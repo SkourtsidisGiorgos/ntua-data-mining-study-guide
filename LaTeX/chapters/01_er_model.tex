@@ -1,0 +1,253 @@
+% =============================================================================
+% Chapter: ER Model & Database Design
+% =============================================================================
+
+\chapter{ER Model \& Database Design}
+
+\begin{formulabox}[Key Concepts - MEMORIZE!]
+\textbf{ER Diagram Components:}
+\begin{itemize}
+    \item \textbf{Entity}: Rectangle - αντικείμενο/οντότητα (π.χ. Student, Course)
+    \item \textbf{Attribute}: Oval - ιδιότητα οντότητας (π.χ. name, id)
+    \item \textbf{Relationship}: Diamond - σύνδεση μεταξύ entities (π.χ. enrolls)
+    \item \textbf{Primary Key}: Υπογραμμισμένο attribute
+\end{itemize}
+
+\textbf{Cardinality Notation:}
+\begin{center}
+\begin{tabular}{ll}
+1:1 & One-to-One (π.χ. Person -- Passport) \\
+1:N & One-to-Many (π.χ. Department -- Employee) \\
+M:N & Many-to-Many (π.χ. Student -- Course) \\
+\end{tabular}
+\end{center}
+\end{formulabox}
+
+% =============================================================================
+\section{Βασικές Έννοιες}
+
+\subsection{Entity Types}
+
+\begin{definitionbox}[Strong vs Weak Entity]
+\begin{center}
+\begin{tikzpicture}
+    % Strong Entity
+    \node[draw=success, fill=success!20, minimum width=2.5cm, minimum height=1cm] (strong) at (0,0) {Employee};
+    \node[anchor=north, font=\small] at (strong.south) {Strong Entity};
+    \node[anchor=south, font=\footnotesize\color{success}] at ([yshift=0.2cm]strong.north) {Έχει δικό του PK};
+
+    % Weak Entity
+    \node[draw=accent, fill=accent!20, minimum width=2.5cm, minimum height=1cm, double] (weak) at (6,0) {Dependent};
+    \node[anchor=north, font=\small] at (weak.south) {Weak Entity};
+    \node[anchor=south, font=\footnotesize\color{accent}] at ([yshift=0.2cm]weak.north) {Εξαρτάται από Strong};
+\end{tikzpicture}
+\end{center}
+\end{definitionbox}
+
+\subsection{Attribute Types}
+
+\begin{center}
+\begin{tikzpicture}
+    % Simple
+    \node[draw=secondary, ellipse, minimum width=2cm] (simple) at (0,2) {name};
+    \node[anchor=north, font=\footnotesize] at (simple.south) {Simple};
+
+    % Composite
+    \node[draw=secondary, ellipse, minimum width=2cm] (comp) at (4,2) {address};
+    \node[draw=secondary, ellipse, minimum width=1.5cm, font=\scriptsize] (street) at (3,0.5) {street};
+    \node[draw=secondary, ellipse, minimum width=1.5cm, font=\scriptsize] (city) at (5,0.5) {city};
+    \draw (comp) -- (street);
+    \draw (comp) -- (city);
+    \node[anchor=north, font=\footnotesize] at (4,0) {Composite};
+
+    % Multivalued
+    \node[draw=secondary, ellipse, double, minimum width=2cm] (multi) at (8,2) {phone};
+    \node[anchor=north, font=\footnotesize] at (multi.south) {Multivalued};
+
+    % Derived
+    \node[draw=secondary, ellipse, dashed, minimum width=2cm] (derived) at (12,2) {age};
+    \node[anchor=north, font=\footnotesize] at (derived.south) {Derived};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Cardinality \& Participation}
+
+\begin{formulabox}[Cardinality Constraints]
+\begin{center}
+\begin{tikzpicture}[node distance=3cm]
+    % 1:1
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (e1) at (0,0) {Person};
+    \node[draw=primary, diamond, aspect=2] (r1) at (3,0) {has};
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (e2) at (6,0) {Passport};
+    \draw (e1) -- node[above] {1} (r1);
+    \draw (r1) -- node[above] {1} (e2);
+    \node[anchor=west, font=\footnotesize\color{secondary}] at (7,0) {1:1 - One to One};
+
+    % 1:N
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (d1) at (0,-1.5) {Department};
+    \node[draw=primary, diamond, aspect=2] (r2) at (3,-1.5) {employs};
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (d2) at (6,-1.5) {Employee};
+    \draw (d1) -- node[above] {1} (r2);
+    \draw (r2) -- node[above] {N} (d2);
+    \node[anchor=west, font=\footnotesize\color{secondary}] at (7,-1.5) {1:N - One to Many};
+
+    % M:N
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (s1) at (0,-3) {Student};
+    \node[draw=primary, diamond, aspect=2] (r3) at (3,-3) {enrolls};
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (s2) at (6,-3) {Course};
+    \draw (s1) -- node[above] {M} (r3);
+    \draw (r3) -- node[above] {N} (s2);
+    \node[anchor=west, font=\footnotesize\color{secondary}] at (7,-3) {M:N - Many to Many};
+\end{tikzpicture}
+\end{center}
+\end{formulabox}
+
+\subsection{Participation Constraints}
+
+\begin{center}
+\begin{tikzpicture}
+    % Total Participation
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (emp) at (0,0) {Employee};
+    \node[draw=primary, diamond, aspect=2] (works) at (4,0) {works\_for};
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (dept) at (8,0) {Department};
+    \draw[double] (emp) -- (works);
+    \draw (works) -- (dept);
+
+    \node[anchor=north, align=center, font=\small] at (2,-0.8) {\textbf{Total} (double line)\\Κάθε employee ΠΡΕΠΕΙ\\να δουλεύει σε dept};
+    \node[anchor=north, align=center, font=\small] at (6,-0.8) {\textbf{Partial} (single line)\\Dept ΜΠΟΡΕΙ να μην\\έχει employees};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Solved Exam Problems}
+
+\subsection{2024-25 Exam Style: ER to Relational}
+
+\begin{examplebox}[Μετατροπή ER σε Relational Schema]
+\textbf{Πρόβλημα}: Δίνεται το παρακάτω ER diagram. Μετατρέψτε σε relational schema.
+
+\begin{center}
+\begin{tikzpicture}[node distance=2.5cm]
+    % Entities
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm] (student) {Student};
+    \node[draw=primary, diamond, aspect=2, right=of student] (enrolls) {enrolls};
+    \node[draw=primary, minimum width=2cm, minimum height=0.8cm, right=of enrolls] (course) {Course};
+
+    % Attributes for Student
+    \node[draw=secondary, ellipse, above=0.8cm of student, font=\small] (sid) {\underline{sid}};
+    \node[draw=secondary, ellipse, left=0.5cm of student, font=\small] (sname) {name};
+
+    % Attributes for Course
+    \node[draw=secondary, ellipse, above=0.8cm of course, font=\small] (cid) {\underline{cid}};
+    \node[draw=secondary, ellipse, right=0.5cm of course, font=\small] (cname) {title};
+
+    % Relationship attribute
+    \node[draw=secondary, ellipse, below=0.5cm of enrolls, font=\small] (grade) {grade};
+
+    % Connections
+    \draw (student) -- node[above] {M} (enrolls);
+    \draw (enrolls) -- node[above] {N} (course);
+    \draw (sid) -- (student);
+    \draw (sname) -- (student);
+    \draw (cid) -- (course);
+    \draw (cname) -- (course);
+    \draw (grade) -- (enrolls);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Λύση - Βήμα προς βήμα:}
+
+\textbf{Step 1: Strong Entities → Tables}
+\begin{itemize}
+    \item \texttt{Student(\underline{sid}, name)}
+    \item \texttt{Course(\underline{cid}, title)}
+\end{itemize}
+
+\textbf{Step 2: M:N Relationship → New Table}
+\begin{itemize}
+    \item \texttt{Enrolls(\underline{sid}, \underline{cid}, grade)}
+    \item Foreign Keys: sid → Student, cid → Course
+\end{itemize}
+
+\textbf{Final Schema:}
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=success, fill=success!20, rounded corners=5pt, minimum width=10cm, minimum height=3cm] (schema) {};
+    \node[anchor=center, align=left, font=\ttfamily\small] at (schema.center) {
+        Student(\underline{sid}, name)\\
+        Course(\underline{cid}, title)\\
+        Enrolls(\underline{sid}, \underline{cid}, grade)\\
+        \hspace{1cm}FK: sid REFERENCES Student(sid)\\
+        \hspace{1cm}FK: cid REFERENCES Course(cid)
+    };
+\end{tikzpicture}
+\end{center}
+\end{examplebox}
+
+\subsection{Cardinality Rules for Conversion}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Cardinality} & \textbf{Conversion Rule} & \textbf{Example} \\
+\midrule
+1:1 & FK σε οποιαδήποτε πλευρά & Person-Passport \\
+1:N & FK στη N-πλευρά & Dept-Employee \\
+M:N & Νέος πίνακας με 2 FKs & Student-Course \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{M:N χωρίς νέο πίνακα}:
+    \begin{itemize}
+        \item[$\times$] Βάζω FK στη μία πλευρά
+        \item[\checkmark] Δημιουργώ junction table με composite key
+    \end{itemize}
+
+    \item \textbf{Weak Entity conversion}:
+    \begin{itemize}
+        \item[$\times$] Μόνο το partial key ως PK
+        \item[\checkmark] Composite key: (owner\_PK + partial\_key)
+    \end{itemize}
+
+    \item \textbf{Multivalued attributes}:
+    \begin{itemize}
+        \item[$\times$] Πολλές στήλες (phone1, phone2, ...)
+        \item[\checkmark] Ξεχωριστός πίνακας με FK
+    \end{itemize}
+
+    \item \textbf{Total Participation}:
+    \begin{itemize}
+        \item[$\times$] Αγνοώ τη διπλή γραμμή
+        \item[\checkmark] NOT NULL constraint στο FK
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=6cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {ER → Relational Conversion Rules};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{1. Strong Entity} → Table με όλα τα simple attributes\\[3pt]
+        \textbf{2. Weak Entity} → Table με (owner\_PK + partial\_key) ως composite PK\\[3pt]
+        \textbf{3. 1:1 Relationship} → FK σε οποιαδήποτε πλευρά (προτίμηση: total participation)\\[3pt]
+        \textbf{4. 1:N Relationship} → FK στην N-πλευρά (many side)\\[3pt]
+        \textbf{5. M:N Relationship} → Νέος πίνακας με PKs και των δύο entities\\[3pt]
+        \textbf{6. Multivalued Attr} → Ξεχωριστός πίνακας (entity\_PK, value)\\[3pt]
+        \textbf{7. Composite Attr} → Flatten: κάθε component γίνεται στήλη\\[3pt]
+        \textbf{8. Derived Attr} → ΔΕΝ αποθηκεύεται (υπολογίζεται)
+    };
+\end{tikzpicture}
+\end{center}

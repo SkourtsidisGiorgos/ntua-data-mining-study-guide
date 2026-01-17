@@ -1,0 +1,259 @@
+% =============================================================================
+% Chapter: Formulas Cheatsheet
+% =============================================================================
+
+\chapter{Formulas Cheatsheet}
+
+\begin{center}
+\textit{Συγκεντρωτικός οδηγός όλων των τύπων για γρήγορη αναφορά στις εξετάσεις}
+\end{center}
+
+% =============================================================================
+\section{Relational Algebra}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=14cm, minimum height=4cm] (ra) at (0,0) {};
+    \node[anchor=north, font=\bfseries\Large\color{secondary}] at (ra.north) {Relational Algebra Operators};
+    \node[anchor=center, align=left] at (ra.center) {
+        \begin{tabular}{llll}
+        $\sigma_{condition}(R)$ & Selection & Rows & WHERE \\
+        $\pi_{cols}(R)$ & Projection & Columns & SELECT \\
+        $R \cup S$ & Union & Both & UNION \\
+        $R \cap S$ & Intersection & Common & INTERSECT \\
+        $R - S$ & Difference & Only in R & EXCEPT \\
+        $R \bowtie S$ & Natural Join & Common cols & NATURAL JOIN \\
+        $R \bowtie_\theta S$ & Theta Join & Condition & JOIN ON \\
+        \end{tabular}
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{SQL Essentials}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=14cm, minimum height=3cm] (sql) at (0,0) {};
+    \node[anchor=north, font=\bfseries\Large\color{success}] at (sql.north) {SQL Execution Order};
+    \node[anchor=center] at (sql.center) {
+        \textbf{FROM} → \textbf{WHERE} → \textbf{GROUP BY} → \textbf{HAVING} → \textbf{SELECT} → \textbf{ORDER BY}
+    };
+    \node[anchor=south, font=\small] at (sql.south) {
+        WHERE: before grouping | HAVING: after grouping (with aggregates)
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Association Rules}
+
+\begin{center}
+\begin{tikzpicture}
+    % Support
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (sup) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (sup.north) {Support};
+    \node[anchor=center] at (sup.center) {$\frac{|T \text{ with } X|}{|T|}$};
+
+    % Confidence
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (conf) at (5,0) {};
+    \node[anchor=north, font=\bfseries] at (conf.north) {Confidence};
+    \node[anchor=center] at (conf.center) {$\frac{Sup(X \cup Y)}{Sup(X)}$};
+
+    % Lift
+    \node[draw=accent, fill=accent!20, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (lift) at (10,0) {};
+    \node[anchor=north, font=\bfseries] at (lift.north) {Lift};
+    \node[anchor=center] at (lift.center) {$\frac{Conf(X \to Y)}{Sup(Y)}$};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\textbf{Lift Interpretation:} $=1$: Independent | $>1$: Positive | $<1$: Negative
+\end{center}
+
+% =============================================================================
+\section{Distance Measures}
+
+\begin{center}
+\begin{tikzpicture}
+    % Euclidean
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4.5cm, minimum height=2cm] (euc) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (euc.north) {Euclidean};
+    \node[anchor=center] at (euc.center) {$\sqrt{\sum_i (x_i - y_i)^2}$};
+
+    % Manhattan
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4.5cm, minimum height=2cm] (man) at (5.5,0) {};
+    \node[anchor=north, font=\bfseries] at (man.north) {Manhattan};
+    \node[anchor=center] at (man.center) {$\sum_i |x_i - y_i|$};
+
+    % Cosine
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4.5cm, minimum height=2cm] (cos) at (11,0) {};
+    \node[anchor=north, font=\bfseries] at (cos.north) {Cosine Similarity};
+    \node[anchor=center] at (cos.center) {$\frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \|\mathbf{y}\|}$};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Classification Metrics}
+
+\begin{center}
+\begin{tikzpicture}
+    % Confusion Matrix mini
+    \node[anchor=center] at (-4,0) {
+        \begin{tabular}{c|cc}
+            & P+ & P-- \\
+            \hline
+            A+ & TP & FN \\
+            A-- & FP & TN \\
+        \end{tabular}
+    };
+
+    % Metrics
+    \node[draw=secondary, fill=box-blue, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (1,1.5) {Acc $= \frac{TP+TN}{All}$};
+    \node[draw=success, fill=box-green, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (5.5,1.5) {Precision $= \frac{TP}{TP+FP}$};
+    \node[draw=success, fill=box-green, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (1,0) {Recall $= \frac{TP}{TP+FN}$};
+    \node[draw=info, fill=info!20, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (5.5,0) {Spec $= \frac{TN}{TN+FP}$};
+    \node[draw=accent, fill=accent!20, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (1,-1.5) {F1 $= \frac{2 \cdot P \cdot R}{P+R}$};
+    \node[draw=warning, fill=warning!20, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (5.5,-1.5) {FPR $= 1 - $ Spec};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{HMM - Viterbi Algorithm}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=accent, fill=accent!15, rounded corners=8pt, minimum width=14cm, minimum height=3cm] (vit) at (0,0) {};
+    \node[anchor=north, font=\bfseries\Large\color{accent}] at (vit.north) {Viterbi Recurrence};
+    \node[anchor=center] at (vit.center) {
+        $\delta_t(j) = \max_i \left[ \delta_{t-1}(i) \cdot a_{ij} \right] \cdot b_j(o_t)$
+    };
+    \node[anchor=south, font=\small] at (vit.south) {
+        Init: $\delta_1(i) = \pi_i \cdot b_i(o_1)$ \quad | \quad Backtrack using $\psi_t(j) = \arg\max_i[\delta_{t-1}(i) \cdot a_{ij}]$
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Bloom Filter}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6cm, minimum height=2cm] (fp) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (fp.north) {False Positive Rate};
+    \node[anchor=center] at (fp.center) {$p \approx (1 - e^{-kn/m})^k$};
+
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6cm, minimum height=2cm] (opt) at (8,0) {};
+    \node[anchor=north, font=\bfseries] at (opt.north) {Optimal Hash Functions};
+    \node[anchor=center] at (opt.center) {$k = \frac{m}{n} \ln 2 \approx 0.693 \frac{m}{n}$};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\textbf{Key:} No false negatives! "No" = definitely not in set | "Yes" = maybe in set
+\end{center}
+
+% =============================================================================
+\section{OLAP Operations}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=4cm,
+            minimum height=1cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Roll-up & Aggregate (day→month→year) \\
+        Drill-down & Detail (year→month→day) \\
+        Slice & Filter ONE dimension \\
+        Dice & Filter MULTIPLE dimensions \\
+        Pivot & Rotate axes \\
+    };
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\textbf{Cube Cells:} $(d_1+1)(d_2+1)...(d_n+1)$ including ALL aggregates
+\end{center}
+
+% =============================================================================
+\section{Data Preprocessing}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=14cm, minimum height=2.5cm] (noir) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (noir.north) {Attribute Types (NOIR)};
+    \node[anchor=center] at (noir.center) {
+        \textbf{Nominal} ($=$, $\neq$) → \textbf{Ordinal} ($<$, $>$) → \textbf{Interval} ($+$, $-$) → \textbf{Ratio} ($\times$, $\div$)
+    };
+    \node[anchor=south, font=\small] at (noir.south) {
+        Test: Can say "twice as much"? Yes → Ratio | No → Interval
+    };
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Equal-Width:} & Width = $\frac{\max - \min}{k}$ \\
+\textbf{Equal-Frequency:} & Records per bin = $\frac{n}{k}$ \\
+\textbf{Min-Max Normalization:} & $x' = \frac{x - \min}{\max - \min}$ \\
+\textbf{Z-Score:} & $z = \frac{x - \mu}{\sigma}$ \\
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{Query Processing}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Join Algorithm} & \textbf{Best When} & \textbf{Cost} \\
+\midrule
+Nested Loop & Small table / Index & $O(n \times m)$ \\
+Hash Join & Equality + Memory & $O(n + m)$ \\
+Merge Join & Sorted data & $O(n + m)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\textbf{Pipelined:} $\sigma$, $\pi$, Nested Loop outer \quad | \quad \textbf{Blocking:} Sort, Hash build, Aggregation
+\end{center}
+
+% =============================================================================
+\section{Quick Reference Table}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Topic} & \textbf{Key Formula/Concept} & \textbf{Notes} \\
+\midrule
+ER → Relational & M:N → New table & 1:N → FK in N-side \\
+Selection ($\sigma$) & Filter rows & = WHERE \\
+Projection ($\pi$) & Choose columns & = SELECT (removes dups) \\
+Natural Join ($\bowtie$) & Match ALL common cols & Auto-match \\
+\midrule
+Support & $|T \text{ with } X| / |T|$ & Frequency \\
+Confidence & $Sup(X \cup Y) / Sup(X)$ & Conditional \\
+Lift & $>1$: positive correlation & \\
+\midrule
+Precision & $TP/(TP+FP)$ & Predicted + \\
+Recall & $TP/(TP+FN)$ & Actual + \\
+F1 & Harmonic mean P\&R & \\
+\midrule
+Viterbi & $\max[\delta \cdot a] \cdot b$ & Don't forget $b$! \\
+Bloom Filter & No false negatives & Only false positives \\
+\midrule
+Roll-up & Less detail & day→month \\
+Drill-down & More detail & month→day \\
+\bottomrule
+\end{tabular}
+\end{center}

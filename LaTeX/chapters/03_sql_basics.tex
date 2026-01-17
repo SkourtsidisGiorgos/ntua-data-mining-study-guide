@@ -1,0 +1,332 @@
+% =============================================================================
+% Chapter: SQL Basics
+% =============================================================================
+
+\chapter{SQL Basics}
+
+\begin{formulabox}[Key SQL Syntax - MEMORIZE!]
+\begin{lstlisting}[language=SQL]
+SELECT [DISTINCT] column1, column2, aggregate(column)
+FROM table1 [JOIN table2 ON condition]
+WHERE condition           -- Filter BEFORE grouping
+GROUP BY column           -- Group rows
+HAVING aggregate_condition -- Filter AFTER grouping
+ORDER BY column [ASC|DESC]
+LIMIT n;
+\end{lstlisting}
+
+\textbf{Execution Order:} FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY
+\end{formulabox}
+
+% =============================================================================
+\section{SELECT Basics}
+
+\subsection{Column Selection}
+
+\begin{examplebox}[Basic SELECT]
+\begin{lstlisting}[language=SQL]
+-- All columns
+SELECT * FROM Employee;
+
+-- Specific columns
+SELECT name, salary FROM Employee;
+
+-- With alias
+SELECT name AS employee_name, salary * 12 AS annual
+FROM Employee;
+
+-- Remove duplicates
+SELECT DISTINCT dept FROM Employee;
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{WHERE Clause}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Operator} & \textbf{Example} \\
+\midrule
+$=$, $<>$, $<$, $>$ & \texttt{salary > 50000} \\
+\texttt{BETWEEN} & \texttt{age BETWEEN 20 AND 30} \\
+\texttt{IN} & \texttt{dept IN ('CS', 'Math')} \\
+\texttt{LIKE} & \texttt{name LIKE 'A\%'} \\
+\texttt{IS NULL} & \texttt{manager IS NULL} \\
+\texttt{AND, OR, NOT} & \texttt{dept='CS' AND salary > 50000} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{examplebox}[WHERE Examples]
+\begin{lstlisting}[language=SQL]
+-- Pattern matching
+SELECT * FROM Employee
+WHERE name LIKE 'A%';  -- Starts with A
+
+-- NULL check (NOT with =!)
+SELECT * FROM Employee
+WHERE manager IS NULL;
+
+-- Range
+SELECT * FROM Employee
+WHERE salary BETWEEN 40000 AND 60000;
+\end{lstlisting}
+\end{examplebox}
+
+% =============================================================================
+\section{Aggregate Functions}
+
+\begin{formulabox}[Aggregate Functions]
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Function} & \textbf{Description} & \textbf{NULL Handling} \\
+\midrule
+\texttt{COUNT(*)} & Αριθμός γραμμών & Counts ALL \\
+\texttt{COUNT(col)} & Αριθμός non-NULL τιμών & Ignores NULL \\
+\texttt{SUM(col)} & Άθροισμα & Ignores NULL \\
+\texttt{AVG(col)} & Μέσος όρος & Ignores NULL \\
+\texttt{MAX(col)} & Μέγιστο & Ignores NULL \\
+\texttt{MIN(col)} & Ελάχιστο & Ignores NULL \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{formulabox}
+
+\begin{warningbox}[COUNT(*) vs COUNT(column)]
+\begin{lstlisting}[language=SQL]
+-- Table: Employee(name, bonus)
+-- Data: ('Alice', 100), ('Bob', NULL), ('Carol', 200)
+
+SELECT COUNT(*) FROM Employee;       -- Returns 3
+SELECT COUNT(bonus) FROM Employee;   -- Returns 2 (NULL ignored!)
+\end{lstlisting}
+\end{warningbox}
+
+% =============================================================================
+\section{GROUP BY \& HAVING}
+
+\begin{definitionbox}[GROUP BY vs HAVING]
+\begin{itemize}
+    \item \textbf{WHERE}: Φιλτράρει γραμμές ΠΡΙΝ το grouping
+    \item \textbf{HAVING}: Φιλτράρει groups ΜΕΤΑ το grouping
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[GROUP BY Example]
+\textbf{Query:} Average salary per department, only for departments with $>$ 2 employees.
+
+\begin{lstlisting}[language=SQL]
+SELECT dept, AVG(salary) AS avg_salary, COUNT(*) AS emp_count
+FROM Employee
+WHERE salary > 30000        -- Filter rows first
+GROUP BY dept               -- Then group
+HAVING COUNT(*) > 2         -- Filter groups
+ORDER BY avg_salary DESC;
+\end{lstlisting}
+\end{examplebox}
+
+\begin{warningbox}[SELECT with GROUP BY Rule]
+Στο SELECT μπορούν ΜΟΝΟ:
+\begin{itemize}
+    \item Στήλες που είναι στο GROUP BY
+    \item Aggregate functions
+\end{itemize}
+
+\begin{lstlisting}[language=SQL]
+-- WRONG!
+SELECT name, dept, AVG(salary) FROM Employee GROUP BY dept;
+-- 'name' is not in GROUP BY!
+
+-- CORRECT
+SELECT dept, AVG(salary) FROM Employee GROUP BY dept;
+\end{lstlisting}
+\end{warningbox}
+
+% =============================================================================
+\section{Solved Exam Problems}
+
+\subsection{2024-25 Exam Question 13 Style}
+
+\begin{examplebox}[Multi-table Query]
+\textbf{Tables:}
+\begin{itemize}
+    \item \texttt{Student(sid, name, dept)}
+    \item \texttt{Course(cid, title, credits)}
+    \item \texttt{Enrolls(sid, cid, grade)}
+\end{itemize}
+
+\textbf{Query:} Find students with average grade $>$ 8.0 in CS department.
+
+\begin{lstlisting}[language=SQL]
+SELECT S.name, AVG(E.grade) AS avg_grade
+FROM Student S
+JOIN Enrolls E ON S.sid = E.sid
+WHERE S.dept = 'CS'
+GROUP BY S.sid, S.name
+HAVING AVG(E.grade) > 8.0
+ORDER BY avg_grade DESC;
+\end{lstlisting}
+
+\textbf{Step-by-step:}
+\begin{enumerate}
+    \item JOIN: Συνδέουμε Student με Enrolls
+    \item WHERE: Φιλτράρουμε CS students
+    \item GROUP BY: Ομαδοποιούμε ανά student
+    \item HAVING: Κρατάμε groups με AVG $>$ 8.0
+    \item SELECT: Εμφανίζουμε name και average
+\end{enumerate}
+\end{examplebox}
+
+\subsection{2024-25 Exam Question 14 Style}
+
+\begin{examplebox}[Subquery Example]
+\textbf{Query:} Students who have NOT enrolled in any course.
+
+\begin{lstlisting}[language=SQL]
+-- Method 1: NOT IN
+SELECT name FROM Student
+WHERE sid NOT IN (SELECT DISTINCT sid FROM Enrolls);
+
+-- Method 2: NOT EXISTS
+SELECT name FROM Student S
+WHERE NOT EXISTS (
+    SELECT 1 FROM Enrolls E WHERE E.sid = S.sid
+);
+
+-- Method 3: LEFT JOIN + NULL check
+SELECT S.name
+FROM Student S
+LEFT JOIN Enrolls E ON S.sid = E.sid
+WHERE E.sid IS NULL;
+\end{lstlisting}
+\end{examplebox}
+
+\subsection{Finding Maximum with Details}
+
+\begin{examplebox}[Max Salary with Employee Details]
+\textbf{Query:} Find employee(s) with highest salary.
+
+\begin{lstlisting}[language=SQL]
+-- WRONG: Returns one row even if ties exist
+SELECT * FROM Employee ORDER BY salary DESC LIMIT 1;
+
+-- CORRECT: Handles ties
+SELECT * FROM Employee
+WHERE salary = (SELECT MAX(salary) FROM Employee);
+\end{lstlisting}
+\end{examplebox}
+
+% =============================================================================
+\section{Common Patterns}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=5cm,
+            minimum height=1.5cm,
+            anchor=center,
+            font=\small,
+            align=left
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Pattern & SQL Template \\
+        Count per group & |[align=left]| \texttt{SELECT g, COUNT(*)}\\
+                          \texttt{FROM T GROUP BY g} \\
+        Top N per group & |[align=left]| \texttt{WITH ranked AS (...)}\\
+                          \texttt{ROW\_NUMBER() OVER} \\
+        Self-join & |[align=left]| \texttt{FROM T t1, T t2}\\
+                    \texttt{WHERE t1.x = t2.y} \\
+        NOT IN pattern & |[align=left]| \texttt{WHERE x NOT IN}\\
+                         \texttt{(SELECT x FROM ...)} \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{NULL με = instead of IS}:
+    \begin{itemize}
+        \item[$\times$] \texttt{WHERE bonus = NULL}
+        \item[\checkmark] \texttt{WHERE bonus IS NULL}
+    \end{itemize}
+
+    \item \textbf{HAVING χωρίς GROUP BY}:
+    \begin{itemize}
+        \item HAVING πρέπει να χρησιμοποιείται με aggregate
+    \end{itemize}
+
+    \item \textbf{Non-grouped columns στο SELECT}:
+    \begin{itemize}
+        \item[$\times$] \texttt{SELECT name, SUM(x) GROUP BY dept}
+        \item[\checkmark] \texttt{SELECT dept, SUM(x) GROUP BY dept}
+    \end{itemize}
+
+    \item \textbf{String comparison}:
+    \begin{itemize}
+        \item[$\times$] \texttt{WHERE name = "Alice"} (double quotes)
+        \item[\checkmark] \texttt{WHERE name = 'Alice'} (single quotes)
+    \end{itemize}
+
+    \item \textbf{COUNT με NULL}:
+    \begin{itemize}
+        \item \texttt{COUNT(*)} counts all rows
+        \item \texttt{COUNT(col)} ignores NULL values
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=7cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {SQL Execution Order};
+
+    \node[anchor=north west, align=left] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \begin{tikzpicture}
+            \node[draw=secondary, fill=secondary!20, rounded corners=3pt, minimum width=2cm] (from) at (0,0) {1. FROM};
+            \node[draw=secondary, fill=secondary!20, rounded corners=3pt, minimum width=2cm] (where) at (2.5,0) {2. WHERE};
+            \node[draw=secondary, fill=secondary!20, rounded corners=3pt, minimum width=2.5cm] (group) at (5.5,0) {3. GROUP BY};
+            \node[draw=secondary, fill=secondary!20, rounded corners=3pt, minimum width=2cm] (having) at (8.5,0) {4. HAVING};
+            \node[draw=secondary, fill=secondary!20, rounded corners=3pt, minimum width=2cm] (select) at (0,-1.2) {5. SELECT};
+            \node[draw=secondary, fill=secondary!20, rounded corners=3pt, minimum width=2.5cm] (order) at (3,-1.2) {6. ORDER BY};
+
+            \draw[->, thick] (from) -- (where);
+            \draw[->, thick] (where) -- (group);
+            \draw[->, thick] (group) -- (having);
+            \draw[->, thick] (having) -- (10,0) -- (10,-1.2) -- (select.east);
+            \draw[->, thick] (select) -- (order);
+        \end{tikzpicture}
+    };
+
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6cm, minimum height=2cm]
+        at ([xshift=-3cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=-3cm, yshift=1.5cm]main.south) {
+        \textbf{Key Pattern:}\\
+        \texttt{SELECT cols, AGG()}\\
+        \texttt{FROM T GROUP BY cols}\\
+        \texttt{HAVING AGG() > val}
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=2cm]
+        at ([xshift=3.5cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=3.5cm, yshift=1.5cm]main.south) {
+        \textbf{Remember:}\\
+        WHERE: before grouping\\
+        HAVING: after grouping
+    };
+\end{tikzpicture}
+\end{center}

@@ -1,0 +1,302 @@
+% =============================================================================
+% Chapter: Data Preprocessing
+% =============================================================================
+
+\chapter{Data Preprocessing}
+
+\begin{formulabox}[Key Concepts - MEMORIZE!]
+\textbf{Attribute Types:}
+\begin{center}
+\begin{tabular}{lllp{5cm}}
+\toprule
+\textbf{Type} & \textbf{Operations} & \textbf{Example} & \textbf{Properties} \\
+\midrule
+Nominal & $=$, $\neq$ & Color, Gender & Categories, no order \\
+Ordinal & $=$, $\neq$, $<$, $>$ & Rating (1-5) & Ordered categories \\
+Interval & $+$, $-$ & Temperature (°C) & Meaningful differences \\
+Ratio & $\times$, $\div$ & Height, Weight & Absolute zero exists \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Distance Formulas:}
+\begin{align*}
+\text{Euclidean:} \quad d &= \sqrt{\sum_i (x_i - y_i)^2} \\
+\text{Manhattan:} \quad d &= \sum_i |x_i - y_i| \\
+\text{Cosine Similarity:} \quad \cos(\theta) &= \frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \|\mathbf{y}\|}
+\end{align*}
+\end{formulabox}
+
+% =============================================================================
+\section{Attribute Types (ΕΞΕΤΑΣΤΙΚΟ ΘΕΜΑ!)}
+
+\subsection{NOIR Scale}
+
+\begin{center}
+\begin{tikzpicture}
+    % Nominal
+    \node[draw=secondary, fill=box-blue, rounded corners=8pt, minimum width=3cm, minimum height=2.5cm] (nom) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (nom.north) {Nominal};
+    \node[anchor=center, align=center, font=\small] at (nom.center) {Categories\\no order\\$=$, $\neq$};
+    \node[anchor=south, font=\footnotesize, color=secondary] at (nom.south) {Color, ID};
+
+    % Ordinal
+    \node[draw=success, fill=box-green, rounded corners=8pt, minimum width=3cm, minimum height=2.5cm] (ord) at (4,0) {};
+    \node[anchor=north, font=\bfseries] at (ord.north) {Ordinal};
+    \node[anchor=center, align=center, font=\small] at (ord.center) {Ordered\\categories\\$<$, $>$};
+    \node[anchor=south, font=\footnotesize, color=success] at (ord.south) {Rating, Grade};
+
+    % Interval
+    \node[draw=warning, fill=warning!20, rounded corners=8pt, minimum width=3cm, minimum height=2.5cm] (int) at (8,0) {};
+    \node[anchor=north, font=\bfseries] at (int.north) {Interval};
+    \node[anchor=center, align=center, font=\small] at (int.center) {Differences\\meaningful\\$+$, $-$};
+    \node[anchor=south, font=\footnotesize, color=warning] at (int.south) {°C, Year};
+
+    % Ratio
+    \node[draw=accent, fill=accent!20, rounded corners=8pt, minimum width=3cm, minimum height=2.5cm] (rat) at (12,0) {};
+    \node[anchor=north, font=\bfseries] at (rat.north) {Ratio};
+    \node[anchor=center, align=center, font=\small] at (rat.center) {Absolute zero\\ratios valid\\$\times$, $\div$};
+    \node[anchor=south, font=\footnotesize, color=accent] at (rat.south) {Height, Money};
+
+    % Arrow showing increasing information
+    \draw[->, thick, primary] (-1.5,-2) -- (13.5,-2);
+    \node[anchor=north] at (6,-2) {Increasing Information →};
+\end{tikzpicture}
+\end{center}
+
+\begin{examplebox}[Attribute Type Classification]
+\textbf{Question (2024-25 Exam Style):} Classify each attribute:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Attribute} & \textbf{Type} & \textbf{Reasoning} \\
+\midrule
+Student ID & Nominal & Just identifier, no meaningful order \\
+Letter Grade (A-F) & Ordinal & Ordered but no meaningful differences \\
+Temperature (°C) & Interval & 0°C is not "no temperature" \\
+Height (cm) & Ratio & 0 cm = no height, ratios meaningful \\
+ZIP Code & Nominal & Numbers used as categories \\
+Year & Interval & Year 0 is arbitrary \\
+Age & Ratio & 0 = no age, can say "twice as old" \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+\begin{warningbox}[Common Confusion]
+\textbf{Interval vs Ratio:}
+\begin{itemize}
+    \item Temperature in \textbf{Celsius/Fahrenheit}: Interval (0° is not "no heat")
+    \item Temperature in \textbf{Kelvin}: Ratio (0K = absolute zero)
+    \item \textbf{Test:} Can you say "twice as much"? If yes → Ratio
+\end{itemize}
+\end{warningbox}
+
+% =============================================================================
+\section{Distance Measures}
+
+\subsection{Euclidean Distance}
+
+\begin{formulabox}[Euclidean Distance (L2)]
+\[
+d_{Euclidean}(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
+\]
+
+\textbf{Properties:}
+\begin{itemize}
+    \item Sensitive to scale (χρειάζεται normalization)
+    \item Works for continuous attributes
+\end{itemize}
+\end{formulabox}
+
+\subsection{Manhattan Distance}
+
+\begin{formulabox}[Manhattan Distance (L1)]
+\[
+d_{Manhattan}(\mathbf{x}, \mathbf{y}) = \sum_{i=1}^{n} |x_i - y_i|
+\]
+
+\textbf{Properties:}
+\begin{itemize}
+    \item Less sensitive to outliers than Euclidean
+    \item "City block" distance
+\end{itemize}
+\end{formulabox}
+
+\subsection{Cosine Similarity}
+
+\begin{formulabox}[Cosine Similarity]
+\[
+\cos(\theta) = \frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \|\mathbf{y}\|} = \frac{\sum_i x_i y_i}{\sqrt{\sum_i x_i^2} \cdot \sqrt{\sum_i y_i^2}}
+\]
+
+\textbf{Properties:}
+\begin{itemize}
+    \item Range: $[-1, 1]$ (or $[0, 1]$ for non-negative vectors)
+    \item Measures \textbf{direction}, ignores magnitude
+    \item Common for text/document similarity
+\end{itemize}
+\end{formulabox}
+
+\begin{examplebox}[Distance Calculation]
+\textbf{Points:} $A = (1, 2)$, $B = (4, 6)$
+
+\textbf{Euclidean:}
+\[
+d = \sqrt{(4-1)^2 + (6-2)^2} = \sqrt{9 + 16} = \sqrt{25} = 5
+\]
+
+\textbf{Manhattan:}
+\[
+d = |4-1| + |6-2| = 3 + 4 = 7
+\]
+
+\textbf{Cosine Similarity:}
+\[
+\cos(\theta) = \frac{1 \times 4 + 2 \times 6}{\sqrt{1^2+2^2} \cdot \sqrt{4^2+6^2}} = \frac{4 + 12}{\sqrt{5} \cdot \sqrt{52}} = \frac{16}{\sqrt{260}} \approx 0.99
+\]
+\end{examplebox}
+
+% =============================================================================
+\section{Data Discretization}
+
+\subsection{Equal-Width Partitioning}
+
+\begin{formulabox}[Equal-Width Binning]
+Διαίρεση του range σε $k$ bins με \textbf{ίσο πλάτος}.
+
+\[
+\text{Width} = \frac{\max - \min}{k}
+\]
+
+Bin $i$: $[\min + (i-1) \times \text{width}, \min + i \times \text{width})$
+\end{formulabox}
+
+\subsection{Equal-Frequency (Equal-Depth) Partitioning}
+
+\begin{formulabox}[Equal-Frequency Binning]
+Διαίρεση ώστε κάθε bin να έχει \textbf{ίσο αριθμό records}.
+
+\[
+\text{Records per bin} = \frac{n}{k}
+\]
+\end{formulabox}
+
+\begin{examplebox}[Discretization - 2024-25 Exam Q16 Style]
+\textbf{Data:} 4, 8, 9, 15, 21, 21, 24, 25, 26, 28, 29, 34
+
+\textbf{Equal-Width (3 bins):}
+\begin{itemize}
+    \item Range: 34 - 4 = 30, Width = 30/3 = 10
+    \item Bin 1 [4, 14): 4, 8, 9
+    \item Bin 2 [14, 24): 15, 21, 21
+    \item Bin 3 [24, 34]: 24, 25, 26, 28, 29, 34
+\end{itemize}
+
+\textbf{Equal-Frequency (3 bins):}
+\begin{itemize}
+    \item 12 values / 3 bins = 4 per bin
+    \item Bin 1: 4, 8, 9, 15
+    \item Bin 2: 21, 21, 24, 25
+    \item Bin 3: 26, 28, 29, 34
+\end{itemize}
+\end{examplebox}
+
+% =============================================================================
+\section{Data Normalization}
+
+\begin{center}
+\begin{tikzpicture}
+    % Min-Max
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6cm, minimum height=2.5cm] (minmax) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (minmax.north) {Min-Max Normalization};
+    \node[anchor=center] at (minmax.center) {$x' = \frac{x - \min}{\max - \min}$};
+    \node[anchor=south, font=\footnotesize] at (minmax.south) {Range: [0, 1]};
+
+    % Z-Score
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6cm, minimum height=2.5cm] (zscore) at (8,0) {};
+    \node[anchor=north, font=\bfseries] at (zscore.north) {Z-Score Standardization};
+    \node[anchor=center] at (zscore.center) {$z = \frac{x - \mu}{\sigma}$};
+    \node[anchor=south, font=\footnotesize] at (zscore.south) {Mean=0, Std=1};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Missing Value Handling}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Method} & \textbf{When to Use} & \textbf{Risk} \\
+\midrule
+Delete rows & Few missing values & Loss of data \\
+Mean/Median imputation & Numerical, MCAR & Reduces variance \\
+Mode imputation & Categorical & May bias data \\
+Regression imputation & Correlated features & Complex \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{Interval vs Ratio confusion}:
+    \begin{itemize}
+        \item Temperature °C: \textbf{Interval} (20°C is NOT "twice as hot" as 10°C)
+        \item Height cm: \textbf{Ratio} (200cm IS twice 100cm)
+    \end{itemize}
+
+    \item \textbf{Equal-Width bin boundaries}:
+    \begin{itemize}
+        \item Include min, exclude max in all but last bin
+        \item Last bin: $[\cdot, \max]$
+    \end{itemize}
+
+    \item \textbf{Cosine vs Euclidean}:
+    \begin{itemize}
+        \item Cosine: direction only (good for text)
+        \item Euclidean: considers magnitude
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=7cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Data Preprocessing Cheat Sheet};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{Attribute Types (NOIR):}\\
+        Nominal → Ordinal → Interval → Ratio (increasing info)\\[5pt]
+        \textbf{Distance Measures:}\\
+        Euclidean: $\sqrt{\sum(x_i-y_i)^2}$ \quad Manhattan: $\sum|x_i-y_i|$\\
+        Cosine: $\frac{\mathbf{x}\cdot\mathbf{y}}{\|\mathbf{x}\|\|\mathbf{y}\|}$ (direction only)\\[5pt]
+        \textbf{Discretization:}\\
+        Equal-Width: width $= \frac{\max-\min}{k}$\\
+        Equal-Frequency: $n/k$ records per bin
+    };
+
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5.5cm, minimum height=1.8cm]
+        at ([xshift=-3.5cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-3.5cm, yshift=1.5cm]main.south) {
+        \textbf{Ratio vs Interval Test:}\\
+        Can say "twice as much"?\\
+        Yes → Ratio, No → Interval
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.8cm]
+        at ([xshift=3.5cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=3.5cm, yshift=1.5cm]main.south) {
+        \textbf{Normalize When:}\\
+        Features have different scales\\
+        Using distance-based methods
+    };
+\end{tikzpicture}
+\end{center}

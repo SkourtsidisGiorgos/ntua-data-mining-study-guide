@@ -1,0 +1,362 @@
+% =============================================================================
+% Chapter: Query Processing & Optimization
+% =============================================================================
+
+\chapter{Query Processing \& Optimization}
+
+\begin{formulabox}[Key Concepts - MEMORIZE!]
+\textbf{Evaluation Methods:}
+\begin{center}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Method} & \textbf{Description} \\
+\midrule
+\textbf{Materialized} & Κάθε operator υπολογίζει πλήρως και αποθηκεύει αποτέλεσμα πριν το δώσει στον επόμενο \\
+\textbf{Pipelined} & Tuples περνούν στον επόμενο operator αμέσως μόλις παραχθούν (streaming) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Join Algorithms Complexity:}
+\begin{center}
+\begin{tabular}{ll}
+Nested Loop Join & $O(n \times m)$ \\
+Hash Join & $O(n + m)$ \\
+Merge Join & $O(n + m)$ (sorted input) \\
+\end{tabular}
+\end{center}
+\end{formulabox}
+
+% =============================================================================
+\section{Query Evaluation Pipeline}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.5cm]
+    % Parser
+    \node[draw=primary, fill=box-blue, rounded corners=5pt, minimum width=3cm, minimum height=1cm] (parser) {Parser};
+
+    % Optimizer
+    \node[draw=primary, fill=box-blue, rounded corners=5pt, minimum width=3cm, minimum height=1cm, right=of parser] (opt) {Optimizer};
+
+    % Executor
+    \node[draw=primary, fill=box-blue, rounded corners=5pt, minimum width=3cm, minimum height=1cm, right=of opt] (exec) {Executor};
+
+    % Arrows
+    \draw[->, thick] (parser) -- node[above, font=\small] {Query Plan} (opt);
+    \draw[->, thick] (opt) -- node[above, font=\small] {Optimized Plan} (exec);
+
+    % Labels below
+    \node[anchor=north, font=\footnotesize, text=secondary] at (parser.south) {SQL → Relational Algebra};
+    \node[anchor=north, font=\footnotesize, text=secondary] at (opt.south) {Cost Estimation};
+    \node[anchor=north, font=\footnotesize, text=secondary] at (exec.south) {Execute Plan};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Materialized vs Pipelined Evaluation}
+
+\subsection{Materialized Evaluation}
+
+\begin{definitionbox}[Materialized Evaluation]
+Κάθε operation υπολογίζει \textbf{πλήρως} το αποτέλεσμά του και το αποθηκεύει (temporary table) πριν περάσει στην επόμενη operation.
+
+\textbf{Πλεονεκτήματα:}
+\begin{itemize}
+    \item Απλή υλοποίηση
+    \item Μπορεί να επαναχρησιμοποιηθεί αποτέλεσμα
+\end{itemize}
+
+\textbf{Μειονεκτήματα:}
+\begin{itemize}
+    \item Χρειάζεται μεγάλο disk I/O
+    \item Καθυστέρηση μέχρι να τελειώσει κάθε βήμα
+\end{itemize}
+\end{definitionbox}
+
+\subsection{Pipelined Evaluation}
+
+\begin{definitionbox}[Pipelined Evaluation]
+Τα tuples περνούν στον επόμενο operator \textbf{αμέσως} μόλις παραχθούν (on-the-fly).
+
+\textbf{Πλεονεκτήματα:}
+\begin{itemize}
+    \item Μειωμένο disk I/O
+    \item Χαμηλή latency (αρχίζει να επιστρέφει αποτελέσματα νωρίς)
+    \item Μικρότερη χρήση μνήμης
+\end{itemize}
+
+\textbf{Μειονεκτήματα:}
+\begin{itemize}
+    \item Πιο περίπλοκη υλοποίηση
+    \item Δεν γίνεται πάντα (π.χ. sorting, hash build)
+\end{itemize}
+\end{definitionbox}
+
+\begin{center}
+\begin{tikzpicture}
+    % Materialized
+    \node[draw=accent, fill=accent!20, rounded corners=8pt, minimum width=6cm, minimum height=4cm] (mat) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (mat.north) {Materialized};
+
+    % Visualization
+    \node[draw=primary, minimum width=1.5cm, minimum height=0.8cm] (r1) at (-1.5,0.5) {R};
+    \node[draw=secondary, minimum width=1.5cm, minimum height=0.8cm] (temp) at (0,0.5) {Temp};
+    \node[draw=success, minimum width=1.5cm, minimum height=0.8cm] (res1) at (1.5,0.5) {Result};
+
+    \draw[->, thick] (r1) -- (temp);
+    \draw[->, thick] (temp) -- (res1);
+
+    \node[font=\small] at (0,-1) {Store complete result};
+    \node[font=\small] at (0,-1.5) {before next step};
+
+    % Pipelined
+    \node[draw=success, fill=success!20, rounded corners=8pt, minimum width=6cm, minimum height=4cm] (pip) at (8,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (pip.north) {Pipelined};
+
+    % Visualization with streaming
+    \node[draw=primary, minimum width=1.5cm, minimum height=0.8cm] (r2) at (6.5,0.5) {R};
+    \node[draw=success, minimum width=1.5cm, minimum height=0.8cm] (res2) at (9.5,0.5) {Result};
+
+    \foreach \i in {0,1,2} {
+        \draw[->, thick, secondary] ([xshift=0.8cm]r2.east) ++(0.2*\i, 0.1*\i) -- ([xshift=-0.8cm]res2.west);
+    }
+
+    \node[font=\small] at (8,-1) {Pass tuples directly};
+    \node[font=\small] at (8,-1.5) {(streaming)};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Join Algorithms}
+
+\subsection{Nested Loop Join}
+
+\begin{algorithmbox}[Nested Loop Join]
+\begin{lstlisting}[language=pseudo]
+for each tuple r in R:
+    for each tuple s in S:
+        if r.key == s.key:
+            emit (r, s)
+\end{lstlisting}
+
+\textbf{Cost:} $O(|R| \times |S|)$ comparisons
+
+\textbf{Best when:}
+\begin{itemize}
+    \item One table is very small
+    \item Index exists on inner table
+\end{itemize}
+\end{algorithmbox}
+
+\subsection{Hash Join}
+
+\begin{algorithmbox}[Hash Join]
+\textbf{Phase 1: Build}
+\begin{lstlisting}[language=pseudo]
+for each tuple r in R (smaller table):
+    insert r into hash_table on r.key
+\end{lstlisting}
+
+\textbf{Phase 2: Probe}
+\begin{lstlisting}[language=pseudo]
+for each tuple s in S:
+    for each r in hash_table.lookup(s.key):
+        emit (r, s)
+\end{lstlisting}
+
+\textbf{Cost:} $O(|R| + |S|)$
+
+\textbf{Best when:}
+\begin{itemize}
+    \item Equality join condition
+    \item Smaller table fits in memory
+\end{itemize}
+\end{algorithmbox}
+
+\subsection{Merge Join (Sort-Merge Join)}
+
+\begin{algorithmbox}[Merge Join]
+\textbf{Requirement:} Both tables sorted on join key
+
+\begin{lstlisting}[language=pseudo]
+// Both R, S sorted on join key
+r = first(R), s = first(S)
+while not end of R and not end of S:
+    if r.key < s.key: r = next(R)
+    else if r.key > s.key: s = next(S)
+    else:  // r.key == s.key
+        emit all matching pairs
+        advance pointers
+\end{lstlisting}
+
+\textbf{Cost:} $O(|R| + |S|)$ (if already sorted) + sorting cost
+
+\textbf{Best when:}
+\begin{itemize}
+    \item Data already sorted (index)
+    \item Result of ORDER BY
+\end{itemize}
+\end{algorithmbox}
+
+\subsection{Join Algorithm Comparison}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=3.5cm,
+            minimum height=1.2cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Algorithm & Best Case & Requirements \\
+        Nested Loop & Small inner table & Index on inner \\
+        Hash Join & Equality join & Memory for hash table \\
+        Merge Join & Sorted data & Pre-sorted input \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Solved Exam Problems}
+
+\subsection{2024-25 Exam Question 5 Style}
+
+\begin{examplebox}[Pipelined vs Materialized]
+\textbf{Question:} Given the query plan below, identify which operations can be pipelined.
+
+\begin{center}
+\begin{tikzpicture}[level distance=1.5cm, sibling distance=4cm]
+    \node[draw=primary, fill=box-blue, rounded corners=3pt] {$\pi_{name}$}
+        child {
+            node[draw=primary, fill=box-blue, rounded corners=3pt] {$\bowtie$}
+            child {
+                node[draw=secondary, fill=secondary!20, rounded corners=3pt] {$\sigma_{dept='CS'}$}
+                child {
+                    node[draw=gray, rounded corners=3pt] {Student}
+                }
+            }
+            child {
+                node[draw=gray, rounded corners=3pt] {Enrolls}
+            }
+        };
+\end{tikzpicture}
+\end{center}
+
+\textbf{Answer:}
+\begin{itemize}
+    \item $\sigma$ (Selection): \textcolor{success}{Pipelined} - φιλτράρει tuples on-the-fly
+    \item $\bowtie$ (Join): Εξαρτάται από algorithm
+    \begin{itemize}
+        \item Hash Join build phase: \textcolor{accent}{Blocking}
+        \item Nested Loop: \textcolor{success}{Pipelined}
+    \end{itemize}
+    \item $\pi$ (Projection): \textcolor{success}{Pipelined} - transforms tuples immediately
+\end{itemize}
+\end{examplebox}
+
+\subsection{Cost Estimation}
+
+\begin{examplebox}[Disk I/O Cost]
+\textbf{Given:}
+\begin{itemize}
+    \item Table R: 1000 pages, 10000 tuples
+    \item Table S: 500 pages, 5000 tuples
+    \item Memory: 50 buffer pages
+\end{itemize}
+
+\textbf{Question:} Calculate I/O cost for Nested Loop Join.
+
+\textbf{Solution:}
+\[
+\text{Cost} = |R| + |R| \times |S| = 1000 + 1000 \times 500 = 501000 \text{ I/Os}
+\]
+
+\textbf{With Block Nested Loop (using memory):}
+\[
+\text{Cost} = |R| + \lceil |R|/B \rceil \times |S| = 1000 + \lceil 1000/48 \rceil \times 500 = 1000 + 21 \times 500 = 11500 \text{ I/Os}
+\]
+
+(B = buffer pages for R = 50 - 2 = 48)
+\end{examplebox}
+
+% =============================================================================
+\section{Query Optimization Rules}
+
+\begin{infobox}[Optimization Heuristics]
+\begin{enumerate}
+    \item \textbf{Push selections down}: Φιλτράρισε νωρίς, μείωσε δεδομένα
+    \item \textbf{Push projections down}: Κράτα μόνο needed columns
+    \item \textbf{Combine selections}: $\sigma_{c1}(\sigma_{c2}(R)) = \sigma_{c1 \land c2}(R)$
+    \item \textbf{Reorder joins}: Βάλε μικρότερο πίνακα ως outer
+    \item \textbf{Use indexes}: Avoid full table scans
+\end{enumerate}
+\end{infobox}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{Hash Join is always best}:
+    \begin{itemize}
+        \item[$\times$] Hash Join πάντα καλύτερο
+        \item[\checkmark] Χρειάζεται equality condition + memory
+    \end{itemize}
+
+    \item \textbf{Pipelined = παντού}:
+    \begin{itemize}
+        \item Sort, Hash build, Aggregation: \textbf{Blocking} operations
+        \item Selection, Projection: Pipelined
+    \end{itemize}
+
+    \item \textbf{Merge Join χωρίς sorting}:
+    \begin{itemize}
+        \item Πρέπει data να είναι sorted on join key
+        \item Sorting cost μπορεί να είναι significant
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=6cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Query Processing Summary};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{Blocking Operations:}\\
+        • Sort, Hash table build, Aggregation (needs all input)\\[5pt]
+        \textbf{Pipelined Operations:}\\
+        • Selection ($\sigma$), Projection ($\pi$), Nested Loop (outer)\\[5pt]
+        \textbf{Join Selection:}\\
+        • Equality + Memory → Hash Join\\
+        • Sorted data → Merge Join\\
+        • Small table / Index → Nested Loop
+    };
+
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
+        at ([xshift=-4cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=1.3cm]main.south) {
+        \textbf{Materialized:} Store full result\\
+        \textbf{Pipelined:} Stream tuples
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
+        at ([xshift=2cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=2cm, yshift=1.3cm]main.south) {
+        \textbf{Optimize by:}\\
+        Push $\sigma$ down, use indexes
+    };
+\end{tikzpicture}
+\end{center}

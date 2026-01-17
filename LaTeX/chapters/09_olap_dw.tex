@@ -1,0 +1,360 @@
+% =============================================================================
+% Chapter: OLAP & Data Warehousing
+% =============================================================================
+
+\chapter{OLAP \& Data Warehousing}
+
+\begin{formulabox}[Key Operations - MEMORIZE!]
+\textbf{OLAP Operations:}
+\begin{center}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Operation} & \textbf{Description} \\
+\midrule
+\textbf{Roll-up} & Aggregation: λεπτομέρεια → σύνοψη (π.χ. day → month) \\
+\textbf{Drill-down} & Disaggregation: σύνοψη → λεπτομέρεια (π.χ. year → quarter) \\
+\textbf{Slice} & Selection on ONE dimension (π.χ. time = 'Q1') \\
+\textbf{Dice} & Selection on MULTIPLE dimensions \\
+\textbf{Pivot} & Rotate cube (swap dimensions) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Schema Types:}
+\begin{itemize}
+    \item \textbf{Star Schema:} Central fact table + dimension tables (denormalized)
+    \item \textbf{Snowflake Schema:} Dimension tables are normalized
+\end{itemize}
+\end{formulabox}
+
+% =============================================================================
+\section{Data Warehouse Concepts}
+
+\subsection{OLTP vs OLAP}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=4cm,
+            minimum height=1.2cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Aspect & OLTP & OLAP \\
+        Purpose & Daily operations & Analysis/Reporting \\
+        Data & Current, detailed & Historical, summarized \\
+        Queries & Simple, frequent & Complex, ad-hoc \\
+        Updates & Many, small & Periodic batch loads \\
+        Users & Clerks, customers & Analysts, managers \\
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Data Cube Structure}
+
+\begin{center}
+\begin{tikzpicture}[
+    cube/.style={draw=primary, thick, fill=secondary!20},
+    axis/.style={->, thick}
+]
+    % Draw cube
+    \draw[cube] (0,0,0) -- (3,0,0) -- (3,3,0) -- (0,3,0) -- cycle;
+    \draw[cube] (0,0,0) -- (0,0,3) -- (0,3,3) -- (0,3,0);
+    \draw[cube] (0,0,0) -- (3,0,0) -- (3,0,3) -- (0,0,3);
+    \draw[cube] (3,0,0) -- (3,0,3) -- (3,3,3) -- (3,3,0);
+    \draw[cube] (0,3,0) -- (3,3,0) -- (3,3,3) -- (0,3,3);
+    \draw[cube] (0,0,3) -- (3,0,3) -- (3,3,3) -- (0,3,3);
+
+    % Axes labels
+    \node[anchor=north] at (1.5,-0.3,0) {\textbf{Product}};
+    \node[anchor=east] at (-0.3,1.5,0) {\textbf{Time}};
+    \node[anchor=south east] at (0,0,4) {\textbf{Location}};
+
+    % Measure
+    \node[anchor=west, font=\small] at (4,1.5,0) {Measure: Sales};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Star vs Snowflake Schema}
+
+\subsection{Star Schema}
+
+\begin{center}
+\begin{tikzpicture}[
+    fact/.style={draw=accent, fill=accent!20, rounded corners=5pt, minimum width=2.5cm, minimum height=1.5cm},
+    dim/.style={draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=2cm, minimum height=1cm}
+]
+    % Fact table
+    \node[fact] (fact) at (0,0) {\textbf{Sales Fact}};
+
+    % Dimension tables
+    \node[dim] (time) at (-3,2) {Time};
+    \node[dim] (product) at (3,2) {Product};
+    \node[dim] (store) at (-3,-2) {Store};
+    \node[dim] (customer) at (3,-2) {Customer};
+
+    % Connections
+    \draw[thick] (fact) -- (time);
+    \draw[thick] (fact) -- (product);
+    \draw[thick] (fact) -- (store);
+    \draw[thick] (fact) -- (customer);
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{Advantages:} Simple queries, fewer joins
+    \item \textbf{Disadvantage:} Data redundancy in dimensions
+\end{itemize}
+
+\subsection{Snowflake Schema}
+
+\begin{center}
+\begin{tikzpicture}[
+    fact/.style={draw=accent, fill=accent!20, rounded corners=5pt, minimum width=2cm, minimum height=1cm},
+    dim/.style={draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=1.5cm, minimum height=0.8cm, font=\small},
+    subdim/.style={draw=success, fill=box-green, rounded corners=3pt, minimum width=1.2cm, minimum height=0.6cm, font=\footnotesize}
+]
+    % Fact table
+    \node[fact] (fact) at (0,0) {\textbf{Sales}};
+
+    % Dimension tables
+    \node[dim] (time) at (-2.5,1.5) {Time};
+    \node[dim] (product) at (2.5,1.5) {Product};
+    \node[dim] (store) at (-2.5,-1.5) {Store};
+
+    % Sub-dimensions (normalized)
+    \node[subdim] (month) at (-4.5,2.5) {Month};
+    \node[subdim] (year) at (-4.5,1.5) {Year};
+    \node[subdim] (category) at (4.5,2.5) {Category};
+    \node[subdim] (brand) at (4.5,1.5) {Brand};
+    \node[subdim] (city) at (-4.5,-1.5) {City};
+    \node[subdim] (region) at (-4.5,-2.5) {Region};
+
+    % Connections
+    \draw[thick] (fact) -- (time);
+    \draw[thick] (fact) -- (product);
+    \draw[thick] (fact) -- (store);
+
+    \draw (time) -- (month);
+    \draw (time) -- (year);
+    \draw (product) -- (category);
+    \draw (product) -- (brand);
+    \draw (store) -- (city);
+    \draw (city) -- (region);
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+    \item \textbf{Advantage:} Less redundancy, normalized
+    \item \textbf{Disadvantage:} More complex queries, more joins
+\end{itemize}
+
+% =============================================================================
+\section{OLAP Operations (EXAM QUESTIONS!)}
+
+\subsection{Roll-up \& Drill-down}
+
+\begin{center}
+\begin{tikzpicture}
+    % Roll-up
+    \node[draw=secondary, fill=box-blue, rounded corners=8pt, minimum width=5cm, minimum height=3cm] (rollup) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (rollup.north) {Roll-up (Aggregation)};
+    \node[anchor=center, align=center, font=\small] at (rollup.center) {
+        Day → Month → Quarter → Year\\[0.5em]
+        City → State → Country\\[0.5em]
+        \textcolor{success}{SUM, COUNT, AVG}
+    };
+
+    % Arrow
+    \draw[<->, thick, primary] (3,0) -- (5,0);
+
+    % Drill-down
+    \node[draw=accent, fill=accent!20, rounded corners=8pt, minimum width=5cm, minimum height=3cm] (drilldown) at (8,0) {};
+    \node[anchor=north, font=\bfseries] at (drilldown.north) {Drill-down (Detail)};
+    \node[anchor=center, align=center, font=\small] at (drilldown.center) {
+        Year → Quarter → Month → Day\\[0.5em]
+        Country → State → City\\[0.5em]
+        \textcolor{accent}{More granular data}
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Slice \& Dice}
+
+\begin{center}
+\begin{tikzpicture}
+    % Slice
+    \node[draw=success, fill=box-green, rounded corners=8pt, minimum width=5cm, minimum height=2.5cm] (slice) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (slice.north) {Slice};
+    \node[anchor=center, align=center, font=\small] at (slice.center) {
+        Selection on \textbf{ONE} dimension\\
+        e.g., Time = 'Q1 2024'
+    };
+
+    % Dice
+    \node[draw=warning, fill=warning!20, rounded corners=8pt, minimum width=5cm, minimum height=2.5cm] (dice) at (7,0) {};
+    \node[anchor=north, font=\bfseries] at (dice.north) {Dice};
+    \node[anchor=center, align=center, font=\small] at (dice.center) {
+        Selection on \textbf{MULTIPLE} dimensions\\
+        e.g., Time='Q1' AND Product='TV'
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Pivot (Rotate)}
+
+\begin{definitionbox}[Pivot]
+Αλλαγή της οπτικής γωνίας του cube - εναλλαγή dimensions στους άξονες.
+
+\textbf{Example:}
+\begin{center}
+\begin{tabular}{l|cc}
+& Q1 & Q2 \\
+\hline
+TV & 100 & 150 \\
+Radio & 50 & 75 \\
+\end{tabular}
+$\xrightarrow{\text{Pivot}}$
+\begin{tabular}{l|cc}
+& TV & Radio \\
+\hline
+Q1 & 100 & 50 \\
+Q2 & 150 & 75 \\
+\end{tabular}
+\end{center}
+\end{definitionbox}
+
+% =============================================================================
+\section{Solved Exam Problems}
+
+\subsection{2024-25 Exam Questions 1-3 Style}
+
+\begin{examplebox}[OLAP Operations Identification]
+\textbf{Sales Data Cube:} Dimensions = (Time, Product, Location)
+
+\textbf{Question 1:} View sales by quarter instead of month.
+
+\textbf{Answer:} \textbf{Roll-up} on Time dimension (month → quarter)
+
+\textbf{Question 2:} View sales for Q1 2024 only.
+
+\textbf{Answer:} \textbf{Slice} (selection on Time = 'Q1 2024')
+
+\textbf{Question 3:} View sales for Q1 2024, in Athens, for Electronics.
+
+\textbf{Answer:} \textbf{Dice} (selection on multiple dimensions)
+\end{examplebox}
+
+\subsection{2024-25 Exam Question 15 Style}
+
+\begin{examplebox}[Data Cube Construction]
+\textbf{Given:} Fact table with (Product, Store, Time, Sales)
+
+\textbf{Question:} How many cells in a data cube with:
+\begin{itemize}
+    \item 10 products
+    \item 5 stores
+    \item 4 quarters
+\end{itemize}
+
+\textbf{Answer:}
+\begin{itemize}
+    \item Base cuboid: $10 \times 5 \times 4 = 200$ cells
+    \item With aggregates (ALL):
+    \begin{itemize}
+        \item Product × Store × Time: 200
+        \item Product × Store × ALL: $10 \times 5 = 50$
+        \item Product × ALL × Time: $10 \times 4 = 40$
+        \item ALL × Store × Time: $5 \times 4 = 20$
+        \item Product × ALL × ALL: 10
+        \item ALL × Store × ALL: 5
+        \item ALL × ALL × Time: 4
+        \item ALL × ALL × ALL: 1
+    \end{itemize}
+    \item Total: $200 + 50 + 40 + 20 + 10 + 5 + 4 + 1 = 330$ cells
+\end{itemize}
+
+\textbf{General Formula:} For dimensions with $d_1, d_2, ..., d_n$ values:
+\[
+\text{Total cells} = (d_1 + 1)(d_2 + 1)...(d_n + 1)
+\]
+Here: $(10+1)(5+1)(4+1) = 11 \times 6 \times 5 = 330$
+\end{examplebox}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{Roll-up vs Drill-down confusion}:
+    \begin{itemize}
+        \item Roll-up: Less detail, MORE aggregation (day→month)
+        \item Drill-down: More detail, LESS aggregation (month→day)
+    \end{itemize}
+
+    \item \textbf{Slice vs Dice}:
+    \begin{itemize}
+        \item Slice: ONE dimension selection
+        \item Dice: MULTIPLE dimension selection
+    \end{itemize}
+
+    \item \textbf{Star vs Snowflake}:
+    \begin{itemize}
+        \item Star: Denormalized dimensions (faster queries)
+        \item Snowflake: Normalized dimensions (less redundancy)
+    \end{itemize}
+
+    \item \textbf{Cube cell count}:
+    \begin{itemize}
+        \item Don't forget the ALL aggregations (+1 for each dimension)
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=7cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {OLAP Operations Summary};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{OLAP Operations:}\\
+        • \textbf{Roll-up}: Aggregate (less detail): day→month→year\\
+        • \textbf{Drill-down}: Disaggregate (more detail): year→month→day\\
+        • \textbf{Slice}: Filter ONE dimension\\
+        • \textbf{Dice}: Filter MULTIPLE dimensions\\
+        • \textbf{Pivot}: Rotate axes\\[5pt]
+        \textbf{Schemas:}\\
+        • Star: Fact table + denormalized dimensions (simple, fast)\\
+        • Snowflake: Normalized dimensions (complex, less redundant)
+    };
+
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5cm, minimum height=1.8cm]
+        at ([xshift=-4cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=1.5cm]main.south) {
+        \textbf{Cube Cells:}\\
+        $(d_1+1)(d_2+1)...(d_n+1)$\\
+        (+1 for ALL aggregation)
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.8cm]
+        at ([xshift=3cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=3cm, yshift=1.5cm]main.south) {
+        \textbf{Remember:}\\
+        Roll-up = UP the hierarchy\\
+        Drill-down = DOWN to detail
+    };
+\end{tikzpicture}
+\end{center}

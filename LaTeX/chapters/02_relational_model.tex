@@ -1,0 +1,364 @@
+% =============================================================================
+% Chapter: Relational Model & Algebra
+% =============================================================================
+
+\chapter{Relational Model \& Algebra}
+
+\begin{formulabox}[Key Operators - MEMORIZE!]
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Symbol} & \textbf{Name} & \textbf{Description} & \textbf{SQL Equivalent} \\
+\midrule
+$\sigma$ & Selection & Επιλογή γραμμών (filter) & WHERE \\
+$\pi$ & Projection & Επιλογή στηλών & SELECT columns \\
+$\cup$ & Union & Ένωση συνόλων & UNION \\
+$\cap$ & Intersection & Τομή συνόλων & INTERSECT \\
+$-$ & Difference & Διαφορά συνόλων & EXCEPT \\
+$\times$ & Cartesian Product & Καρτεσιανό γινόμενο & FROM A, B \\
+$\bowtie$ & Natural Join & Ένωση με κοινές στήλες & NATURAL JOIN \\
+$\bowtie_\theta$ & Theta Join & Ένωση με συνθήκη & JOIN ON \\
+$\rho$ & Rename & Μετονομασία & AS \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{formulabox}
+
+% =============================================================================
+\section{Βασικοί Τελεστές}
+
+\subsection{Selection (\texorpdfstring{$\sigma$}{sigma})}
+
+\begin{definitionbox}[Selection]
+Επιλογή γραμμών που ικανοποιούν συνθήκη.
+
+\[
+\sigma_{condition}(R)
+\]
+
+\textbf{Conditions:} $=$, $\neq$, $<$, $>$, $\leq$, $\geq$, AND, OR, NOT
+\end{definitionbox}
+
+\begin{examplebox}[Selection Example]
+\textbf{Table Employee:}
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{name} & \textbf{dept} & \textbf{salary} \\
+\midrule
+Alice & CS & 50000 \\
+Bob & Math & 45000 \\
+Carol & CS & 60000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$\sigma_{dept='CS'}(Employee)$ =
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{name} & \textbf{dept} & \textbf{salary} \\
+\midrule
+Alice & CS & 50000 \\
+Carol & CS & 60000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$\sigma_{salary > 48000 \land dept='CS'}(Employee)$ =
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{name} & \textbf{dept} & \textbf{salary} \\
+\midrule
+Alice & CS & 50000 \\
+Carol & CS & 60000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+\subsection{Projection (\texorpdfstring{$\pi$}{pi})}
+
+\begin{definitionbox}[Projection]
+Επιλογή στηλών (και αφαίρεση duplicates).
+
+\[
+\pi_{attr_1, attr_2, ...}(R)
+\]
+\end{definitionbox}
+
+\begin{examplebox}[Projection Example]
+$\pi_{name, dept}(Employee)$ =
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{name} & \textbf{dept} \\
+\midrule
+Alice & CS \\
+Bob & Math \\
+Carol & CS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$\pi_{dept}(Employee)$ = \{CS, Math\} (duplicates removed!)
+\end{examplebox}
+
+\subsection{Set Operations (\texorpdfstring{$\cup$, $\cap$, $-$}{union, intersection, difference})}
+
+\begin{warningbox}[Compatibility Requirement]
+Για $\cup$, $\cap$, $-$: Οι πίνακες ΠΡΕΠΕΙ να έχουν \textbf{ίδιο schema} (ίδιος αριθμός στηλών, συμβατοί τύποι).
+\end{warningbox}
+
+\begin{examplebox}[Set Operations]
+\textbf{R:} \{1, 2, 3\} \quad \textbf{S:} \{2, 3, 4\}
+
+\begin{center}
+\begin{tabular}{lll}
+$R \cup S$ = \{1, 2, 3, 4\} & $R \cap S$ = \{2, 3\} & $R - S$ = \{1\} \\
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+% =============================================================================
+\section{Join Operations}
+
+\subsection{Natural Join (\texorpdfstring{$\bowtie$}{join})}
+
+\begin{formulabox}[Natural Join]
+Ενώνει πίνακες στις \textbf{κοινές στήλες} (ίδιο όνομα \& τιμή).
+
+\[
+R \bowtie S
+\]
+\end{formulabox}
+
+\begin{examplebox}[Natural Join Example]
+\textbf{Student:}
+\begin{tabular}{ll}
+\toprule
+\textbf{sid} & \textbf{name} \\
+\midrule
+1 & Alice \\
+2 & Bob \\
+\bottomrule
+\end{tabular}
+\quad
+\textbf{Enrolls:}
+\begin{tabular}{ll}
+\toprule
+\textbf{sid} & \textbf{course} \\
+\midrule
+1 & CS101 \\
+1 & CS102 \\
+3 & CS101 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+
+$Student \bowtie Enrolls$ =
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{sid} & \textbf{name} & \textbf{course} \\
+\midrule
+1 & Alice & CS101 \\
+1 & Alice & CS102 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textit{Σημείωση: sid=3 δεν εμφανίζεται (δεν υπάρχει στο Student)}
+\end{examplebox}
+
+\subsection{Theta Join (\texorpdfstring{$\bowtie_\theta$}{theta-join})}
+
+\begin{formulabox}[Theta Join]
+Join με arbitrary condition.
+
+\[
+R \bowtie_{\theta} S = \sigma_{\theta}(R \times S)
+\]
+\end{formulabox}
+
+\subsection{Outer Joins}
+
+\begin{center}
+\begin{tikzpicture}
+    % Left Outer Join
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (left) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (left.north) {Left Outer ⟕};
+    \node[anchor=center, font=\small, align=center] at (left.center) {Κρατάει ΟΛΕΣ\\τις γραμμές του R\\(NULL για unmatched)};
+
+    % Right Outer Join
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (right) at (5,0) {};
+    \node[anchor=north, font=\bfseries] at (right.north) {Right Outer ⟖};
+    \node[anchor=center, font=\small, align=center] at (right.center) {Κρατάει ΟΛΕΣ\\τις γραμμές του S\\(NULL για unmatched)};
+
+    % Full Outer Join
+    \node[draw=accent, fill=accent!20, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (full) at (10,0) {};
+    \node[anchor=north, font=\bfseries] at (full.north) {Full Outer ⟗};
+    \node[anchor=center, font=\small, align=center] at (full.center) {Κρατάει ΟΛΕΣ\\τις γραμμές\\και των δύο};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Solved Exam Problems}
+
+\subsection{2024-25 Exam Question 6 Style}
+
+\begin{examplebox}[Query Translation: SQL → Relational Algebra]
+\textbf{Tables:}
+\begin{itemize}
+    \item \texttt{Student(sid, name, dept)}
+    \item \texttt{Course(cid, title, credits)}
+    \item \texttt{Enrolls(sid, cid, grade)}
+\end{itemize}
+
+\textbf{Query:} Find names of CS students enrolled in courses with $\geq$ 4 credits.
+
+\textbf{SQL:}
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT S.name
+FROM Student S, Enrolls E, Course C
+WHERE S.sid = E.sid
+  AND E.cid = C.cid
+  AND S.dept = 'CS'
+  AND C.credits >= 4;
+\end{lstlisting}
+
+\textbf{Relational Algebra - Step by Step:}
+
+\textbf{Step 1:} Filter students from CS
+\[
+R_1 = \sigma_{dept='CS'}(Student)
+\]
+
+\textbf{Step 2:} Filter courses with $\geq$ 4 credits
+\[
+R_2 = \sigma_{credits \geq 4}(Course)
+\]
+
+\textbf{Step 3:} Join with Enrolls
+\[
+R_3 = R_1 \bowtie Enrolls \bowtie R_2
+\]
+
+\textbf{Step 4:} Project name
+\[
+Result = \pi_{name}(R_3)
+\]
+
+\textbf{Final Answer (one expression):}
+\[
+\pi_{name}(\sigma_{dept='CS'}(Student) \bowtie Enrolls \bowtie \sigma_{credits \geq 4}(Course))
+\]
+\end{examplebox}
+
+\subsection{Division Operation}
+
+\begin{examplebox}[Division: "For All" Queries]
+\textbf{Query:} Find students enrolled in ALL courses.
+
+\textbf{Tables:}
+\begin{itemize}
+    \item $Enrolls(sid, cid)$
+    \item $Course(cid, title)$
+\end{itemize}
+
+\textbf{Solution:}
+\[
+\pi_{sid, cid}(Enrolls) \div \pi_{cid}(Course)
+\]
+
+\textbf{Division Rule:}
+\[
+R(A, B) \div S(B) = \text{tuples } a \text{ such that for ALL } b \in S, (a,b) \in R
+\]
+\end{examplebox}
+
+% =============================================================================
+\section{Operator Precedence}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=8pt, minimum width=10cm, minimum height=3cm] (prec) {};
+    \node[anchor=north, font=\bfseries\color{ntua-blue}] at (prec.north) {Operator Precedence (Highest to Lowest)};
+    \node[anchor=center, align=left] at (prec.center) {
+        1. $\sigma$, $\pi$, $\rho$ (Unary operators)\\
+        2. $\times$, $\bowtie$ (Products and Joins)\\
+        3. $\cap$ (Intersection)\\
+        4. $\cup$, $-$ (Union and Difference)
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{Projection removes duplicates}:
+    \begin{itemize}
+        \item $\pi_{dept}(Employee)$ returns DISTINCT values!
+    \end{itemize}
+
+    \item \textbf{Natural Join matches on ALL common columns}:
+    \begin{itemize}
+        \item[$\times$] $R \bowtie S$ only on one column
+        \item[\checkmark] Matches on ALL columns with same name
+    \end{itemize}
+
+    \item \textbf{Selection vs Projection confusion}:
+    \begin{itemize}
+        \item $\sigma$ = rows (horizontal slice)
+        \item $\pi$ = columns (vertical slice)
+    \end{itemize}
+
+    \item \textbf{Set operations need compatible schemas}:
+    \begin{itemize}
+        \item Cannot do $\pi_{name}(R) \cup \pi_{dept}(S)$ if different types
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=7cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Relational Algebra Cheat Sheet};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{Selection:} $\sigma_{condition}(R)$ — Filter rows\\[5pt]
+        \textbf{Projection:} $\pi_{cols}(R)$ — Choose columns (removes duplicates)\\[5pt]
+        \textbf{Natural Join:} $R \bowtie S$ — Join on common column names\\[5pt]
+        \textbf{Theta Join:} $R \bowtie_\theta S$ — Join with condition\\[5pt]
+        \textbf{Division:} $R \div S$ — "For all" queries\\[5pt]
+        \textbf{Rename:} $\rho_{newname}(R)$ — Change table/column name
+    };
+
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6cm, minimum height=1.8cm]
+        at ([xshift=-3cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=-3cm, yshift=1.5cm]main.south) {
+        \textbf{SQL → RA Mapping:}\\
+        WHERE = $\sigma$, SELECT = $\pi$\\
+        JOIN ON = $\bowtie_\theta$
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.8cm]
+        at ([xshift=3.5cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=3.5cm, yshift=1.5cm]main.south) {
+        \textbf{Common Pattern:}\\
+        $\pi_{cols}(\sigma_{cond}(R \bowtie S))$
+    };
+\end{tikzpicture}
+\end{center}

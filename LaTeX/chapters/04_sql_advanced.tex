@@ -1,0 +1,345 @@
+% =============================================================================
+% Chapter: Advanced SQL
+% =============================================================================
+
+\chapter{Advanced SQL}
+
+\begin{formulabox}[Key Concepts - MEMORIZE!]
+\textbf{JOIN Types:}
+\begin{center}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Type} & \textbf{Description} \\
+\midrule
+INNER JOIN & Μόνο matching rows \\
+LEFT OUTER JOIN & Όλα από αριστερά + matching δεξιά (NULL αν δεν υπάρχει) \\
+RIGHT OUTER JOIN & Όλα από δεξιά + matching αριστερά \\
+FULL OUTER JOIN & Όλα από και τις δύο πλευρές \\
+NATURAL JOIN & Auto-join on same column names \\
+CROSS JOIN & Cartesian product (κάθε row με κάθε row) \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{formulabox}
+
+% =============================================================================
+\section{JOIN Types Visualization}
+
+\begin{center}
+\begin{tikzpicture}
+    % INNER JOIN
+    \begin{scope}[shift={(0,0)}]
+        \fill[secondary!30] (0.6,0) circle (1);
+        \fill[secondary!30] (1.4,0) circle (1);
+        \begin{scope}
+            \clip (0.6,0) circle (1);
+            \fill[secondary] (1.4,0) circle (1);
+        \end{scope}
+        \node at (1,-1.8) {\textbf{INNER JOIN}};
+        \node[font=\footnotesize] at (1,-2.2) {Only matching};
+    \end{scope}
+
+    % LEFT JOIN
+    \begin{scope}[shift={(4,0)}]
+        \fill[secondary] (0.6,0) circle (1);
+        \fill[secondary!30] (1.4,0) circle (1);
+        \node at (1,-1.8) {\textbf{LEFT JOIN}};
+        \node[font=\footnotesize] at (1,-2.2) {All left + matching right};
+    \end{scope}
+
+    % RIGHT JOIN
+    \begin{scope}[shift={(8,0)}]
+        \fill[secondary!30] (0.6,0) circle (1);
+        \fill[secondary] (1.4,0) circle (1);
+        \node at (1,-1.8) {\textbf{RIGHT JOIN}};
+        \node[font=\footnotesize] at (1,-2.2) {All right + matching left};
+    \end{scope}
+
+    % FULL OUTER JOIN
+    \begin{scope}[shift={(12,0)}]
+        \fill[secondary] (0.6,0) circle (1);
+        \fill[secondary] (1.4,0) circle (1);
+        \node at (1,-1.8) {\textbf{FULL OUTER}};
+        \node[font=\footnotesize] at (1,-2.2) {All from both};
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{JOIN Examples}
+
+\begin{examplebox}[JOIN Comparison]
+\textbf{Tables:}
+
+\begin{minipage}{0.45\textwidth}
+\textbf{Employee:}
+\begin{tabular}{ll}
+\toprule
+\textbf{eid} & \textbf{name} \\
+\midrule
+1 & Alice \\
+2 & Bob \\
+3 & Carol \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\begin{minipage}{0.45\textwidth}
+\textbf{Department:}
+\begin{tabular}{ll}
+\toprule
+\textbf{eid} & \textbf{dept} \\
+\midrule
+1 & CS \\
+2 & Math \\
+4 & Physics \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+
+\vspace{0.5cm}
+
+\textbf{INNER JOIN:}
+\begin{lstlisting}[language=SQL]
+SELECT * FROM Employee E INNER JOIN Department D ON E.eid = D.eid;
+\end{lstlisting}
+Result: \{(1, Alice, CS), (2, Bob, Math)\}
+
+\textbf{LEFT JOIN:}
+\begin{lstlisting}[language=SQL]
+SELECT * FROM Employee E LEFT JOIN Department D ON E.eid = D.eid;
+\end{lstlisting}
+Result: \{(1, Alice, CS), (2, Bob, Math), (3, Carol, NULL)\}
+
+\textbf{FULL OUTER JOIN:}
+\begin{lstlisting}[language=SQL]
+SELECT * FROM Employee E FULL OUTER JOIN Department D ON E.eid = D.eid;
+\end{lstlisting}
+Result: \{(1, Alice, CS), (2, Bob, Math), (3, Carol, NULL), (NULL, NULL, Physics)\}
+\end{examplebox}
+
+% =============================================================================
+\section{Self-Join}
+
+\begin{examplebox}[Self-Join: Finding Pairs]
+\textbf{Query:} Find employees who work in the same department.
+
+\begin{lstlisting}[language=SQL]
+SELECT e1.name, e2.name, e1.dept
+FROM Employee e1, Employee e2
+WHERE e1.dept = e2.dept
+  AND e1.eid < e2.eid;  -- Avoid duplicates & self-pairs
+\end{lstlisting}
+\end{examplebox}
+
+% =============================================================================
+\section{Subqueries}
+
+\subsection{Types of Subqueries}
+
+\begin{center}
+\begin{tikzpicture}
+    % Scalar
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (scalar) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (scalar.north) {Scalar Subquery};
+    \node[anchor=center, font=\small, align=center] at (scalar.center) {Returns single value\\WHERE x = (SELECT ...)};
+
+    % Row
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (row) at (5,0) {};
+    \node[anchor=north, font=\bfseries] at (row.north) {Table Subquery};
+    \node[anchor=center, font=\small, align=center] at (row.center) {Returns set of values\\WHERE x IN (SELECT ...)};
+
+    % Correlated
+    \node[draw=accent, fill=accent!20, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (corr) at (10,0) {};
+    \node[anchor=north, font=\bfseries] at (corr.north) {Correlated};
+    \node[anchor=center, font=\small, align=center] at (corr.center) {References outer query\\WHERE EXISTS (...)};
+\end{tikzpicture}
+\end{center}
+
+\subsection{EXISTS vs IN}
+
+\begin{examplebox}[EXISTS vs IN]
+\begin{lstlisting}[language=SQL]
+-- Students enrolled in at least one course
+-- Using IN
+SELECT name FROM Student
+WHERE sid IN (SELECT sid FROM Enrolls);
+
+-- Using EXISTS (often faster for large tables)
+SELECT name FROM Student S
+WHERE EXISTS (SELECT 1 FROM Enrolls E WHERE E.sid = S.sid);
+\end{lstlisting}
+
+\textbf{Key Difference:}
+\begin{itemize}
+    \item \texttt{IN}: Builds set, then checks membership
+    \item \texttt{EXISTS}: Stops at first match (short-circuit)
+\end{itemize}
+\end{examplebox}
+
+% =============================================================================
+\section{Window Functions}
+
+\begin{formulabox}[Window Functions]
+\begin{lstlisting}[language=SQL]
+function_name() OVER (
+    [PARTITION BY col]
+    [ORDER BY col]
+    [ROWS BETWEEN ... AND ...]
+)
+\end{lstlisting}
+
+\textbf{Common Functions:}
+\begin{itemize}
+    \item \texttt{ROW\_NUMBER()}: Unique sequential number
+    \item \texttt{RANK()}: Rank with gaps for ties
+    \item \texttt{DENSE\_RANK()}: Rank without gaps
+    \item \texttt{SUM(), AVG(), COUNT()}: Running aggregates
+\end{itemize}
+\end{formulabox}
+
+\begin{examplebox}[ROW\_NUMBER Example]
+\textbf{Query:} Top 3 highest paid employees per department.
+
+\begin{lstlisting}[language=SQL]
+WITH ranked AS (
+    SELECT name, dept, salary,
+           ROW_NUMBER() OVER (PARTITION BY dept
+                              ORDER BY salary DESC) AS rn
+    FROM Employee
+)
+SELECT name, dept, salary
+FROM ranked
+WHERE rn <= 3;
+\end{lstlisting}
+\end{examplebox}
+
+% =============================================================================
+\section{Common Table Expressions (CTE)}
+
+\begin{examplebox}[CTE with WITH]
+\begin{lstlisting}[language=SQL]
+WITH high_earners AS (
+    SELECT * FROM Employee WHERE salary > 50000
+),
+cs_employees AS (
+    SELECT * FROM high_earners WHERE dept = 'CS'
+)
+SELECT * FROM cs_employees;
+\end{lstlisting}
+\end{examplebox}
+
+% =============================================================================
+\section{Solved Exam Problems}
+
+\subsection{2024-25 Exam Question 7 Style: Join Algorithm}
+
+\begin{examplebox}[Hash Join vs Merge Join vs Nested Loop]
+\textbf{Question:} Which join algorithm is best for each scenario?
+
+\begin{center}
+\begin{tabular}{lp{5cm}l}
+\toprule
+\textbf{Algorithm} & \textbf{Best When} & \textbf{Complexity} \\
+\midrule
+\textbf{Nested Loop} & Small tables, or indexed inner & $O(n \cdot m)$ \\
+\textbf{Hash Join} & Equality joins, one table fits in memory & $O(n + m)$ \\
+\textbf{Merge Join} & Both tables sorted on join key & $O(n + m)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Decision Tree:}
+\begin{enumerate}
+    \item Sorted on join key? → \textbf{Merge Join}
+    \item Equality condition + one fits memory? → \textbf{Hash Join}
+    \item Small tables or index available? → \textbf{Nested Loop}
+\end{enumerate}
+\end{examplebox}
+
+\subsection{Complex Query with Multiple Joins}
+
+\begin{examplebox}[Multi-table Join]
+\textbf{Tables:}
+\begin{itemize}
+    \item \texttt{Student(sid, name, advisor\_id)}
+    \item \texttt{Professor(pid, name, dept)}
+    \item \texttt{Course(cid, title, prof\_id)}
+    \item \texttt{Enrolls(sid, cid, grade)}
+\end{itemize}
+
+\textbf{Query:} Find students whose advisor teaches a course they're enrolled in.
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT S.name
+FROM Student S
+JOIN Professor P ON S.advisor_id = P.pid
+JOIN Course C ON P.pid = C.prof_id
+JOIN Enrolls E ON S.sid = E.sid AND C.cid = E.cid;
+\end{lstlisting}
+\end{examplebox}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{LEFT JOIN με WHERE condition on right table}:
+    \begin{lstlisting}[language=SQL]
+-- WRONG: Converts to INNER JOIN!
+SELECT * FROM A LEFT JOIN B ON A.id = B.id
+WHERE B.value = 'x';
+
+-- CORRECT: Put condition in ON clause
+SELECT * FROM A LEFT JOIN B ON A.id = B.id AND B.value = 'x';
+    \end{lstlisting}
+
+    \item \textbf{NATURAL JOIN surprises}:
+    \begin{itemize}
+        \item Matches on ALL columns with same name
+        \item Can fail silently if column names change
+    \end{itemize}
+
+    \item \textbf{Correlated subquery performance}:
+    \begin{itemize}
+        \item Executes once per outer row
+        \item Consider JOIN for better performance
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=6cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Advanced SQL Patterns};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{Find unmatched rows:}\\
+        \texttt{SELECT * FROM A LEFT JOIN B ON ... WHERE B.id IS NULL}\\[5pt]
+        \textbf{Top N per group:}\\
+        \texttt{WITH r AS (SELECT *, ROW\_NUMBER() OVER (PARTITION BY ...) AS rn)}\\
+        \texttt{SELECT * FROM r WHERE rn <= N}\\[5pt]
+        \textbf{Running total:}\\
+        \texttt{SUM(x) OVER (ORDER BY date ROWS UNBOUNDED PRECEDING)}\\[5pt]
+        \textbf{Exists check:}\\
+        \texttt{WHERE EXISTS (SELECT 1 FROM ... WHERE ...)}
+    };
+
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
+        at ([xshift=-4cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=1.3cm]main.south) {
+        \textbf{INNER}: Only matches\\
+        \textbf{LEFT}: All left + matches
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
+        at ([xshift=2cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=2cm, yshift=1.3cm]main.south) {
+        \textbf{Hash Join}: Equality, memory\\
+        \textbf{Merge Join}: Sorted data
+    };
+\end{tikzpicture}
+\end{center}

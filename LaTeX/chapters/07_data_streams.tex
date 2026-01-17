@@ -1,0 +1,319 @@
+% =============================================================================
+% Chapter: Data Streams & Bloom Filters
+% =============================================================================
+
+\chapter{Data Streams \& Bloom Filters}
+
+\begin{formulabox}[Key Concepts - MEMORIZE!]
+\textbf{Data Stream Characteristics:}
+\begin{itemize}
+    \item Continuous, unbounded data flow
+    \item Cannot store all data in memory
+    \item Must process in single pass (or limited passes)
+    \item Approximate answers often acceptable
+\end{itemize}
+
+\textbf{Bloom Filter:}
+\begin{align*}
+\text{False Positive Probability:} \quad p &\approx \left(1 - e^{-kn/m}\right)^k \\
+\text{Optimal \# hash functions:} \quad k &= \frac{m}{n} \ln 2
+\end{align*}
+where $m$ = bits, $n$ = elements, $k$ = hash functions
+\end{formulabox}
+
+% =============================================================================
+\section{Stream Processing Model}
+
+\begin{center}
+\begin{tikzpicture}
+    % Stream
+    \draw[->, thick, secondary] (0,0) -- (4,0);
+    \foreach \i in {0.5,1,1.5,2,2.5,3,3.5} {
+        \node[draw=primary, circle, fill=primary!20, inner sep=2pt, font=\tiny] at (\i,0) {$x$};
+    }
+    \node[anchor=south, font=\small] at (2,0.5) {Incoming Data Stream};
+
+    % Processing
+    \node[draw=success, fill=success!20, rounded corners=5pt, minimum width=2.5cm, minimum height=1.5cm] (proc) at (6,0) {};
+    \node at (proc.center) {Processor};
+
+    % Memory
+    \node[draw=accent, fill=accent!20, rounded corners=3pt, minimum width=1cm, minimum height=0.5cm] (mem) at (6,1.5) {Memory};
+    \draw[<->, dashed] (proc) -- (mem);
+
+    % Output
+    \draw[->, thick] (proc.east) -- ++(1.5,0) node[right] {Result};
+
+    % Constraints
+    \node[anchor=north, align=center, font=\footnotesize\color{accent}] at (6,-1.5) {
+        Limited Memory\\
+        Single Pass\\
+        Real-time
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Sampling Techniques}
+
+\subsection{Reservoir Sampling}
+
+\begin{algorithmbox}[Reservoir Sampling]
+\textbf{Goal:} Select $k$ random items from stream of unknown size.
+
+\begin{lstlisting}[language=pseudo]
+// Keep k items uniformly at random
+reservoir = first k items
+for i = k+1 to n:
+    j = random(1, i)
+    if j <= k:
+        reservoir[j] = stream[i]
+return reservoir
+\end{lstlisting}
+
+\textbf{Property:} Each item has equal probability $k/n$ of being selected.
+\end{algorithmbox}
+
+\subsection{Sliding Window}
+
+\begin{definitionbox}[Sliding Window]
+Διατήρηση των τελευταίων $N$ στοιχείων (ή χρονικό παράθυρο).
+
+\textbf{Types:}
+\begin{itemize}
+    \item \textbf{Count-based:} Last $N$ elements
+    \item \textbf{Time-based:} Last $T$ time units
+\end{itemize}
+\end{definitionbox}
+
+% =============================================================================
+\section{Bloom Filters}
+
+\subsection{Structure}
+
+\begin{definitionbox}[Bloom Filter]
+Probabilistic data structure για fast membership testing.
+
+\textbf{Components:}
+\begin{itemize}
+    \item Bit array of size $m$
+    \item $k$ independent hash functions
+\end{itemize}
+
+\textbf{Properties:}
+\begin{itemize}
+    \item No false negatives (αν λέει "no", σίγουρα δεν υπάρχει)
+    \item Possible false positives (αν λέει "yes", μπορεί να μην υπάρχει)
+    \item Cannot delete elements (standard Bloom filter)
+\end{itemize}
+\end{definitionbox}
+
+\subsection{Operations}
+
+\begin{center}
+\begin{tikzpicture}
+    % Bit array
+    \draw (0,0) grid (10,1);
+    \foreach \i in {0,...,9} {
+        \node at (\i+0.5,0.5) {0};
+    }
+    \node[anchor=east] at (-0.3,0.5) {Initial:};
+
+    % After insert "cat"
+    \draw (0,-2) grid (10,-1);
+    \node at (1.5,-1.5) {1};
+    \node at (4.5,-1.5) {1};
+    \node at (7.5,-1.5) {1};
+    \foreach \i in {0,2,3,5,6,8,9} {
+        \node at (\i+0.5,-1.5) {0};
+    }
+    \node[anchor=east] at (-0.3,-1.5) {Insert "cat":};
+
+    % Hash arrows
+    \draw[->, thick, secondary] (1.5,0) -- (1.5,-0.9);
+    \draw[->, thick, success] (4.5,0) -- (4.5,-0.9);
+    \draw[->, thick, accent] (7.5,0) -- (7.5,-0.9);
+
+    % Hash function labels
+    \node[font=\footnotesize, secondary] at (1.5,-0.5) {$h_1$};
+    \node[font=\footnotesize, success] at (4.5,-0.5) {$h_2$};
+    \node[font=\footnotesize, accent] at (7.5,-0.5) {$h_3$};
+\end{tikzpicture}
+\end{center}
+
+\begin{algorithmbox}[Bloom Filter Operations]
+\textbf{Insert(x):}
+\begin{lstlisting}[language=pseudo]
+for i = 1 to k:
+    bit_array[hash_i(x) mod m] = 1
+\end{lstlisting}
+
+\textbf{Query(x):}
+\begin{lstlisting}[language=pseudo]
+for i = 1 to k:
+    if bit_array[hash_i(x) mod m] == 0:
+        return "NOT in set"  // Definitely not
+return "MAYBE in set"  // Might be false positive
+\end{lstlisting}
+\end{algorithmbox}
+
+\subsection{False Positive Probability}
+
+\begin{formulabox}[False Positive Rate]
+After inserting $n$ elements into $m$ bits with $k$ hash functions:
+
+\[
+p_{FP} \approx \left(1 - e^{-kn/m}\right)^k
+\]
+
+\textbf{Optimal number of hash functions:}
+\[
+k_{opt} = \frac{m}{n} \ln 2 \approx 0.693 \frac{m}{n}
+\]
+
+\textbf{Required bits per element for target FP rate:}
+\[
+\frac{m}{n} = -\frac{\ln p_{FP}}{(\ln 2)^2} \approx -1.44 \log_2 p_{FP}
+\]
+\end{formulabox}
+
+\begin{examplebox}[Bloom Filter Calculation]
+\textbf{Given:} Want to store $n = 1000$ elements with FP rate $\leq 1\%$
+
+\textbf{Calculate required bits:}
+\[
+\frac{m}{n} = -1.44 \log_2(0.01) = -1.44 \times (-6.64) \approx 9.6
+\]
+\[
+m = 9.6 \times 1000 \approx 10000 \text{ bits} \approx 1.25 \text{ KB}
+\]
+
+\textbf{Optimal hash functions:}
+\[
+k = 0.693 \times 9.6 \approx 7 \text{ hash functions}
+\]
+\end{examplebox}
+
+% =============================================================================
+\section{Count-Min Sketch}
+
+\begin{definitionbox}[Count-Min Sketch]
+Data structure για approximate frequency counting σε streams.
+
+\textbf{Structure:}
+\begin{itemize}
+    \item 2D array: $d$ rows × $w$ columns
+    \item $d$ hash functions (one per row)
+\end{itemize}
+
+\textbf{Operations:}
+\begin{itemize}
+    \item \textbf{Update(x):} Increment counter at $h_i(x)$ for each row $i$
+    \item \textbf{Query(x):} Return $\min_i \text{counter}[i][h_i(x)]$
+\end{itemize}
+
+\textbf{Property:} Never underestimates, may overestimate
+\end{definitionbox}
+
+% =============================================================================
+\section{Solved Exam Problems}
+
+\begin{examplebox}[Bloom Filter Query]
+\textbf{Given:}
+\begin{itemize}
+    \item Bloom filter with $m = 10$ bits, $k = 3$ hash functions
+    \item Elements inserted: "apple", "banana"
+    \item Hash values: \\
+        apple: $h_1 = 2$, $h_2 = 5$, $h_3 = 8$ \\
+        banana: $h_1 = 1$, $h_2 = 5$, $h_3 = 9$
+\end{itemize}
+
+\textbf{Bit array after insertions:}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+\hline
+0 & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 1 & 1 \\
+\hline
+\end{tabular}
+
+Index: 0 \quad 1 \quad 2 \quad 3 \quad 4 \quad 5 \quad 6 \quad 7 \quad 8 \quad 9
+\end{center}
+
+\textbf{Query "cherry":} $h_1 = 2$, $h_2 = 6$, $h_3 = 8$
+\begin{itemize}
+    \item Check bit 2: 1 ✓
+    \item Check bit 6: 0 ✗
+    \item Result: \textbf{NOT in set} (definitely correct)
+\end{itemize}
+
+\textbf{Query "date":} $h_1 = 1$, $h_2 = 5$, $h_3 = 9$
+\begin{itemize}
+    \item Check bit 1: 1 ✓
+    \item Check bit 5: 1 ✓
+    \item Check bit 9: 1 ✓
+    \item Result: \textbf{MAYBE in set} (false positive! "date" was never inserted)
+\end{itemize}
+\end{examplebox}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{False negatives in Bloom filters}:
+    \begin{itemize}
+        \item[$\times$] Bloom filter can have false negatives
+        \item[\checkmark] ONLY false positives, NEVER false negatives
+    \end{itemize}
+
+    \item \textbf{Deletion from Bloom filter}:
+    \begin{itemize}
+        \item[$\times$] Just set bits to 0
+        \item[\checkmark] Cannot delete (use Counting Bloom Filter instead)
+    \end{itemize}
+
+    \item \textbf{More hash functions = always better}:
+    \begin{itemize}
+        \item[$\times$] Use as many hash functions as possible
+        \item[\checkmark] Optimal $k$ depends on $m/n$; too many increases FP
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=6cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Data Streams Summary};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{Bloom Filter:}\\
+        • No false negatives, possible false positives\\
+        • Cannot delete elements\\
+        • $p_{FP} \approx (1 - e^{-kn/m})^k$\\[5pt]
+        \textbf{Reservoir Sampling:}\\
+        • Uniform sample from stream of unknown size\\
+        • Each item has $k/n$ probability\\[5pt]
+        \textbf{Sliding Window:}\\
+        • Count-based or Time-based
+    };
+
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
+        at ([xshift=-4cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=1.3cm]main.south) {
+        \textbf{Bloom Filter Answer:}\\
+        "No" = Definitely not in set\\
+        "Yes" = Maybe in set
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5.5cm, minimum height=1.5cm]
+        at ([xshift=3cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=3cm, yshift=1.3cm]main.south) {
+        \textbf{Optimal Hash Functions:}\\
+        $k = 0.693 \times (m/n)$
+    };
+\end{tikzpicture}
+\end{center}

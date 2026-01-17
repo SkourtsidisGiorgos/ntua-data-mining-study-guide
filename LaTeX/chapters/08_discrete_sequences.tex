@@ -1,0 +1,296 @@
+% =============================================================================
+% Chapter: Discrete Sequences & HMMs
+% =============================================================================
+
+\chapter{Discrete Sequences \& HMMs}
+
+\begin{formulabox}[Key Formulas - MEMORIZE!]
+\textbf{HMM Components:}
+\begin{itemize}
+    \item $S = \{s_1, ..., s_N\}$: Hidden states
+    \item $V = \{v_1, ..., v_M\}$: Observable symbols
+    \item $A = [a_{ij}]$: Transition probabilities, $a_{ij} = P(s_j | s_i)$
+    \item $B = [b_j(k)]$: Emission probabilities, $b_j(k) = P(v_k | s_j)$
+    \item $\pi = [\pi_i]$: Initial state distribution
+\end{itemize}
+
+\textbf{Viterbi Algorithm:}
+\[
+\delta_t(j) = \max_{i} \left[ \delta_{t-1}(i) \cdot a_{ij} \right] \cdot b_j(o_t)
+\]
+
+\textbf{Sequence Support:}
+\[
+\text{Support}(S) = \frac{|\text{sequences containing } S|}{|\text{total sequences}|}
+\]
+\end{formulabox}
+
+% =============================================================================
+\section{Hidden Markov Models (HMMs)}
+
+\subsection{Model Structure}
+
+\begin{center}
+\begin{tikzpicture}
+    % Hidden states
+    \node[draw=accent, circle, fill=accent!20, minimum size=1.2cm] (s1) at (0,2) {$s_1$};
+    \node[draw=accent, circle, fill=accent!20, minimum size=1.2cm] (s2) at (4,2) {$s_2$};
+    \node[draw=accent, circle, fill=accent!20, minimum size=1.2cm] (s3) at (8,2) {$s_3$};
+
+    % Observations
+    \node[draw=secondary, rectangle, fill=secondary!20, minimum width=1cm] (o1) at (0,0) {$o_1$};
+    \node[draw=secondary, rectangle, fill=secondary!20, minimum width=1cm] (o2) at (4,0) {$o_2$};
+    \node[draw=secondary, rectangle, fill=secondary!20, minimum width=1cm] (o3) at (8,0) {$o_3$};
+
+    % Transitions
+    \draw[->, thick] (s1) -- node[above] {$a_{12}$} (s2);
+    \draw[->, thick] (s2) -- node[above] {$a_{23}$} (s3);
+    \draw[->, thick, bend left=30] (s1) to node[above] {$a_{11}$} (s1);
+    \draw[->, thick, bend left=30] (s2) to node[above] {$a_{22}$} (s2);
+
+    % Emissions
+    \draw[->, dashed, thick, success] (s1) -- node[left] {$b_1(o_1)$} (o1);
+    \draw[->, dashed, thick, success] (s2) -- node[left] {$b_2(o_2)$} (o2);
+    \draw[->, dashed, thick, success] (s3) -- node[left] {$b_3(o_3)$} (o3);
+
+    % Labels
+    \node[anchor=south, font=\bfseries, color=accent] at (4,3) {Hidden States};
+    \node[anchor=north, font=\bfseries, color=secondary] at (4,-0.8) {Observations};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Three Fundamental Problems}
+
+\begin{center}
+\begin{tikzpicture}
+    % Evaluation
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4cm, minimum height=2.5cm] (eval) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (eval.north) {1. Evaluation};
+    \node[anchor=center, font=\small, align=center] at (eval.center) {$P(O|\lambda)$\\Given model,\\what's obs probability?};
+    \node[anchor=south, font=\footnotesize, color=secondary] at (eval.south) {Forward Algorithm};
+
+    % Decoding
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4cm, minimum height=2.5cm] (dec) at (5.5,0) {};
+    \node[anchor=north, font=\bfseries] at (dec.north) {2. Decoding};
+    \node[anchor=center, font=\small, align=center] at (dec.center) {Best state sequence\\given observations};
+    \node[anchor=south, font=\footnotesize, color=success] at (dec.south) {Viterbi Algorithm};
+
+    % Learning
+    \node[draw=accent, fill=accent!20, rounded corners=5pt, minimum width=4cm, minimum height=2.5cm] (learn) at (11,0) {};
+    \node[anchor=north, font=\bfseries] at (learn.north) {3. Learning};
+    \node[anchor=center, font=\small, align=center] at (learn.center) {Estimate model\\parameters from data};
+    \node[anchor=south, font=\footnotesize, color=accent] at (learn.south) {Baum-Welch (EM)};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Viterbi Algorithm (EXAM QUESTION!)}
+
+\begin{algorithmbox}[Viterbi Algorithm]
+\textbf{Goal:} Find most likely state sequence given observations.
+
+\textbf{Initialization:}
+\[
+\delta_1(i) = \pi_i \cdot b_i(o_1), \quad \psi_1(i) = 0
+\]
+
+\textbf{Recursion:}
+\[
+\delta_t(j) = \max_{i=1}^{N} \left[ \delta_{t-1}(i) \cdot a_{ij} \right] \cdot b_j(o_t)
+\]
+\[
+\psi_t(j) = \arg\max_{i=1}^{N} \left[ \delta_{t-1}(i) \cdot a_{ij} \right]
+\]
+
+\textbf{Termination:}
+\[
+P^* = \max_{i=1}^{N} \delta_T(i), \quad q_T^* = \arg\max_{i=1}^{N} \delta_T(i)
+\]
+
+\textbf{Backtracking:}
+\[
+q_t^* = \psi_{t+1}(q_{t+1}^*)
+\]
+\end{algorithmbox}
+
+\begin{examplebox}[Viterbi - 2024-25 Exam Q12 Style]
+\textbf{HMM Model:}
+\begin{itemize}
+    \item States: $S = \{H, L\}$ (High, Low)
+    \item Observations: $V = \{A, B\}$
+    \item Initial: $\pi_H = 0.6$, $\pi_L = 0.4$
+\end{itemize}
+
+\textbf{Transition Matrix $A$:}
+\begin{center}
+\begin{tabular}{c|cc}
+& H & L \\
+\hline
+H & 0.7 & 0.3 \\
+L & 0.4 & 0.6 \\
+\end{tabular}
+\end{center}
+
+\textbf{Emission Matrix $B$:}
+\begin{center}
+\begin{tabular}{c|cc}
+& A & B \\
+\hline
+H & 0.2 & 0.8 \\
+L & 0.5 & 0.5 \\
+\end{tabular}
+\end{center}
+
+\textbf{Observation sequence:} $O = (B, A)$
+
+\textbf{Step 1: Initialization ($t=1$, observe B)}
+\begin{align*}
+\delta_1(H) &= \pi_H \cdot b_H(B) = 0.6 \times 0.8 = 0.48 \\
+\delta_1(L) &= \pi_L \cdot b_L(B) = 0.4 \times 0.5 = 0.20
+\end{align*}
+
+\textbf{Step 2: Recursion ($t=2$, observe A)}
+\begin{align*}
+\delta_2(H) &= \max\{\delta_1(H) \cdot a_{HH}, \delta_1(L) \cdot a_{LH}\} \cdot b_H(A) \\
+&= \max\{0.48 \times 0.7, 0.20 \times 0.4\} \times 0.2 \\
+&= \max\{0.336, 0.08\} \times 0.2 = 0.336 \times 0.2 = \mathbf{0.0672} \\
+\psi_2(H) &= H
+\end{align*}
+\begin{align*}
+\delta_2(L) &= \max\{\delta_1(H) \cdot a_{HL}, \delta_1(L) \cdot a_{LL}\} \cdot b_L(A) \\
+&= \max\{0.48 \times 0.3, 0.20 \times 0.6\} \times 0.5 \\
+&= \max\{0.144, 0.12\} \times 0.5 = 0.144 \times 0.5 = \mathbf{0.072} \\
+\psi_2(L) &= H
+\end{align*}
+
+\textbf{Step 3: Termination}
+\[
+P^* = \max\{0.0672, 0.072\} = 0.072, \quad q_2^* = L
+\]
+
+\textbf{Step 4: Backtracking}
+\[
+q_1^* = \psi_2(L) = H
+\]
+
+\textbf{Answer:} Most likely sequence is \textbf{H → L}
+\end{examplebox}
+
+% =============================================================================
+\section{Sequential Pattern Mining}
+
+\subsection{Definitions}
+
+\begin{definitionbox}[Sequence Terminology]
+\begin{itemize}
+    \item \textbf{Sequence}: Ordered list of itemsets, e.g., $\langle \{A\}, \{B,C\}, \{D\} \rangle$
+    \item \textbf{Subsequence}: $\alpha$ is subsequence of $\beta$ if all itemsets of $\alpha$ appear in $\beta$ in order
+    \item \textbf{Support}: Fraction of sequences containing the pattern
+\end{itemize}
+\end{definitionbox}
+
+\begin{examplebox}[Subsequence - 2024-25 Exam Q11 Style]
+\textbf{Given sequences:}
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{SID} & \textbf{Sequence} \\
+\midrule
+1 & $\langle \{A\}, \{A,B\}, \{C\} \rangle$ \\
+2 & $\langle \{A,B\}, \{C\} \rangle$ \\
+3 & $\langle \{A\}, \{B\}, \{C\} \rangle$ \\
+4 & $\langle \{A\}, \{C\} \rangle$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Question:} Is $\langle \{A\}, \{C\} \rangle$ a subsequence of Sequence 1?
+
+\textbf{Answer:} Yes! $\{A\} \subseteq \{A\}$ and $\{C\} \subseteq \{C\}$, appearing in order.
+
+\textbf{Support of $\langle \{A\}, \{C\} \rangle$:}
+\begin{itemize}
+    \item Seq 1: ✓ ($\{A\}$ then $\{C\}$)
+    \item Seq 2: ✓ ($\{A,B\} \supseteq \{A\}$ then $\{C\}$)
+    \item Seq 3: ✓
+    \item Seq 4: ✓
+\end{itemize}
+Support = $4/4 = 100\%$
+\end{examplebox}
+
+\subsection{GSP Algorithm (Generalized Sequential Pattern)}
+
+\begin{infobox}[GSP Overview]
+Similar to Apriori but for sequences:
+\begin{enumerate}
+    \item Find frequent 1-sequences
+    \item Generate candidate $k$-sequences from $(k-1)$-sequences
+    \item Prune using Apriori property
+    \item Count support and keep frequent
+\end{enumerate}
+\end{infobox}
+
+% =============================================================================
+\section{Common Mistakes}
+
+\begin{warningbox}[Συχνά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{Viterbi: Forgetting to multiply by emission}:
+    \begin{itemize}
+        \item[$\times$] $\delta_t(j) = \max[\delta_{t-1}(i) \cdot a_{ij}]$
+        \item[\checkmark] $\delta_t(j) = \max[\delta_{t-1}(i) \cdot a_{ij}] \cdot b_j(o_t)$
+    \end{itemize}
+
+    \item \textbf{Subsequence ordering}:
+    \begin{itemize}
+        \item Itemsets must appear in the SAME ORDER
+        \item But items within itemset can be in any order
+    \end{itemize}
+
+    \item \textbf{HMM emission vs transition}:
+    \begin{itemize}
+        \item $a_{ij}$: State $i$ → State $j$ (transition)
+        \item $b_j(o)$: State $j$ emits observation $o$ (emission)
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=7cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {HMM \& Sequences Cheat Sheet};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{HMM Components:}\\
+        • States ($S$), Observations ($V$), Transitions ($A$), Emissions ($B$), Initial ($\pi$)\\[5pt]
+        \textbf{Viterbi:}\\
+        $\delta_t(j) = \max_i[\delta_{t-1}(i) \cdot a_{ij}] \cdot b_j(o_t)$\\
+        Backtrack using $\psi_t(j)$\\[5pt]
+        \textbf{Sequential Patterns:}\\
+        Subsequence: ordered itemsets appearing in sequence\\
+        Support: fraction of sequences containing pattern
+    };
+
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=5cm, minimum height=1.8cm]
+        at ([xshift=-4cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=1.5cm]main.south) {
+        \textbf{Viterbi Steps:}\\
+        1. Init: $\pi \cdot b(o_1)$\\
+        2. Recurse: max prev × trans × emit\\
+        3. Backtrack
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.8cm]
+        at ([xshift=3cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=3cm, yshift=1.5cm]main.south) {
+        \textbf{Three HMM Problems:}\\
+        Evaluation: Forward\\
+        Decoding: Viterbi\\
+        Learning: Baum-Welch
+    };
+\end{tikzpicture}
+\end{center}

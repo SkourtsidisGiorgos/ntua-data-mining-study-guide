@@ -2,6 +2,7 @@
 % Data Mining Study Guide - Main Document
 % NTUA - School of Electrical and Computer Engineering
 % XeLaTeX Compilation Required
+% Academic Year: 2025-26
 % =============================================================================
 
 \input{preamble}
@@ -26,7 +27,8 @@
 \vspace{1.5cm}
 
 {\Huge\bfseries\color{ntua-blue} Data Mining}\\[0.5cm]
-{\LARGE\bfseries\color{primary} Πλήρης Οδηγός Μελέτης}
+{\LARGE\bfseries\color{primary} Οδηγός Μελέτης για Εξετάσεις}\\[0.3cm]
+{\large\color{secondary} Ακαδημαϊκό Έτος 2025-26}
 
 \vspace{1cm}
 
@@ -52,15 +54,15 @@
 \vspace{0.5cm}
 
 \begin{tabular}{ccc}
-\textcolor{secondary}{●} Decision Trees &
-\textcolor{success}{●} Clustering &
-\textcolor{info}{●} Association Rules \\[5pt]
-\textcolor{accent}{●} Classification Metrics &
-\textcolor{warning}{●} DTW &
-\textcolor{secondary}{●} Bayesian Networks \\[5pt]
-\textcolor{success}{●} Privacy &
-\textcolor{info}{●} TF-IDF &
-\textcolor{accent}{●} OLAP \\
+\textcolor{secondary}{●} ER Model &
+\textcolor{success}{●} Relational Algebra &
+\textcolor{info}{●} SQL \\[5pt]
+\textcolor{accent}{●} Query Processing &
+\textcolor{warning}{●} Data Preprocessing &
+\textcolor{secondary}{●} Data Streams \\[5pt]
+\textcolor{success}{●} HMMs/Sequences &
+\textcolor{info}{●} OLAP/Data Warehouse &
+\textcolor{accent}{●} RAG/LLMs \\
 \end{tabular}
 
 \vspace{1.5cm}
@@ -81,16 +83,18 @@
 % =============================================================================
 \mainmatter
 
-% Include chapters
-\include{chapters/01_decision_trees}
-\include{chapters/02_clustering}
-\include{chapters/03_association_rules}
-\include{chapters/04_dtw_similarity}
-\include{chapters/05_classification_metrics}
-\include{chapters/06_bayesian_networks}
-\include{chapters/07_privacy}
-\include{chapters/08_tfidf}
-\include{chapters/09_formulas_cheatsheet}
+% Include chapters - 2025-26 curriculum
+\include{chapters/01_er_model}
+\include{chapters/02_relational_model}
+\include{chapters/03_sql_basics}
+\include{chapters/04_sql_advanced}
+\include{chapters/05_query_processing}
+\include{chapters/06_data_preprocessing}
+\include{chapters/07_data_streams}
+\include{chapters/08_discrete_sequences}
+\include{chapters/09_olap_dw}
+\include{chapters/10_rag_llms}
+\include{chapters/11_formulas_cheatsheet}
 
 % =============================================================================
 % BACK MATTER
@@ -104,9 +108,9 @@
 \begin{tikzpicture}[scale=0.9]
     % Formula summary cards
     \foreach \y/\title/\formula in {
-        0/{Entropy}/{$H(S) = -\sum p_i \log_2(p_i)$},
-        -2.5/{Info Gain}/{$IG = H(S) - \sum \frac{|S_v|}{|S|} H(S_v)$},
-        -5/{Gini}/{$Gini(S) = 1 - \sum p_i^2$},
+        0/{OLAP: Roll-up}/{Aggregation από λεπτομέρεια σε σύνοψη},
+        -2.5/{Relational Algebra}/{$\sigma, \pi, \cup, \cap, -, \bowtie$},
+        -5/{HMM: Viterbi}/{$\delta_t(j) = \max_i[\delta_{t-1}(i) \cdot a_{ij}] \cdot b_j(o_t)$},
         -7.5/{Support}/{$Sup(X) = |T \text{ with } X| / |T|$},
         -10/{Confidence}/{$Conf(X \to Y) = Sup(X \cup Y) / Sup(X)$}
     } {

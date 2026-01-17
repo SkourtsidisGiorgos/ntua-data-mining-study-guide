@@ -1,0 +1,285 @@
+% =============================================================================
+% Chapter: RAG & Retrieval-based LLMs
+% =============================================================================
+
+\chapter{RAG \& Retrieval-based LLMs}
+
+\begin{formulabox}[Key Concepts]
+\textbf{RAG (Retrieval-Augmented Generation):}
+
+Συνδυασμός retrieval από knowledge base + generation από LLM.
+
+\textbf{Basic Pipeline:}
+\begin{enumerate}
+    \item \textbf{Query}: User question
+    \item \textbf{Retrieve}: Find relevant documents
+    \item \textbf{Augment}: Add context to prompt
+    \item \textbf{Generate}: LLM produces answer
+\end{enumerate}
+
+\textbf{Key Metrics:}
+\begin{itemize}
+    \item Recall@K: Fraction of relevant docs in top-K
+    \item Precision@K: Fraction of top-K that are relevant
+    \item MRR (Mean Reciprocal Rank): $\frac{1}{|Q|}\sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}$
+\end{itemize}
+\end{formulabox}
+
+% =============================================================================
+\section{RAG Architecture}
+
+\begin{center}
+\begin{tikzpicture}[
+    block/.style={draw=primary, fill=box-blue, rounded corners=5pt, minimum width=2.5cm, minimum height=1cm, font=\small},
+    arrow/.style={->, thick}
+]
+    % Query
+    \node[block, fill=secondary!30] (query) at (0,0) {Query};
+
+    % Retriever
+    \node[block] (retriever) at (4,0) {Retriever};
+
+    % Knowledge Base
+    \node[block, fill=success!30, minimum height=2cm, align=center] (kb) at (4,-2.5) {Knowledge\\Base};
+
+    % Context
+    \node[block] (context) at (8,0) {Context};
+
+    % LLM
+    \node[block, fill=accent!30] (llm) at (12,0) {LLM};
+
+    % Answer
+    \node[block, fill=success!30] (answer) at (12,-2) {Answer};
+
+    % Connections
+    \draw[arrow] (query) -- (retriever);
+    \draw[arrow, secondary] (kb) -- (retriever);
+    \draw[arrow] (retriever) -- (context);
+    \draw[arrow] (query.east) to[bend left=20] (context.north);
+    \draw[arrow] (context) -- (llm);
+    \draw[arrow] (llm) -- (answer);
+
+    % Labels
+    \node[font=\footnotesize, anchor=north] at (4,-0.6) {Search};
+    \node[font=\footnotesize, anchor=south] at (10,0.1) {Augmented Prompt};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Retrieval Methods}
+
+\subsection{Sparse Retrieval (Traditional)}
+
+\begin{definitionbox}[TF-IDF / BM25]
+Keyword-based retrieval using term frequencies.
+
+\textbf{TF-IDF:}
+\[
+\text{TF-IDF}(t, d) = TF(t, d) \times \log\left(\frac{N}{DF(t)}\right)
+\]
+
+\textbf{BM25:} Improved TF-IDF with document length normalization.
+
+\textbf{Pros:} Fast, interpretable, no training required\\
+\textbf{Cons:} No semantic understanding (keyword mismatch problem)
+\end{definitionbox}
+
+\subsection{Dense Retrieval (Neural)}
+
+\begin{definitionbox}[Dense Embeddings]
+Documents and queries encoded as vectors in semantic space.
+
+\textbf{Process:}
+\begin{enumerate}
+    \item Encode documents → $\mathbf{d}_i = \text{Encoder}(d_i)$
+    \item Encode query → $\mathbf{q} = \text{Encoder}(q)$
+    \item Score = $\cos(\mathbf{q}, \mathbf{d}_i)$ or $\mathbf{q} \cdot \mathbf{d}_i$
+\end{enumerate}
+
+\textbf{Pros:} Captures semantic similarity\\
+\textbf{Cons:} Requires training, less interpretable
+\end{definitionbox}
+
+\begin{center}
+\begin{tikzpicture}
+    % Sparse
+    \node[draw=secondary, fill=box-blue, rounded corners=8pt, minimum width=5cm, minimum height=3cm] (sparse) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (sparse.north) {Sparse (TF-IDF/BM25)};
+    \node[anchor=center, align=center, font=\small] at (sparse.center) {
+        Keyword matching\\
+        Exact terms\\
+        Bag-of-words
+    };
+
+    % vs
+    \node at (3.5,0) {\textbf{vs}};
+
+    % Dense
+    \node[draw=success, fill=box-green, rounded corners=8pt, minimum width=5cm, minimum height=3cm] (dense) at (7,0) {};
+    \node[anchor=north, font=\bfseries] at (dense.north) {Dense (Embeddings)};
+    \node[anchor=center, align=center, font=\small] at (dense.center) {
+        Semantic matching\\
+        Vector similarity\\
+        Context-aware
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Vector Databases}
+
+\begin{infobox}[Vector Similarity Search]
+For efficient retrieval from millions of embeddings:
+
+\textbf{Exact Search:}
+\begin{itemize}
+    \item Brute-force comparison with all vectors
+    \item $O(n)$ complexity
+\end{itemize}
+
+\textbf{Approximate Nearest Neighbor (ANN):}
+\begin{itemize}
+    \item HNSW (Hierarchical Navigable Small World)
+    \item IVF (Inverted File Index)
+    \item Product Quantization (PQ)
+\end{itemize}
+
+Trade-off: Speed vs Accuracy
+\end{infobox}
+
+% =============================================================================
+\section{Chunking Strategies}
+
+\begin{definitionbox}[Document Chunking]
+Splitting documents into smaller pieces for retrieval.
+
+\textbf{Strategies:}
+\begin{itemize}
+    \item \textbf{Fixed-size:} Every N tokens/characters
+    \item \textbf{Sentence-based:} Split at sentence boundaries
+    \item \textbf{Paragraph-based:} Natural paragraph breaks
+    \item \textbf{Semantic:} Use embeddings to find natural breaks
+    \item \textbf{Overlapping:} Chunks with shared context
+\end{itemize}
+
+\textbf{Considerations:}
+\begin{itemize}
+    \item Too small: Lost context
+    \item Too large: Irrelevant content included
+    \item Typical: 256-512 tokens with 20\% overlap
+\end{itemize}
+\end{definitionbox}
+
+% =============================================================================
+\section{RAG Evaluation}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=4cm,
+            minimum height=1.2cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Metric & Formula & Use Case \\
+        Recall@K & $\frac{|\text{relevant} \cap \text{top-K}|}{|\text{relevant}|}$ & Coverage \\
+        Precision@K & $\frac{|\text{relevant} \cap \text{top-K}|}{K}$ & Accuracy \\
+        MRR & $\frac{1}{|Q|}\sum\frac{1}{\text{rank}_i}$ & Ranking quality \\
+        NDCG & Discounted cumulative gain & Graded relevance \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Common Challenges}
+
+\begin{warningbox}[RAG Challenges]
+\begin{enumerate}
+    \item \textbf{Retrieval Failure:}
+    \begin{itemize}
+        \item Relevant documents not retrieved
+        \item Solution: Better embeddings, hybrid retrieval
+    \end{itemize}
+
+    \item \textbf{Context Window Limit:}
+    \begin{itemize}
+        \item Too much retrieved content
+        \item Solution: Re-ranking, summarization
+    \end{itemize}
+
+    \item \textbf{Hallucination:}
+    \begin{itemize}
+        \item LLM ignores or contradicts retrieved context
+        \item Solution: Better prompting, fact verification
+    \end{itemize}
+
+    \item \textbf{Latency:}
+    \begin{itemize}
+        \item Retrieval adds overhead
+        \item Solution: Caching, ANN indexes
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Advanced RAG Techniques}
+
+\begin{infobox}[RAG Improvements]
+\textbf{Hybrid Retrieval:}
+Combine sparse (BM25) + dense retrieval, then merge results.
+
+\textbf{Re-ranking:}
+Use cross-encoder to re-score top-K candidates.
+
+\textbf{Query Expansion:}
+Use LLM to generate alternative queries.
+
+\textbf{Multi-hop RAG:}
+Iterative retrieval for complex questions.
+\end{infobox}
+
+% =============================================================================
+\section{Quick Reference}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=6cm] (main) {};
+
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {RAG Summary};
+
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \textbf{RAG Pipeline:} Query → Retrieve → Augment → Generate\\[5pt]
+        \textbf{Retrieval Types:}\\
+        • Sparse (BM25): Keyword matching, fast, no training\\
+        • Dense (Embeddings): Semantic matching, requires training\\[5pt]
+        \textbf{Key Design Choices:}\\
+        • Chunk size (256-512 tokens typical)\\
+        • Embedding model selection\\
+        • Number of retrieved documents (K)
+    };
+
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
+        at ([xshift=-4cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=1.3cm]main.south) {
+        \textbf{Why RAG?}\\
+        Up-to-date knowledge\\
+        Reduces hallucination
+    };
+
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
+        at ([xshift=3cm, yshift=1.3cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=3cm, yshift=1.3cm]main.south) {
+        \textbf{Hybrid = Best:}\\
+        BM25 + Dense retrieval\\
+        then Re-rank
+    };
+\end{tikzpicture}
+\end{center}
