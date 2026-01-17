@@ -1,0 +1,290 @@
+% =============================================================================
+% Chapter: Text Mining & TF-IDF
+% =============================================================================
+
+\chapter{Text Mining \& TF-IDF}
+
+\section{Εισαγωγή}
+
+\keyword{Text Mining} αναλύει και εξάγει πληροφορίες από κείμενα. \keyword{TF-IDF} είναι μέθοδος για να μετρήσουμε τη σημασία λέξεων σε documents.
+
+\begin{definitionbox}[Bag of Words (BoW)]
+\begin{itemize}
+    \item Αγνοεί τη σειρά των λέξεων
+    \item Μετράει μόνο frequencies
+    \item Document = vector of word counts
+\end{itemize}
+
+\textbf{Παράδειγμα}:
+
+"the cat sat on the mat" $\to$ \{the:2, cat:1, sat:1, on:1, mat:1\}
+\end{definitionbox}
+
+% =============================================================================
+\section{Term Frequency (TF)}
+
+\begin{formulabox}[Term Frequency]
+\begin{equation}
+TF(t, d) = \text{αριθμός εμφανίσεων του } t \text{ στο } d
+\end{equation}
+
+\textbf{Variants}:
+\begin{itemize}
+    \item Raw count: $tf(t,d) = f(t,d)$
+    \item Boolean: $tf(t,d) = 1$ if $t \in d$, else $0$
+    \item Log normalized: $tf(t,d) = 1 + \log(f(t,d))$ if $f > 0$
+\end{itemize}
+\end{formulabox}
+
+\begin{examplebox}[TF Calculation]
+Document: "the cat sat on the mat the cat"
+
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+Term & TF \\
+\midrule
+"the" & 3 \\
+"cat" & 2 \\
+"sat" & 1 \\
+"on" & 1 \\
+"mat" & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+% =============================================================================
+\section{Inverse Document Frequency (IDF)}
+
+\begin{formulabox}[Inverse Document Frequency]
+\begin{equation}
+IDF(t) = \log\left(\frac{N}{df(t)}\right)
+\end{equation}
+
+\begin{itemize}
+    \item $N$ = total number of documents
+    \item $df(t)$ = number of documents containing term $t$
+\end{itemize}
+
+\textbf{Smoothed variant}: $IDF(t) = \log\left(\frac{N+1}{df(t)+1}\right) + 1$
+\end{formulabox}
+
+\begin{center}
+\begin{tikzpicture}
+    % Low IDF
+    \node[draw=accent, fill=accent!20, rounded corners=10pt, minimum width=5cm, minimum height=2.5cm] (low) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (low.north) {Low IDF};
+    \node[align=center, font=\small] at (low.center) {
+        Λέξη σε \textbf{ΠΟΛΛΑ} docs\\
+        $\Rightarrow$ Λιγότερο σημαντική\\
+        π.χ. "the", "is", "a"
+    };
+
+    % High IDF
+    \node[draw=success, fill=success!20, rounded corners=10pt, minimum width=5cm, minimum height=2.5cm] (high) at (7,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (high.north) {High IDF};
+    \node[align=center, font=\small] at (high.center) {
+        Λέξη σε \textbf{ΛΙΓΑ} docs\\
+        $\Rightarrow$ Πιο διακριτική\\
+        π.χ. "DBSCAN", "algorithm"
+    };
+
+    % Arrow
+    \draw[<->, thick, dashed, primary] (low.east) -- (high.west);
+\end{tikzpicture}
+\end{center}
+
+\begin{examplebox}[IDF Values (N=1000)]
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Term & Documents & df & IDF = $\log(N/df)$ \\
+\midrule
+"the" & 950 & 950 & $\log(1000/950) \approx 0.02$ \\
+"algorithm" & 50 & 50 & $\log(1000/50) = 3.00$ \\
+"DBSCAN" & 5 & 5 & $\log(1000/5) = 5.30$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+% =============================================================================
+\section{TF-IDF}
+
+\begin{formulabox}[TF-IDF Formula - ΑΠΟΜΝΗΜΟΝΕΥΣΕ!]
+\begin{equation}
+\text{TF-IDF}(t, d) = TF(t, d) \times IDF(t)
+\end{equation}
+
+\textbf{Υψηλό TF-IDF σημαίνει}:
+\begin{itemize}
+    \item Λέξη εμφανίζεται συχνά στο \textbf{ΣΥΓΚΕΚΡΙΜΕΝΟ} document
+    \item Λέξη είναι \textbf{ΣΠΑΝΙΑ} στα υπόλοιπα documents
+\end{itemize}
+\end{formulabox}
+
+% =============================================================================
+\section{Worked Example}
+
+\begin{examplebox}[Complete TF-IDF Calculation]
+\textbf{Corpus (3 documents)}:
+\begin{itemize}
+    \item D1: "the cat sat on the mat"
+    \item D2: "the dog sat on the log"
+    \item D3: "the cat and the dog"
+\end{itemize}
+\end{examplebox}
+
+\subsection{Step 1: Calculate TF}
+
+\begin{center}
+\begin{tabular}{l|ccc}
+\toprule
+Term & D1 & D2 & D3 \\
+\midrule
+the & 2 & 2 & 2 \\
+cat & 1 & 0 & 1 \\
+sat & 1 & 1 & 0 \\
+on & 1 & 1 & 0 \\
+mat & 1 & 0 & 0 \\
+dog & 0 & 1 & 1 \\
+log & 0 & 1 & 0 \\
+and & 0 & 0 & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Step 2: Calculate DF and IDF (N=3)}
+
+\begin{center}
+\begin{tabular}{l|cc}
+\toprule
+Term & df & IDF = $\log(3/df)$ \\
+\midrule
+the & 3 & $\log(3/3) = 0$ \\
+cat & 2 & $\log(3/2) = 0.405$ \\
+sat & 2 & $\log(3/2) = 0.405$ \\
+on & 2 & $\log(3/2) = 0.405$ \\
+mat & 1 & $\log(3/1) = 1.099$ \\
+dog & 2 & $\log(3/2) = 0.405$ \\
+log & 1 & $\log(3/1) = 1.099$ \\
+and & 1 & $\log(3/1) = 1.099$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Step 3: Calculate TF-IDF}
+
+\begin{center}
+\begin{tabular}{l|ccc}
+\toprule
+Term & D1 & D2 & D3 \\
+\midrule
+the & $2 \times 0 = \mathbf{0}$ & $2 \times 0 = 0$ & $2 \times 0 = 0$ \\
+cat & $1 \times 0.405 = 0.41$ & 0 & 0.41 \\
+sat & 0.41 & 0.41 & 0 \\
+on & 0.41 & 0.41 & 0 \\
+\rowcolor{success!20} mat & $1 \times 1.099 = \mathbf{1.10}$ & 0 & 0 \\
+dog & 0 & 0.41 & 0.41 \\
+\rowcolor{success!20} log & 0 & $\mathbf{1.10}$ & 0 \\
+\rowcolor{success!20} and & 0 & 0 & $\mathbf{1.10}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Παρατηρήσεις]
+\begin{itemize}
+    \item "the" έχει TF-IDF = 0 παντού (πολύ κοινή)
+    \item "mat", "log", "and" έχουν υψηλό TF-IDF (unique στα docs τους)
+    \item Αυτές οι λέξεις "χαρακτηρίζουν" κάθε document
+\end{itemize}
+\end{infobox}
+
+% =============================================================================
+\section{Document Similarity}
+
+\begin{formulabox}[Cosine Similarity]
+\begin{equation}
+\text{sim}(d_1, d_2) = \frac{d_1 \cdot d_2}{\|d_1\| \times \|d_2\|} = \frac{\sum_i \text{tfidf}_1[i] \times \text{tfidf}_2[i]}{\sqrt{\sum_i \text{tfidf}_1[i]^2} \times \sqrt{\sum_i \text{tfidf}_2[i]^2}}
+\end{equation}
+
+\textbf{Range for TF-IDF vectors}: $[0, 1]$
+\begin{itemize}
+    \item $1$ = identical documents
+    \item $0$ = completely different
+\end{itemize}
+\end{formulabox}
+
+% =============================================================================
+\section{Συχνά Λάθη}
+
+\begin{warningbox}[Κοινά Λάθη στις Εξετάσεων]
+\begin{enumerate}
+    \item \textbf{df = 0}:
+    \begin{itemize}
+        \item[$\times$] $IDF = \log(N/0)$ $\to$ undefined!
+        \item[\checkmark] Use smoothing: $\log(N/(df+1))$
+    \end{itemize}
+
+    \item \textbf{Log Base}:
+    \begin{itemize}
+        \item Δεν έχει σημασία η βάση (σταθερός συντελεστής)
+        \item Συνήθως: $\log_{10}$ ή $\ln$
+    \end{itemize}
+
+    \item \textbf{IDF = 0}:
+    \begin{itemize}
+        \item Συμβαίνει όταν $df = N$ (λέξη σε ΟΛΑ τα docs)
+        \item $IDF = \log(N/N) = \log(1) = 0$
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Σύνοψη - Key Points}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=9cm] (main) at (0,0) {};
+
+    % Formulas section
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Formulas (ΑΠΟΜΝΗΜΟΝΕΥΣΕ!)};
+
+    \node[anchor=north west, align=left] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \begin{tabular}{ll}
+            \textbf{TF}$(t, d)$ & = count of $t$ in $d$ \\[8pt]
+            \textbf{IDF}$(t)$ & = $\log(N / df(t))$ \\[8pt]
+            \textbf{TF-IDF}$(t, d)$ & = $TF(t, d) \times IDF(t)$ \\[8pt]
+            $N$ & = total documents \\[5pt]
+            $df(t)$ & = documents containing $t$
+        \end{tabular}
+    };
+
+    % Interpretation box
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5.5cm, minimum height=3.5cm]
+        at ([xshift=4cm, yshift=-1.5cm]main.north west) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at ([xshift=4cm, yshift=-0.3cm]main.north west) {Interpretation};
+    \node[align=left, font=\small] at ([xshift=4cm, yshift=-2cm]main.north west) {
+        High TF: Common in doc\\
+        High IDF: Rare in corpus\\
+        High TF-IDF: Characteristic
+    };
+
+    % Key insight box
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=12cm, minimum height=2cm]
+        at (0,-2.5) {};
+    \node[align=center] at (0,-2.5) {
+        \textbf{IDF = 0} when word appears in ALL documents $\Rightarrow$ not discriminative\\
+        \textbf{High TF-IDF} = word is characteristic of specific document
+    };
+
+    % Cosine similarity box
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=8cm, minimum height=1.5cm]
+        at (0,-4.2) {};
+    \node[align=center, font=\small] at (0,-4.2) {
+        \textbf{Document Similarity}: Cosine = $(d_1 \cdot d_2) / (\|d_1\| \times \|d_2\|)$\\
+        Range: $[0, 1]$ for TF-IDF vectors
+    };
+\end{tikzpicture}
+\end{center}

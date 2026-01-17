@@ -1,0 +1,317 @@
+% =============================================================================
+% Chapter: Privacy - K-Anonymity & L-Diversity
+% =============================================================================
+
+\chapter{Privacy: K-Anonymity \& L-Diversity}
+
+\section{Εισαγωγή}
+
+\keyword{Data Privacy} αφορά την προστασία προσωπικών δεδομένων κατά τη δημοσίευση ή ανάλυση datasets. Ακόμα κι αν αφαιρεθούν τα ονόματα, άλλα attributes μπορούν να οδηγήσουν σε \keyword{re-identification}.
+
+\begin{warningbox}[Το Πρόβλημα]
+\begin{center}
+\begin{tikzpicture}
+    % Published dataset
+    \node[draw=primary, fill=box-blue, rounded corners=5pt, minimum width=4.5cm, minimum height=2.5cm] (pub) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (pub.north) {Published Data};
+    \node[font=\small] at (pub.center) {
+        \begin{tabular}{cc}
+            Age & Disease \\
+            28 & HIV \\
+            28 & Cancer
+        \end{tabular}
+    };
+
+    % External knowledge
+    \node[draw=secondary, fill=secondary!20, rounded corners=5pt, minimum width=4.5cm, minimum height=2.5cm] (ext) at (6,0) {};
+    \node[anchor=north, font=\bfseries] at (ext.north) {External Knowledge};
+    \node[font=\small, align=center] at (ext.center) {
+        "John is 28 years old\\
+        and lives in zipcode 12345"
+    };
+
+    % Arrow and result
+    \draw[->, >=Stealth, thick, accent] (pub.east) -- (ext.west) node[midway, above] {+};
+
+    % Result
+    \node[draw=accent, fill=accent!20, rounded corners=5pt, minimum width=4cm, minimum height=1.5cm] (res) at (3,-2.5) {};
+    \node[align=center, font=\small] at (res.center) {
+        \textbf{Re-identification!}\\
+        Can identify John's disease
+    };
+    \draw[->, >=Stealth, thick, accent] (3,-0.8) -- (res.north);
+\end{tikzpicture}
+\end{center}
+\end{warningbox}
+
+% =============================================================================
+\section{Attribute Types}
+
+\begin{center}
+\begin{tikzpicture}
+    % Explicit Identifiers
+    \node[draw=accent, fill=accent!20, rounded corners=10pt, minimum width=5cm, minimum height=2.5cm] (ei) at (0,3) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (ei.north) {Explicit Identifiers};
+    \node[align=center, font=\small] at (ei.center) {
+        Μοναδικά αναγνωρίζουν\\
+        \textbf{Name, SSN, Phone}\\
+        $\Rightarrow$ ΑΦΑΙΡΟΥΝΤΑΙ πάντα
+    };
+
+    % Quasi-Identifiers
+    \node[draw=warning, fill=warning!20, rounded corners=10pt, minimum width=5cm, minimum height=2.5cm] (qi) at (6.5,3) {};
+    \node[anchor=north, font=\bfseries\color{warning}] at (qi.north) {Quasi-Identifiers (QIs)};
+    \node[align=center, font=\small] at (qi.center) {
+        Σε \textbf{συνδυασμό} ταυτοποιούν\\
+        \textbf{Age, Zipcode, Gender}\\
+        $\Rightarrow$ Γενικεύονται
+    };
+
+    % Sensitive Attributes
+    \node[draw=secondary, fill=secondary!20, rounded corners=10pt, minimum width=5cm, minimum height=2.5cm] (sa) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (sa.north) {Sensitive Attributes};
+    \node[align=center, font=\small] at (sa.center) {
+        Πληροφορία προς προστασία\\
+        \textbf{Disease, Salary}\\
+        $\Rightarrow$ Προστατεύονται
+    };
+
+    % Non-Sensitive
+    \node[draw=success, fill=success!20, rounded corners=10pt, minimum width=5cm, minimum height=2.5cm] (ns) at (6.5,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (ns.north) {Non-Sensitive};
+    \node[align=center, font=\small] at (ns.center) {
+        Δεν αποκαλύπτουν τίποτα\\
+        \textbf{Favorite color}\\
+        $\Rightarrow$ Δημοσιεύονται
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{K-Anonymity}
+
+\begin{formulabox}[K-Anonymity - Ορισμός]
+Ένα dataset είναι \textbf{K-ANONYMOUS} αν για κάθε record, υπάρχουν τουλάχιστον $(k-1)$ άλλα records με \textbf{ΙΔΙΕΣ} τιμές στα Quasi-Identifiers.
+
+\vspace{0.5em}
+Με άλλα λόγια: κάθε \keyword{equivalence class} (συνδυασμός QIs) έχει $\geq k$ records.
+\end{formulabox}
+
+\begin{examplebox}[K-Anonymity Example]
+\textbf{Original Data (NOT k-anonymous)}:
+\begin{center}
+\begin{tabular}{cc|c}
+\toprule
+Age & Zipcode & Disease \\
+\midrule
+25 & 12345 & HIV \\
+27 & 12345 & Cancer \\
+35 & 54321 & Flu \\
+36 & 54321 & Diabetes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{2-Anonymous (k=2)} - after generalization:
+\begin{center}
+\begin{tabular}{cc|c|l}
+\toprule
+Age & Zipcode & Disease & Class \\
+\midrule
+\rowcolor{success!20} 20-30 & 123** & HIV & \multirow{2}{*}{Class 1: 2 records \checkmark} \\
+\rowcolor{success!20} 20-30 & 123** & Cancer & \\
+\rowcolor{info!20} 30-40 & 543** & Flu & \multirow{2}{*}{Class 2: 2 records \checkmark} \\
+\rowcolor{info!20} 30-40 & 543** & Diabetes & \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+\subsection{Anonymization Techniques}
+
+\begin{center}
+\begin{tikzpicture}
+    % Generalization
+    \node[draw=secondary, fill=secondary!20, rounded corners=10pt, minimum width=6cm, minimum height=3cm] (gen) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (gen.north) {Generalization};
+    \node[align=center, font=\small] at (gen.center) {
+        Make values more general\\[0.5em]
+        Age: $25 \to 20\text{-}30 \to 20\text{-}40 \to *$\\
+        Zip: $12345 \to 1234* \to 123** \to *****$
+    };
+
+    % Suppression
+    \node[draw=accent, fill=accent!20, rounded corners=10pt, minimum width=6cm, minimum height=3cm] (sup) at (8,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (sup.north) {Suppression};
+    \node[align=center, font=\small] at (sup.center) {
+        Remove values entirely\\[0.5em]
+        Age: $25 \to *$\\
+        Or remove entire records
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Αδυναμίες K-Anonymity}
+
+\begin{warningbox}[Homogeneity Attack]
+\begin{center}
+\begin{tabular}{cc|c}
+\toprule
+Age & Zipcode & Disease \\
+\midrule
+\rowcolor{accent!20} 20-30 & 123** & HIV \\
+\rowcolor{accent!20} 20-30 & 123** & HIV \\
+\rowcolor{accent!20} 20-30 & 123** & HIV \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+3-anonymous \textbf{αλλά}: αν ξέρω κάποιον 25χρονο στο 12345, \important{ΞΕΡΩ ότι έχει HIV!}
+
+(Όλοι στο equivalence class έχουν την ίδια disease)
+\end{warningbox}
+
+% =============================================================================
+\section{L-Diversity}
+
+\begin{formulabox}[L-Diversity - Ορισμός]
+Ένα dataset είναι \textbf{L-DIVERSE} αν σε κάθε equivalence class υπάρχουν τουλάχιστον $L$ \textbf{ΔΙΑΦΟΡΕΤΙΚΕΣ} τιμές του sensitive attribute.
+\end{formulabox}
+
+\begin{examplebox}[L-Diversity Example]
+\textbf{2-Diverse}:
+\begin{center}
+\begin{tabular}{cc|c|l}
+\toprule
+Age & Zipcode & Disease & Distinct values \\
+\midrule
+\rowcolor{success!20} 20-30 & 123** & HIV & \multirow{2}{*}{\{HIV, Cancer\} = 2 \checkmark} \\
+\rowcolor{success!20} 20-30 & 123** & Cancer & \\
+\rowcolor{success!20} 30-40 & 543** & Flu & \multirow{2}{*}{\{Flu, Diabetes\} = 2 \checkmark} \\
+\rowcolor{success!20} 30-40 & 543** & Diabetes & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{NOT 2-Diverse}:
+\begin{center}
+\begin{tabular}{cc|c|l}
+\toprule
+Age & Zipcode & Disease & Distinct values \\
+\midrule
+\rowcolor{accent!20} 20-30 & 123** & HIV & \multirow{2}{*}{\{HIV\} = 1 \texttimes} \\
+\rowcolor{accent!20} 20-30 & 123** & HIV & \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+% =============================================================================
+\section{T-Closeness}
+
+\begin{formulabox}[T-Closeness - Ορισμός]
+\textbf{T-CLOSENESS}: Η κατανομή του sensitive attribute σε κάθε equivalence class πρέπει να είναι "κοντά" στη συνολική κατανομή (distance $\leq t$).
+
+\textbf{Distance}: Earth Mover's Distance (EMD)
+\end{formulabox}
+
+\begin{warningbox}[Γιατί χρειάζεται - Skewness Attack]
+\textbf{Overall distribution}: 99\% "Healthy", 1\% "Disease"
+
+\textbf{Equivalence class}: 50\% "Healthy", 50\% "Disease"
+
+L=2 satisfied, \textbf{BUT}: αν κάποιος είναι στο class, η πιθανότητα νόσου είναι \important{50\% αντί για 1\%!}
+\end{warningbox}
+
+% =============================================================================
+\section{Σύγκριση Μέτρων}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=3.5cm,
+            minimum height=1.2cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Measure & Protects against & Weakness \\
+        K-Anonymity & Re-identification & Homogeneity attack \\
+        L-Diversity & Homogeneity & Skewness attack \\
+        T-Closeness & Distribution leakage & Complex to implement \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Συχνά Λάθη}
+
+\begin{warningbox}[Κοινά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{K-Anonymity}:
+    \begin{itemize}
+        \item[$\times$] k-anonymity προστατεύει πλήρως
+        \item[\checkmark] Προστατεύει μόνο από re-identification μέσω QIs
+    \end{itemize}
+
+    \item \textbf{QI Definition}:
+    \begin{itemize}
+        \item[$\times$] Age μόνο του είναι identifier
+        \item[\checkmark] Age + Zipcode + Gender ΜΑΖΙ = quasi-identifier
+    \end{itemize}
+
+    \item \textbf{L-Diversity}:
+    \begin{itemize}
+        \item[$\times$] L=3 σημαίνει ακριβώς 3 values
+        \item[\checkmark] L=3 σημαίνει ΤΟΥΛΑΧΙΣΤΟΝ 3 distinct values
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Σύνοψη - Key Points}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=9cm] (main) at (0,0) {};
+
+    % Attribute Types
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Attribute Types};
+    \node[anchor=north west, align=left, font=\small] at ([xshift=10pt, yshift=-30pt]main.north west) {
+        \textbf{Explicit Identifiers} $\to$ REMOVE (Name, SSN)\\
+        \textbf{Quasi-Identifiers} $\to$ GENERALIZE (Age, Zipcode)\\
+        \textbf{Sensitive} $\to$ PROTECT (Disease, Salary)
+    };
+
+    % Privacy Measures
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=12cm, minimum height=4.5cm]
+        at (0,-1.5) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (0,0.7) {Privacy Measures (ΑΠΟΜΝΗΜΟΝΕΥΣΕ!)};
+
+    \node[align=left, font=\small] at (0,-1.5) {
+        \textbf{K-ANONYMITY}:\\
+        Every equivalence class has $\geq k$ records\\
+        Weakness: Homogeneity attack\\[0.8em]
+        \textbf{L-DIVERSITY}:\\
+        Every equivalence class has $\geq L$ distinct sensitive values\\
+        Weakness: Skewness attack\\[0.8em]
+        \textbf{T-CLOSENESS}:\\
+        Distribution in class $\approx$ overall distribution (distance $\leq t$)
+    };
+
+    % Techniques box
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6cm, minimum height=1.5cm]
+        at (0,-4) {};
+    \node[align=center, font=\small] at (0,-4) {
+        \textbf{Techniques}\\
+        Generalization: $25 \to 20\text{-}30$ | Suppression: $25 \to *$
+    };
+\end{tikzpicture}
+\end{center}

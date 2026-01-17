@@ -1,0 +1,385 @@
+% =============================================================================
+% Chapter: Clustering - DBSCAN & K-means
+% =============================================================================
+
+\chapter{Clustering: DBSCAN \& K-means}
+
+\section{Εισαγωγή}
+
+\keyword{Clustering} είναι unsupervised learning που ομαδοποιεί δεδομένα σε clusters χωρίς προκαθορισμένες κατηγορίες.
+
+\subsection{Τύποι Clustering}
+
+\begin{center}
+\begin{tikzpicture}
+    % Partitional
+    \node[draw=secondary, fill=secondary!20, rounded corners=8pt,
+          minimum width=4cm, minimum height=2.5cm] (part) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (part.north) {Partitional};
+    \node[anchor=center, align=center, font=\small] at (part.center) {
+        Διαμερίζει σε $k$ clusters\\[3pt]
+        \textit{π.χ. K-means}
+    };
+
+    % Density-based
+    \node[draw=success, fill=success!20, rounded corners=8pt,
+          minimum width=4cm, minimum height=2.5cm] (dens) at (5.5,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (dens.north) {Density-based};
+    \node[anchor=center, align=center, font=\small] at (dens.center) {
+        Clusters με βάση\\πυκνότητα\\[3pt]
+        \textit{π.χ. DBSCAN}
+    };
+
+    % Hierarchical
+    \node[draw=accent, fill=accent!20, rounded corners=8pt,
+          minimum width=4cm, minimum height=2.5cm] (hier) at (11,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (hier.north) {Hierarchical};
+    \node[anchor=center, align=center, font=\small] at (hier.center) {
+        Ιεραρχία clusters\\[3pt]
+        \textit{π.χ. Agglomerative}
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{K-means Algorithm}
+
+\subsection{Βασική Ιδέα}
+
+Διαμερίζει $n$ σημεία σε \keyword{k clusters} ελαχιστοποιώντας το \keyword{within-cluster variance}.
+
+\begin{formulabox}[K-means Objective]
+\begin{equation}
+\text{Minimize} \quad J = \sum_{k=1}^{K} \sum_{x \in C_k} ||x - \mu_k||^2
+\end{equation}
+
+όπου $\mu_k$ = centroid του cluster $k$, $C_k$ = σύνολο σημείων στο cluster $k$
+\end{formulabox}
+
+\subsection{Αλγόριθμος K-means}
+
+\begin{center}
+\begin{tikzpicture}[node distance=0.8cm]
+    % Start
+    \node[startstop] (start) {Start};
+
+    % Initialize
+    \node[process, below=of start] (init) {1. Initialize k centroids};
+
+    % Assignment
+    \node[process, below=of init] (assign) {2. Assign points to nearest centroid};
+
+    % Update
+    \node[process, below=of assign] (update) {3. Update centroids = mean};
+
+    % Decision
+    \node[decision, below=of update] (converge) {Converged?};
+
+    % End
+    \node[startstop, below=of converge, yshift=-0.5cm] (end) {End};
+
+    % Arrows
+    \draw[arrow] (start) -- (init);
+    \draw[arrow] (init) -- (assign);
+    \draw[arrow] (assign) -- (update);
+    \draw[arrow] (update) -- (converge);
+    \draw[arrow] (converge) -- node[right] {Yes} (end);
+    \draw[arrow] (converge.west) -- ++(-1.5,0) |- node[pos=0.25, left] {No} (assign.west);
+\end{tikzpicture}
+\end{center}
+
+\begin{formulabox}[Centroid Update]
+\begin{equation}
+\mu_k = \frac{1}{n_k} \sum_{x_i \in C_k} x_i
+\end{equation}
+
+Για 2D: $\mu_k = \left(\frac{\sum x_i}{n_k}, \frac{\sum y_i}{n_k}\right)$
+\end{formulabox}
+
+\subsection{Visual Example}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+    % Grid
+    \draw[help lines, gray!30] (0,0) grid (10,8);
+    \draw[->] (0,0) -- (10.5,0) node[right] {$x$};
+    \draw[->] (0,0) -- (0,8.5) node[above] {$y$};
+
+    % Cluster 1 points
+    \foreach \x/\y in {1/1, 1.5/2, 2/1.5, 2.5/2.5, 1.8/1.2} {
+        \fill[secondary] (\x,\y) circle (4pt);
+    }
+
+    % Cluster 2 points
+    \foreach \x/\y in {7/6, 7.5/7, 8/6.5, 8.5/7.5, 7.8/6.2} {
+        \fill[success] (\x,\y) circle (4pt);
+    }
+
+    % Centroids
+    \fill[secondary, star, star points=5, inner sep=3pt] (1.76,1.64) {};
+    \fill[success, star, star points=5, inner sep=3pt] (7.76,6.64) {};
+
+    % Labels
+    \node[secondary, font=\small\bfseries] at (2.5,0.5) {$C_1$};
+    \node[success, font=\small\bfseries] at (8.5,5.5) {$C_2$};
+
+    % Legend
+    \node[anchor=north west] at (0.5,8) {
+        \begin{tabular}{cl}
+            {\color{secondary}●} & Cluster 1 \\
+            {\color{success}●} & Cluster 2 \\
+            {\color{secondary}★} & Centroid
+        \end{tabular}
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{DBSCAN Algorithm}
+
+\subsection{Βασική Ιδέα}
+
+Βρίσκει clusters ως \keyword{περιοχές υψηλής πυκνότητας} διαχωρισμένες από περιοχές χαμηλής πυκνότητας.
+
+\begin{formulabox}[DBSCAN Parameters]
+\begin{itemize}
+    \item $\varepsilon$ (\textbf{Eps}): Ακτίνα γειτονιάς (radius)
+    \item \textbf{MinPts}: Ελάχιστα σημεία για να είναι ``πυκνή'' περιοχή
+\end{itemize}
+\end{formulabox}
+
+\subsection{Ταξινόμηση Σημείων}
+
+\begin{center}
+\begin{tikzpicture}
+    % Core point
+    \node[draw=success, fill=success!20, rounded corners=5pt,
+          minimum width=4.5cm, minimum height=3cm] (core) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (core.north) {CORE POINT};
+
+    \begin{scope}[shift={(0,-0.3)}]
+        \fill[success!70] (0,0) circle (6pt);
+        \foreach \angle in {45, 90, 135, 180, 225, 270, 315, 360} {
+            \fill[success!40] ({cos(\angle)*0.6}, {sin(\angle)*0.6}) circle (3pt);
+        }
+        \draw[dashed, success] (0,0) circle (0.8);
+    \end{scope}
+    \node[anchor=south, font=\scriptsize] at (core.south) {$|N(p)| \geq$ MinPts};
+
+    % Border point
+    \node[draw=warning, fill=warning!20, rounded corners=5pt,
+          minimum width=4.5cm, minimum height=3cm] (border) at (5.5,0) {};
+    \node[anchor=north, font=\bfseries\color{warning}] at (border.north) {BORDER POINT};
+
+    \begin{scope}[shift={(5.5,-0.3)}]
+        \fill[warning!70] (0,0) circle (6pt);
+        \fill[warning!40] (0.4, 0.3) circle (3pt);
+        \fill[success!70] (-0.6, 0) circle (6pt);
+        \draw[dashed, warning] (0,0) circle (0.8);
+        \draw[dashed, success] (-0.6,0) circle (0.8);
+    \end{scope}
+    \node[anchor=south, font=\scriptsize, align=center] at (border.south) {$|N(p)| <$ MinPts\\near core};
+
+    % Noise point
+    \node[draw=accent, fill=accent!20, rounded corners=5pt,
+          minimum width=4.5cm, minimum height=3cm] (noise) at (11,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (noise.north) {NOISE POINT};
+
+    \begin{scope}[shift={(11,-0.3)}]
+        \fill[accent!70] (0,0) circle (6pt);
+        \draw[dashed, accent] (0,0) circle (0.8);
+    \end{scope}
+    \node[anchor=south, font=\scriptsize] at (noise.south) {Neither core nor border};
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}[Σημαντικό!]
+Η γειτονιά $N(p)$ \textbf{ΠΕΡΙΛΑΜΒΑΝΕΙ} το ίδιο το σημείο $p$!
+
+Αν MinPts = 3 και ένα σημείο έχει 2 γείτονες (εκτός εαυτού), τότε $|N(p)| = 3$ → \textbf{Core}!
+\end{warningbox}
+
+\subsection{DBSCAN Algorithm}
+
+\begin{algorithmbox}[DBSCAN]
+\begin{lstlisting}[language=pseudo]
+function DBSCAN(D, eps, MinPts):
+    Mark all points as UNVISITED
+
+    for each point p in D:
+        if p is VISITED: continue
+        Mark p as VISITED
+        N = eps-neighborhood of p
+
+        if |N| < MinPts:
+            Mark p as NOISE
+        else:
+            Create new cluster C
+            ExpandCluster(p, N, C, eps, MinPts)
+
+function ExpandCluster(p, N, C, eps, MinPts):
+    Add p to C
+    for each q in N:
+        if q is UNVISITED:
+            Mark q as VISITED
+            N' = eps-neighborhood of q
+            if |N'| >= MinPts:
+                N = N union N'
+        if q not in any cluster:
+            Add q to C
+\end{lstlisting}
+\end{algorithmbox}
+
+\subsection{Worked Example}
+
+\begin{examplebox}[DBSCAN με $\varepsilon=2$, MinPts=3]
+Points: A(0,0), B(1,0), C(0,1), D(1,1), E(5,5), F(6,5), G(10,10)
+\end{examplebox}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.5]
+    % Grid
+    \draw[help lines, gray!20] (0,0) grid (12,12);
+    \draw[->] (0,0) -- (12.5,0) node[right] {$x$};
+    \draw[->] (0,0) -- (0,12.5) node[above] {$y$};
+
+    % Cluster 1
+    \draw[secondary!30, fill=secondary!10, rounded corners=10pt]
+        (-0.5,-0.5) rectangle (2,2);
+    \foreach \name/\x/\y in {A/0/0, B/1/0, C/0/1, D/1/1} {
+        \fill[secondary] (\x,\y) circle (6pt);
+        \node[anchor=south west, font=\scriptsize\bfseries] at (\x+0.1,\y+0.1) {\name};
+    }
+    \node[secondary, font=\small\bfseries] at (0.5,-1) {Cluster 1};
+
+    % Cluster 2
+    \draw[success!30, fill=success!10, rounded corners=10pt]
+        (4.5,4.5) rectangle (7,6);
+    \foreach \name/\x/\y in {E/5/5, F/6/5} {
+        \fill[success] (\x,\y) circle (6pt);
+        \node[anchor=south west, font=\scriptsize\bfseries] at (\x+0.1,\y+0.1) {\name};
+    }
+    \node[success, font=\small\bfseries] at (5.5,4) {Cluster 2};
+
+    % Noise
+    \fill[accent] (10,10) circle (6pt);
+    \node[anchor=south west, font=\scriptsize\bfseries, accent] at (10.1,10.1) {G};
+    \node[accent, font=\small\bfseries] at (10,9) {Noise};
+
+    % Legend
+    \node[anchor=north west, align=left, font=\small] at (8,3) {
+        \begin{tabular}{cl}
+            {\color{secondary}●} & Core \\
+            {\color{success}●} & Core \\
+            {\color{accent}●} & Noise
+        \end{tabular}
+    };
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Point} & \textbf{Neighbors} & $|N(p)|$ & \textbf{Type} & \textbf{Cluster} \\
+\midrule
+A & A, B, C, D & 4 & Core & 1 \\
+B & A, B, C, D & 4 & Core & 1 \\
+C & A, B, C, D & 4 & Core & 1 \\
+D & A, B, C, D & 4 & Core & 1 \\
+E & E, F & 2 & Border/Noise & 2 \\
+F & E, F & 2 & Border/Noise & 2 \\
+G & G & 1 & Noise & - \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{Σύγκριση K-means vs DBSCAN}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary!50,
+            minimum width=3.2cm,
+            minimum height=0.9cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=light-gray, font=\bfseries\small}},
+        row 1/.style={nodes={fill=ntua-blue!20, font=\bfseries\small}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+                        & K-means & DBSCAN \\
+        Parameters      & $k$ (clusters) & $\varepsilon$, MinPts \\
+        Shape           & Spherical & Arbitrary \\
+        Outliers        & Problematic & Detected \\
+        \# Clusters     & Fixed & Automatic \\
+        Initialization  & Sensitive & Not needed \\
+        Complexity      & $O(nki)$ & $O(n^2)$ \\
+    };
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}
+    % K-means clusters (spherical)
+    \begin{scope}[shift={(0,0)}]
+        \node[font=\bfseries, secondary] at (2,3.5) {K-means};
+        \draw[secondary, fill=secondary!10] (1,1.5) circle (1);
+        \draw[secondary, fill=secondary!10] (3,2) circle (0.8);
+        \foreach \x/\y in {0.6/1.2, 1.2/1.8, 1/1.5, 0.8/1.1, 1.4/1.6} {
+            \fill[secondary!70] (\x,\y) circle (2pt);
+        }
+        \foreach \x/\y in {2.7/2.2, 3.2/1.8, 3/2, 2.8/1.9, 3.3/2.1} {
+            \fill[secondary!70] (\x,\y) circle (2pt);
+        }
+    \end{scope}
+
+    % DBSCAN clusters (arbitrary shape)
+    \begin{scope}[shift={(6,0)}]
+        \node[font=\bfseries, success] at (2,3.5) {DBSCAN};
+        \draw[success, fill=success!10, rounded corners=5pt]
+            plot[smooth cycle] coordinates {(0.5,0.8) (1.5,0.5) (2.5,1) (2.8,2) (2,2.5) (1,2.2) (0.3,1.5)};
+        \foreach \x/\y in {0.8/1.2, 1.5/1, 2/1.5, 2.3/2, 1.5/2, 1/1.8, 1.8/1.2} {
+            \fill[success!70] (\x,\y) circle (2pt);
+        }
+        % Noise point
+        \fill[accent] (3.5,0.5) circle (2pt);
+        \node[accent, font=\scriptsize] at (3.5,0.2) {noise};
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Σύνοψη - Key Points}
+
+\begin{center}
+\begin{tikzpicture}
+    % K-means summary
+    \node[draw=secondary, fill=secondary!10, rounded corners=10pt,
+          minimum width=6.5cm, minimum height=4cm] (kmeans) at (0,0) {};
+    \node[anchor=north, font=\bfseries\large\color{secondary}] at (kmeans.north) {K-means};
+    \node[anchor=center, align=left, font=\small] at (kmeans.center) {
+        1. Initialize $k$ centroids\\[3pt]
+        2. Assign points to nearest\\[3pt]
+        3. Update: $\mu_k = \frac{1}{n_k}\sum x_i$\\[3pt]
+        4. Repeat until converge\\[8pt]
+        \textcolor{accent}{Weakness:} Needs $k$, spherical only
+    };
+
+    % DBSCAN summary
+    \node[draw=success, fill=success!10, rounded corners=10pt,
+          minimum width=6.5cm, minimum height=4cm] (dbscan) at (8,0) {};
+    \node[anchor=north, font=\bfseries\large\color{success}] at (dbscan.north) {DBSCAN};
+    \node[anchor=center, align=left, font=\small] at (dbscan.center) {
+        \textbf{Core:} $|N(p)| \geq$ MinPts\\[3pt]
+        \textbf{Border:} Near core, $|N(p)| <$ MinPts\\[3pt]
+        \textbf{Noise:} Neither\\[8pt]
+        \textcolor{success}{Strength:} Arbitrary shapes,\\
+        finds outliers, auto \# clusters
+    };
+\end{tikzpicture}
+\end{center}

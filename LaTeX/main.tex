@@ -1,0 +1,121 @@
+% =============================================================================
+% Data Mining Study Guide - Main Document
+% NTUA - School of Electrical and Computer Engineering
+% XeLaTeX Compilation Required
+% =============================================================================
+
+\input{preamble}
+
+\begin{document}
+
+% =============================================================================
+% TITLE PAGE
+% =============================================================================
+\begin{titlepage}
+\centering
+
+\vspace*{2cm}
+
+% NTUA Logo placeholder
+\begin{tikzpicture}
+    \node[draw=ntua-blue, line width=2pt, rounded corners=10pt,
+          minimum width=4cm, minimum height=4cm, fill=white] (logo) {};
+    \node at (logo.center) {\textbf{\Huge\color{ntua-blue} NTUA}};
+\end{tikzpicture}
+
+\vspace{1.5cm}
+
+{\Huge\bfseries\color{ntua-blue} Data Mining}\\[0.5cm]
+{\LARGE\bfseries\color{primary} Πλήρης Οδηγός Μελέτης}
+
+\vspace{1cm}
+
+{\large\color{secondary} Εθνικό Μετσόβιο Πολυτεχνείο\\
+Σχολή Ηλεκτρολόγων Μηχανικών και Μηχανικών Υπολογιστών}
+
+\vspace{2cm}
+
+\begin{tikzpicture}
+    % Decorative data mining visualization
+    \foreach \i in {0,1,2,3,4,5} {
+        \fill[secondary!\i 0!info] ({cos(\i*60)*2}, {sin(\i*60)*2}) circle (0.3);
+        \draw[arrow, secondary] (0,0) -- ({cos(\i*60)*1.7}, {sin(\i*60)*1.7});
+    }
+    \fill[ntua-blue] (0,0) circle (0.5);
+    \node[white, font=\bfseries] at (0,0) {DM};
+\end{tikzpicture}
+
+\vfill
+
+{\large Θέματα που καλύπτονται:}
+
+\vspace{0.5cm}
+
+\begin{tabular}{ccc}
+\textcolor{secondary}{●} Decision Trees &
+\textcolor{success}{●} Clustering &
+\textcolor{info}{●} Association Rules \\[5pt]
+\textcolor{accent}{●} Classification Metrics &
+\textcolor{warning}{●} DTW &
+\textcolor{secondary}{●} Bayesian Networks \\[5pt]
+\textcolor{success}{●} Privacy &
+\textcolor{info}{●} TF-IDF &
+\textcolor{accent}{●} OLAP \\
+\end{tabular}
+
+\vspace{1.5cm}
+
+{\large\today}
+
+\end{titlepage}
+
+% =============================================================================
+% FRONT MATTER
+% =============================================================================
+\frontmatter
+\tableofcontents
+\newpage
+
+% =============================================================================
+% MAIN MATTER
+% =============================================================================
+\mainmatter
+
+% Include chapters
+\include{chapters/01_decision_trees}
+\include{chapters/02_clustering}
+\include{chapters/03_association_rules}
+\include{chapters/04_dtw_similarity}
+\include{chapters/05_classification_metrics}
+\include{chapters/06_bayesian_networks}
+\include{chapters/07_privacy}
+\include{chapters/08_tfidf}
+\include{chapters/09_formulas_cheatsheet}
+
+% =============================================================================
+% BACK MATTER
+% =============================================================================
+\backmatter
+
+\chapter*{Σύνοψη Τύπων - Quick Reference}
+\addcontentsline{toc}{chapter}{Σύνοψη Τύπων}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+    % Formula summary cards
+    \foreach \y/\title/\formula in {
+        0/{Entropy}/{$H(S) = -\sum p_i \log_2(p_i)$},
+        -2.5/{Info Gain}/{$IG = H(S) - \sum \frac{|S_v|}{|S|} H(S_v)$},
+        -5/{Gini}/{$Gini(S) = 1 - \sum p_i^2$},
+        -7.5/{Support}/{$Sup(X) = |T \text{ with } X| / |T|$},
+        -10/{Confidence}/{$Conf(X \to Y) = Sup(X \cup Y) / Sup(X)$}
+    } {
+        \node[draw=secondary, fill=box-blue, rounded corners=5pt,
+              minimum width=10cm, minimum height=1.8cm] at (0,\y) {};
+        \node[anchor=west, font=\bfseries\color{primary}] at (-4.5,\y+0.4) {\title};
+        \node[anchor=west] at (-4.5,\y-0.3) {\formula};
+    }
+\end{tikzpicture}
+\end{center}
+
+\end{document}

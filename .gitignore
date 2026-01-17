@@ -1,0 +1,16 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.pdf
+
+# IDE/Agent folders
+.claude/
+.gemini/
+
+# OS files
+.DS_Store

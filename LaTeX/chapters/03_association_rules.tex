@@ -1,0 +1,571 @@
+% =============================================================================
+% Chapter: Association Rules & Apriori
+% =============================================================================
+
+\chapter{Association Rules \& Apriori}
+
+\section{Εισαγωγή}
+
+\keyword{Association Rule Mining} ανακαλύπτει ενδιαφέρουσες σχέσεις μεταξύ items σε μεγάλα datasets. Κλασικό παράδειγμα: \keyword{Market Basket Analysis} (ποια προϊόντα αγοράζονται μαζί).
+
+\begin{examplebox}[Market Basket Analysis]
+\begin{center}
+\begin{tikzpicture}
+    % Shopping basket visualization
+    \node[draw=primary, fill=box-yellow, rounded corners=5pt, minimum width=8cm, minimum height=2cm] (basket) {};
+    \node[anchor=north, font=\bfseries] at (basket.north) {Transaction};
+
+    % Items
+    \node[draw=success, fill=success!20, rounded corners=3pt, minimum width=1.5cm] at (-2.5,0) {Bread};
+    \node[draw=secondary, fill=secondary!20, rounded corners=3pt, minimum width=1.5cm] at (-0.5,0) {Butter};
+    \node[draw=info, fill=info!20, rounded corners=3pt, minimum width=1.5cm] at (1.5,0) {Milk};
+
+    % Arrow and rule
+    \draw[->, >=Stealth, thick] (5,0) -- (7,0);
+    \node[anchor=west, align=left] at (7.2,0) {
+        \textbf{Rule}: \{Bread, Butter\} $\to$ \{Milk\}\\
+        {\small "Αν αγοράσεις ψωμί και βούτυρο,}\\
+        {\small πιθανώς θα αγοράσεις και γάλα"}
+    };
+\end{tikzpicture}
+\end{center}
+\end{examplebox}
+
+% =============================================================================
+\section{Βασικές Έννοιες \& Ορισμοί}
+
+\subsection{Itemset}
+
+\begin{definitionbox}[Itemset]
+\textbf{Itemset}: Σύνολο από items (π.χ. \{Bread, Milk, Butter\})
+
+\textbf{k-itemset}: Itemset με k items
+\begin{itemize}
+    \item 1-itemset: \{Bread\}
+    \item 2-itemset: \{Bread, Milk\}
+    \item 3-itemset: \{Bread, Milk, Butter\}
+\end{itemize}
+\end{definitionbox}
+
+\subsection{Transaction Database}
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{TID} & \textbf{Items} \\
+\midrule
+T1 & Bread, Milk \\
+T2 & Bread, Butter, Eggs \\
+T3 & Milk, Butter, Eggs \\
+T4 & Bread, Milk, Butter, Eggs \\
+T5 & Bread, Milk, Butter \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+Total Transactions: 5
+\end{center}
+
+% =============================================================================
+\section{Μέτρα Αξιολόγησης}
+
+\subsection{Support}
+
+\begin{formulabox}[Support]
+\begin{equation}
+\text{Support}(X) = \frac{|\{T : X \subseteq T\}|}{|T|} = \frac{\text{Transactions που περιέχουν } X}{\text{Συνολικές Transactions}}
+\end{equation}
+
+"Πόσο συχνά εμφανίζεται το itemset X στις transactions"
+\end{formulabox}
+
+\begin{examplebox}[Υπολογισμός Support]
+\begin{align*}
+\text{Support}(\{Bread\}) &= 4/5 = 0.80 \quad \text{(T1, T2, T4, T5)} \\
+\text{Support}(\{Milk\}) &= 4/5 = 0.80 \quad \text{(T1, T3, T4, T5)} \\
+\text{Support}(\{Bread, Milk\}) &= 3/5 = 0.60 \quad \text{(T1, T4, T5)} \\
+\text{Support}(\{Bread, Butter\}) &= 3/5 = 0.60 \quad \text{(T2, T4, T5)}
+\end{align*}
+\end{examplebox}
+
+\subsection{Confidence}
+
+\begin{formulabox}[Confidence]
+\begin{equation}
+\text{Confidence}(X \to Y) = \frac{\text{Support}(X \cup Y)}{\text{Support}(X)}
+\end{equation}
+
+"Αν έχω X, πόσο πιθανό να έχω και Y;"
+\end{formulabox}
+
+\begin{examplebox}[Υπολογισμός Confidence]
+\begin{align*}
+\text{Confidence}(\{Bread\} \to \{Milk\}) &= \frac{\text{Support}(\{Bread, Milk\})}{\text{Support}(\{Bread\})} \\
+&= \frac{0.60}{0.80} = 0.75 = 75\%
+\end{align*}
+
+"75\% των transactions με Bread περιέχουν και Milk"
+\end{examplebox}
+
+\subsection{Lift}
+
+\begin{formulabox}[Lift]
+\begin{equation}
+\text{Lift}(X \to Y) = \frac{\text{Confidence}(X \to Y)}{\text{Support}(Y)} = \frac{\text{Support}(X \cup Y)}{\text{Support}(X) \times \text{Support}(Y)}
+\end{equation}
+\end{formulabox}
+
+\begin{center}
+\begin{tikzpicture}
+    % Lift interpretation visualization
+    \node[draw=accent, fill=accent!20, rounded corners=5pt, minimum width=3.5cm, minimum height=1.8cm] (neg) at (0,0) {};
+    \node[anchor=center, align=center] at (neg.center) {\textbf{Lift $<$ 1}\\Αρνητική\\συσχέτιση};
+
+    \node[draw=warning, fill=warning!20, rounded corners=5pt, minimum width=3.5cm, minimum height=1.8cm] (ind) at (5,0) {};
+    \node[anchor=center, align=center] at (ind.center) {\textbf{Lift $=$ 1}\\Ανεξάρτητα\\(τυχαίο)};
+
+    \node[draw=success, fill=success!20, rounded corners=5pt, minimum width=3.5cm, minimum height=1.8cm] (pos) at (10,0) {};
+    \node[anchor=center, align=center] at (pos.center) {\textbf{Lift $>$ 1}\\Θετική\\συσχέτιση};
+
+    % Scale
+    \draw[thick, ->, >=Stealth] (-2,-1.8) -- (12,-1.8);
+    \node at (0,-2.2) {0};
+    \node at (5,-2.2) {1};
+    \node at (10,-2.2) {$\infty$};
+    \node[anchor=north] at (5,-2.5) {\small Lift Value};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Σύνοψη Μέτρων}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=4cm,
+            minimum height=1cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Μέτρο & Τύπος & Ερμηνεία \\
+        Support(X) & $|T \text{ with } X| / |T|$ & Συχνότητα εμφάνισης \\
+        Confidence(X$\to$Y) & $\frac{\text{Sup}(X \cup Y)}{\text{Sup}(X)}$ & Conditional probability \\
+        Lift(X$\to$Y) & $\frac{\text{Conf}(X \to Y)}{\text{Sup}(Y)}$ & Correlation measure \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Apriori Algorithm}
+
+\subsection{Βασική Αρχή: Downward Closure (Apriori Principle)}
+
+\begin{warningbox}[Apriori Principle - ΑΠΟΜΝΗΜΟΝΕΥΣΕ!]
+\begin{center}
+\begin{tikzpicture}
+    % Main principle box
+    \node[draw=accent, fill=box-red, rounded corners=8pt, minimum width=12cm, minimum height=3cm] (principle) {};
+
+    % Text
+    \node[anchor=north, align=center, font=\large] at ([yshift=-0.3cm]principle.north) {
+        \textbf{"Αν ένα itemset είναι INFREQUENT,}\\
+        \textbf{όλα τα SUPERSETS του είναι επίσης infrequent"}
+    };
+
+    \node[anchor=south, align=center, font=\small] at ([yshift=0.3cm]principle.south) {
+        ΑΝΤΙΣΤΡΟΦΑ: "Κάθε subset ενός frequent itemset είναι frequent"
+    };
+\end{tikzpicture}
+\end{center}
+
+\textbf{Γιατί είναι χρήσιμο}: Αποκλείουμε candidates χωρίς να μετρήσουμε support!
+\end{warningbox}
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.5cm,
+    sibling distance=3cm,
+    edge from parent/.style={draw, ->, >=Stealth}
+]
+    % Lattice visualization
+    \node[draw=accent, fill=accent!30, circle, minimum size=1cm] (ab) {\{A,B\}}
+        [grow=down]
+        child {
+            node[draw=accent, fill=accent!20, circle, minimum size=1cm] (abc) {\{A,B,C\}}
+            child {
+                node[draw=accent, fill=accent!10, circle, minimum size=0.8cm] (abcd) {\small\{A,B,C,D\}}
+            }
+        };
+
+    % Labels
+    \node[anchor=west, font=\small, text=accent] at (2,0) {Infrequent};
+    \node[anchor=west, font=\small, text=accent] at (2,-1.5) {$\Rightarrow$ Also Infrequent};
+    \node[anchor=west, font=\small, text=accent] at (2,-3) {$\Rightarrow$ Also Infrequent};
+
+    % Support inequality
+    \node[anchor=north, align=center] at (0,-4.5) {
+        $\text{Support}(\{A,B,C,D\}) \leq \text{Support}(\{A,B,C\}) \leq \text{Support}(\{A,B\})$
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Αλγόριθμος}
+
+\begin{algorithmbox}[Apriori Algorithm]
+\begin{lstlisting}[language=pseudo]
+function APRIORI(D, min_sup):
+    // D = transaction database
+    // min_sup = minimum support threshold
+
+    C1 = all 1-itemsets
+    L1 = {items in C1 with support >= min_sup}
+
+    k = 2
+    while L(k-1) is not empty:
+        // Generate candidates
+        Ck = generate_candidates(L(k-1))
+
+        // Prune using Apriori principle
+        Ck = prune(Ck)  // remove if any (k-1)-subset not in L(k-1)
+
+        // Count support
+        for each transaction t in D:
+            for each candidate c in Ck:
+                if c is subset of t:
+                    count[c]++
+
+        // Filter frequent
+        Lk = {c in Ck : support(c) >= min_sup}
+        k = k + 1
+
+    return L1 union L2 union ... union L(k-1)
+\end{lstlisting}
+\end{algorithmbox}
+
+\subsection{Apriori Flowchart}
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.5cm]
+    % Start
+    \node[startstop] (start) {Start};
+
+    % Scan C1
+    \node[process, below=of start] (c1) {$C_1$ = all 1-itemsets};
+
+    % L1
+    \node[process, below=of c1] (l1) {$L_1$ = frequent 1-itemsets};
+
+    % k=2
+    \node[process, below=of l1] (k2) {k = 2};
+
+    % Check empty
+    \node[decision, below=of k2, aspect=2] (check) {$L_{k-1} = \emptyset$?};
+
+    % Generate Ck
+    \node[process, right=3cm of check] (gen) {Generate $C_k$ from $L_{k-1}$};
+
+    % Prune
+    \node[process, below=of gen] (prune) {Prune $C_k$};
+
+    % Count support
+    \node[process, below=of prune] (count) {Count support of $C_k$};
+
+    % Lk
+    \node[process, below=of count] (lk) {$L_k$ = frequent k-itemsets};
+
+    % k++
+    \node[process, left=3cm of lk] (inc) {k = k + 1};
+
+    % End
+    \node[startstop, below=of check] (end) {Return $\bigcup L_k$};
+
+    % Arrows
+    \draw[arrow] (start) -- (c1);
+    \draw[arrow] (c1) -- (l1);
+    \draw[arrow] (l1) -- (k2);
+    \draw[arrow] (k2) -- (check);
+    \draw[arrow] (check) -- node[above] {No} (gen);
+    \draw[arrow] (gen) -- (prune);
+    \draw[arrow] (prune) -- (count);
+    \draw[arrow] (count) -- (lk);
+    \draw[arrow] (lk) -- (inc);
+    \draw[arrow] (inc) |- (check);
+    \draw[arrow] (check) -- node[right] {Yes} (end);
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Worked Example (ΤΥΠΙΚΟ ΘΕΜΑ ΕΞΕΤΑΣΕΩΝ!)}
+
+\begin{examplebox}[Apriori - Πλήρες Παράδειγμα]
+\textbf{Transaction Database:}
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{TID} & \textbf{Items} \\
+\midrule
+T1 & A, C, D \\
+T2 & B, C, E \\
+T3 & A, B, C, E \\
+T4 & B, E \\
+T5 & A, B, C, E \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+$\text{min\_sup} = 2/5 = 0.40$ (τουλάχιστον 2 transactions)
+\end{center}
+\end{examplebox}
+
+\subsection{Βήμα 1: $C_1 \to L_1$}
+
+\begin{center}
+\begin{tikzpicture}
+    % C1 box
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5cm, minimum height=3cm] (c1) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (c1.north) {$C_1$ (Candidates)};
+    \node[anchor=center, align=left, font=\small] at (c1.center) {
+        \{A\}: 3 $\to$ 0.60 $\geq$ 0.40 \textcolor{success}{\checkmark}\\
+        \{B\}: 4 $\to$ 0.80 $\geq$ 0.40 \textcolor{success}{\checkmark}\\
+        \{C\}: 4 $\to$ 0.80 $\geq$ 0.40 \textcolor{success}{\checkmark}\\
+        \{D\}: 1 $\to$ 0.20 $<$ 0.40 \textcolor{accent}{\texttimes}\\
+        \{E\}: 4 $\to$ 0.80 $\geq$ 0.40 \textcolor{success}{\checkmark}
+    };
+
+    % Arrow
+    \draw[->, >=Stealth, thick] (3,0) -- (5,0) node[midway, above] {Filter};
+
+    % L1 box
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4cm, minimum height=2cm] (l1) at (7.5,0) {};
+    \node[anchor=north, font=\bfseries] at (l1.north) {$L_1$ (Frequent)};
+    \node[anchor=center, align=center] at (l1.center) {
+        \{A\}, \{B\}, \{C\}, \{E\}
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Βήμα 2: Generate $C_2$ from $L_1$}
+
+\begin{center}
+\begin{tikzpicture}
+    % C2 box
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6cm, minimum height=4cm] (c2) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (c2.north) {$C_2$ (2-combinations of $L_1$)};
+    \node[anchor=center, align=left, font=\small] at (c2.center) {
+        \{A,B\}: 2 $\to$ 0.40 \textcolor{success}{\checkmark}\\
+        \{A,C\}: 3 $\to$ 0.60 \textcolor{success}{\checkmark}\\
+        \{A,E\}: 2 $\to$ 0.40 \textcolor{success}{\checkmark}\\
+        \{B,C\}: 3 $\to$ 0.60 \textcolor{success}{\checkmark}\\
+        \{B,E\}: 4 $\to$ 0.80 \textcolor{success}{\checkmark}\\
+        \{C,E\}: 3 $\to$ 0.60 \textcolor{success}{\checkmark}
+    };
+
+    % Arrow
+    \draw[->, >=Stealth, thick] (4,0) -- (6,0) node[midway, above] {All pass!};
+
+    % L2 box
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=5.5cm, minimum height=2.5cm] (l2) at (9,0) {};
+    \node[anchor=north, font=\bfseries] at (l2.north) {$L_2$ (Frequent)};
+    \node[anchor=center, align=center, font=\small] at (l2.center) {
+        \{A,B\}, \{A,C\}, \{A,E\}\\
+        \{B,C\}, \{B,E\}, \{C,E\}
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Βήμα 3: Generate $C_3$ from $L_2$}
+
+\textbf{Join Step:}
+\begin{align*}
+\{A,B\} \cup \{A,C\} &= \{A,B,C\} \\
+\{A,B\} \cup \{A,E\} &= \{A,B,E\} \\
+\{A,C\} \cup \{A,E\} &= \{A,C,E\} \\
+\{B,C\} \cup \{B,E\} &= \{B,C,E\}
+\end{align*}
+
+\textbf{Prune Step:}
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Candidate} & \textbf{Subsets in $L_2$?} & \textbf{Status} \\
+\midrule
+\{A,B,C\} & \{A,B\}\checkmark, \{A,C\}\checkmark, \{B,C\}\checkmark & \textcolor{success}{KEEP} \\
+\{A,B,E\} & \{A,B\}\checkmark, \{A,E\}\checkmark, \{B,E\}\checkmark & \textcolor{success}{KEEP} \\
+\{A,C,E\} & \{A,C\}\checkmark, \{A,E\}\checkmark, \{C,E\}\checkmark & \textcolor{success}{KEEP} \\
+\{B,C,E\} & \{B,C\}\checkmark, \{B,E\}\checkmark, \{C,E\}\checkmark & \textcolor{success}{KEEP} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Count Support:}
+\[
+L_3 = \{\{A,B,C\}, \{A,B,E\}, \{A,C,E\}, \{B,C,E\}\}
+\]
+
+\subsection{Βήμα 4: Generate $C_4$ from $L_3$}
+
+Join: $\{A,B,C\} \cup \{A,B,E\} = \{A,B,C,E\}$
+
+Prune: All 3-subsets in $L_3$? \checkmark
+
+Count: \{A,B,C,E\} appears in T3, T5 $\to$ support = 0.40 $\geq$ 0.40 \checkmark
+
+\[
+L_4 = \{\{A,B,C,E\}\}
+\]
+
+\subsection{Τελικό Αποτέλεσμα}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=10pt, minimum width=12cm, minimum height=5cm] (result) {};
+    \node[anchor=north, font=\Large\bfseries\color{ntua-blue}] at (result.north) {Frequent Itemsets};
+
+    \node[anchor=center, align=left] at (result.center) {
+        \textbf{1-itemsets}: \{A\}, \{B\}, \{C\}, \{E\}\\[0.5em]
+        \textbf{2-itemsets}: \{A,B\}, \{A,C\}, \{A,E\}, \{B,C\}, \{B,E\}, \{C,E\}\\[0.5em]
+        \textbf{3-itemsets}: \{A,B,C\}, \{A,B,E\}, \{A,C,E\}, \{B,C,E\}\\[0.5em]
+        \textbf{4-itemsets}: \{A,B,C,E\}
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Rule Generation}
+
+\begin{formulabox}[Από Frequent Itemset σε Rules]
+Για κάθε frequent itemset $L$, για κάθε non-empty subset $S$:
+\begin{itemize}
+    \item Rule: $(L - S) \to S$
+    \item $\text{Confidence} = \text{Support}(L) / \text{Support}(L - S)$
+\end{itemize}
+\end{formulabox}
+
+\begin{examplebox}[Rule Generation]
+Frequent itemset: \{A, B, C\} με support = 0.40
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Rule} & \textbf{Confidence} & \textbf{Pass?} (min\_conf=0.60) \\
+\midrule
+\{A, B\} $\to$ \{C\} & $0.40/0.40 = 1.00$ & \textcolor{success}{\checkmark} \\
+\{A, C\} $\to$ \{B\} & $0.40/0.60 = 0.67$ & \textcolor{success}{\checkmark} \\
+\{B, C\} $\to$ \{A\} & $0.40/0.60 = 0.67$ & \textcolor{success}{\checkmark} \\
+\{A\} $\to$ \{B, C\} & $0.40/0.60 = 0.67$ & \textcolor{success}{\checkmark} \\
+\{B\} $\to$ \{A, C\} & $0.40/0.80 = 0.50$ & \textcolor{accent}{\texttimes} \\
+\{C\} $\to$ \{A, B\} & $0.40/0.80 = 0.50$ & \textcolor{accent}{\texttimes} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{examplebox}
+
+% =============================================================================
+\section{FP-Growth (Overview)}
+
+\begin{center}
+\begin{tikzpicture}
+    % Apriori box
+    \node[draw=accent, fill=accent!20, rounded corners=10pt, minimum width=5.5cm, minimum height=4cm] (apriori) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (apriori.north) {Apriori};
+    \node[anchor=center, align=left, font=\small] at (apriori.center) {
+        \textbf{Μειονεκτήματα:}\\
+        • Πολλαπλά scans βάσης\\
+        • Μεγάλος αριθμός candidates\\
+        • Πολλοί support counts
+    };
+
+    % Arrow
+    \draw[->, >=Stealth, thick, dashed] (3.5,0) -- (5.5,0) node[midway, above] {vs};
+
+    % FP-Growth box
+    \node[draw=success, fill=success!20, rounded corners=10pt, minimum width=5.5cm, minimum height=4cm] (fpg) at (9,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (fpg.north) {FP-Growth};
+    \node[anchor=center, align=left, font=\small] at (fpg.center) {
+        \textbf{Πλεονεκτήματα:}\\
+        • Μόνο 2 database scans\\
+        • Χωρίς candidate generation\\
+        • FP-tree compression
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Συχνά Λάθη}
+
+\begin{warningbox}[Κοινά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{Support Calculation}:
+    \begin{itemize}
+        \item[$\times$] $\text{Support}(\{A,B\}) = \text{Support}(\{A\}) \times \text{Support}(\{B\})$
+        \item[\checkmark] $\text{Support}(\{A,B\}) = |T \text{ containing BOTH A and B}| / |T|$
+    \end{itemize}
+
+    \item \textbf{Confidence Direction}:
+    \begin{itemize}
+        \item[$\times$] $\text{Confidence}(A \to B) = \text{Confidence}(B \to A)$
+        \item[\checkmark] Συνήθως διαφορετικά! Εξαρτάται από Support
+    \end{itemize}
+
+    \item \textbf{Lift Interpretation}:
+    \begin{itemize}
+        \item Υψηλό confidence ΔΕΝ σημαίνει υψηλό lift!
+        \item Lift = 1 σημαίνει ανεξαρτησία
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Σύνοψη - Key Points}
+
+\begin{center}
+\begin{tikzpicture}
+    % Main summary box
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=9cm] (main) at (0,0) {};
+
+    % Formulas section
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Τύποι (ΑΠΟΜΝΗΜΟΝΕΥΣΕ!)};
+
+    \node[anchor=north west, align=left] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \begin{tabular}{ll}
+            \textbf{Support(X)} & $= |T \text{ containing } X| / |T|$ \\[8pt]
+            \textbf{Confidence(X$\to$Y)} & $= \text{Support}(X \cup Y) / \text{Support}(X)$ \\[8pt]
+            \textbf{Lift(X$\to$Y)} & $= \text{Conf}(X \to Y) / \text{Sup}(Y)$ \\[8pt]
+             & $= \text{Sup}(X \cup Y) / (\text{Sup}(X) \times \text{Sup}(Y))$
+        \end{tabular}
+    };
+
+    % Apriori steps
+    \node[anchor=west, align=left] at ([xshift=10pt, yshift=-60pt]main.west) {
+        \textbf{Apriori Steps:}\\
+        1. Find frequent 1-itemsets ($L_1$)\\
+        2. Generate candidates ($C_k$) from $L_{k-1}$\\
+        3. Prune candidates (Apriori principle)\\
+        4. Count support, keep frequent ($L_k$)\\
+        5. Repeat until no more frequent itemsets
+    };
+
+    % Apriori Principle
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=6cm, minimum height=1.5cm]
+        at ([xshift=-3.5cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=-3.5cm, yshift=1.5cm]main.south) {
+        \textbf{Apriori Principle:}\\
+        "Subsets of frequent itemsets are frequent"
+    };
+
+    % Lift box
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4.5cm, minimum height=1.5cm]
+        at ([xshift=3.5cm, yshift=1.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=3.5cm, yshift=1.5cm]main.south) {
+        \textbf{Lift:} 1 = Independent\\
+        $>$1 = Positive, $<$1 = Negative
+    };
+\end{tikzpicture}
+\end{center}

@@ -1,0 +1,398 @@
+% =============================================================================
+% Data Mining Study Guide - Preamble
+% XeLaTeX Document
+% =============================================================================
+
+\documentclass[11pt,a4paper,twoside]{book}
+
+% =============================================================================
+% FONTS AND ENCODING
+% =============================================================================
+\usepackage{fontspec}
+\usepackage{xunicode}
+\usepackage{xltxtra}
+\usepackage{polyglossia}
+\setdefaultlanguage{greek}
+\setotherlanguage{english}
+
+% Set fonts
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont{DejaVu Sans Mono}
+
+% =============================================================================
+% PAGE LAYOUT
+% =============================================================================
+\usepackage[
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=14pt
+]{geometry}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\leftmark}
+\fancyhead[RO]{\rightmark}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% =============================================================================
+% COLORS
+% =============================================================================
+\usepackage[dvipsnames,svgnames,x11names]{xcolor}
+
+% Define custom colors
+\definecolor{ntua-blue}{RGB}{0, 70, 127}
+\definecolor{primary}{RGB}{52, 73, 94}
+\definecolor{secondary}{RGB}{41, 128, 185}
+\definecolor{accent}{RGB}{231, 76, 60}
+\definecolor{success}{RGB}{39, 174, 96}
+\definecolor{warning}{RGB}{243, 156, 18}
+\definecolor{info}{RGB}{52, 152, 219}
+\definecolor{light-gray}{RGB}{245, 245, 245}
+\definecolor{code-bg}{RGB}{248, 248, 248}
+\definecolor{box-blue}{RGB}{230, 240, 250}
+\definecolor{box-green}{RGB}{230, 250, 230}
+\definecolor{box-red}{RGB}{255, 235, 235}
+\definecolor{box-yellow}{RGB}{255, 250, 230}
+
+% =============================================================================
+% MATH AND SYMBOLS
+% =============================================================================
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{unicode-math}
+
+% =============================================================================
+% GRAPHICS AND DIAGRAMS
+% =============================================================================
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{
+    shapes.geometric,
+    shapes.symbols,
+    shapes.misc,
+    arrows.meta,
+    positioning,
+    calc,
+    fit,
+    backgrounds,
+    decorations.pathreplacing,
+    decorations.markings,
+    matrix,
+    trees,
+    chains,
+    patterns,
+    shadows,
+    mindmap
+}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% =============================================================================
+% TABLES
+% =============================================================================
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{longtable}
+
+% Custom column types
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+% =============================================================================
+% BOXES AND FRAMES
+% =============================================================================
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{breakable,skins,theorems}
+
+% Formula Box
+\newtcolorbox{formulabox}[1][]{
+    enhanced,
+    colback=box-blue,
+    colframe=secondary,
+    fonttitle=\bfseries,
+    title={#1},
+    boxrule=1pt,
+    arc=3pt,
+    left=10pt,
+    right=10pt,
+    top=8pt,
+    bottom=8pt,
+    breakable
+}
+
+% Definition Box
+\newtcolorbox{definitionbox}[1][Ορισμός]{
+    enhanced,
+    colback=light-gray,
+    colframe=primary,
+    fonttitle=\bfseries,
+    title={#1},
+    boxrule=1pt,
+    arc=3pt,
+    breakable
+}
+
+% Example Box
+\newtcolorbox{examplebox}[1][Παράδειγμα]{
+    enhanced,
+    colback=box-green,
+    colframe=success,
+    fonttitle=\bfseries,
+    title={#1},
+    boxrule=1pt,
+    arc=3pt,
+    breakable
+}
+
+% Warning Box
+\newtcolorbox{warningbox}[1][Προσοχή]{
+    enhanced,
+    colback=box-red,
+    colframe=accent,
+    fonttitle=\bfseries,
+    title={\textcolor{accent}{⚠} #1},
+    boxrule=1pt,
+    arc=3pt,
+    breakable
+}
+
+% Info Box
+\newtcolorbox{infobox}[1][Σημείωση]{
+    enhanced,
+    colback=box-yellow,
+    colframe=warning,
+    fonttitle=\bfseries,
+    title={#1},
+    boxrule=1pt,
+    arc=3pt,
+    breakable
+}
+
+% Algorithm Box
+\newtcolorbox{algorithmbox}[1][Αλγόριθμος]{
+    enhanced,
+    colback=code-bg,
+    colframe=primary,
+    fonttitle=\bfseries\ttfamily,
+    title={#1},
+    boxrule=1pt,
+    arc=3pt,
+    left=5pt,
+    right=5pt,
+    breakable
+}
+
+% =============================================================================
+% CODE LISTINGS
+% =============================================================================
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{code-bg},
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{gray},
+    breaklines=true,
+    breakatwhitespace=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=4,
+    showstringspaces=false,
+    keywordstyle=\color{secondary}\bfseries,
+    commentstyle=\color{success}\itshape,
+    stringstyle=\color{accent}
+}
+
+\lstdefinelanguage{pseudo}{
+    keywords={if, else, then, while, do, for, foreach, return, emit, function, end, repeat, until, and, or, not, in, to},
+    sensitive=false,
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/}
+}
+
+% =============================================================================
+% CHAPTER AND SECTION STYLING
+% =============================================================================
+\usepackage{titlesec}
+
+\titleformat{\chapter}[display]
+    {\normalfont\huge\bfseries\color{ntua-blue}}
+    {\chaptertitlename\ \thechapter}
+    {20pt}
+    {\Huge}
+
+\titleformat{\section}
+    {\normalfont\Large\bfseries\color{primary}}
+    {\thesection}
+    {1em}
+    {}
+
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\color{secondary}}
+    {\thesubsection}
+    {1em}
+    {}
+
+\titleformat{\subsubsection}
+    {\normalfont\normalsize\bfseries}
+    {\thesubsubsection}
+    {1em}
+    {}
+
+% =============================================================================
+% TABLE OF CONTENTS
+% =============================================================================
+\usepackage{tocloft}
+\renewcommand{\cftchapfont}{\bfseries\color{ntua-blue}}
+\renewcommand{\cftsecfont}{\color{primary}}
+
+% =============================================================================
+% HYPERLINKS
+% =============================================================================
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=ntua-blue,
+    filecolor=secondary,
+    urlcolor=info,
+    citecolor=success,
+    pdftitle={Data Mining Study Guide - NTUA},
+    pdfauthor={},
+    pdfsubject={Data Mining},
+    pdfkeywords={Data Mining, OLAP, Machine Learning, Clustering, Classification}
+}
+
+% =============================================================================
+% MISCELLANEOUS
+% =============================================================================
+\usepackage{enumitem}
+\setlist{itemsep=2pt,parsep=2pt}
+
+\usepackage{float}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+
+% Theorem environments
+\theoremstyle{definition}
+\newtheorem{theorem}{Θεώρημα}[chapter]
+\newtheorem{lemma}[theorem]{Λήμμα}
+\newtheorem{corollary}[theorem]{Πόρισμα}
+\newtheorem{definition}[theorem]{Ορισμός}
+\newtheorem{example}[theorem]{Παράδειγμα}
+\newtheorem{remark}[theorem]{Παρατήρηση}
+
+% =============================================================================
+% CUSTOM COMMANDS
+% =============================================================================
+
+% Math shortcuts
+\newcommand{\prob}[1]{P\left(#1\right)}
+\newcommand{\cprob}[2]{P\left(#1 \mid #2\right)}
+\newcommand{\entropy}[1]{H\left(#1\right)}
+\newcommand{\ig}[2]{\text{IG}\left(#1, #2\right)}
+\newcommand{\gini}[1]{\text{Gini}\left(#1\right)}
+\newcommand{\supp}[1]{\text{Support}\left(#1\right)}
+\newcommand{\conf}[1]{\text{Confidence}\left(#1\right)}
+\newcommand{\lift}[1]{\text{Lift}\left(#1\right)}
+
+% Text shortcuts
+\newcommand{\keyword}[1]{\textbf{\textcolor{secondary}{#1}}}
+\newcommand{\important}[1]{\textbf{\textcolor{accent}{#1}}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+% =============================================================================
+% TikZ STYLES
+% =============================================================================
+\tikzset{
+    % Node styles
+    process/.style={
+        rectangle,
+        rounded corners=3pt,
+        draw=primary,
+        fill=box-blue,
+        text=primary,
+        minimum width=2.5cm,
+        minimum height=0.8cm,
+        font=\small
+    },
+    decision/.style={
+        diamond,
+        draw=secondary,
+        fill=box-yellow,
+        text=primary,
+        aspect=2,
+        font=\small
+    },
+    startstop/.style={
+        rectangle,
+        rounded corners=10pt,
+        draw=success,
+        fill=box-green,
+        text=primary,
+        minimum width=2cm,
+        minimum height=0.7cm,
+        font=\small
+    },
+    io/.style={
+        trapezium,
+        trapezium left angle=70,
+        trapezium right angle=110,
+        draw=info,
+        fill=light-gray,
+        text=primary,
+        minimum width=2cm,
+        font=\small
+    },
+    % Arrow styles
+    arrow/.style={
+        ->,
+        >=Stealth,
+        thick,
+        color=primary
+    },
+    doublearrow/.style={
+        <->,
+        >=Stealth,
+        thick,
+        color=secondary
+    },
+    % Tree styles
+    treenode/.style={
+        circle,
+        draw=primary,
+        fill=box-blue,
+        minimum size=0.8cm,
+        font=\small
+    },
+    leafnode/.style={
+        rectangle,
+        rounded corners=2pt,
+        draw=success,
+        fill=box-green,
+        minimum width=1cm,
+        minimum height=0.5cm,
+        font=\small
+    },
+    % Cluster styles
+    cluster/.style={
+        ellipse,
+        draw=#1,
+        fill=#1!20,
+        minimum width=2cm,
+        minimum height=1.5cm
+    },
+    point/.style={
+        circle,
+        fill=#1,
+        inner sep=2pt
+    }
+}

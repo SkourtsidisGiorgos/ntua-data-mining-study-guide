@@ -1,0 +1,385 @@
+% =============================================================================
+% Chapter: Decision Trees & Classification
+% =============================================================================
+
+\chapter{Decision Trees \& Classification}
+
+\section{Εισαγωγή}
+
+Τα \keyword{Decision Trees} είναι supervised learning models που χρησιμοποιούνται για classification και regression. Χτίζουν ένα δέντρο αποφάσεων βασισμένο στα features των δεδομένων.
+
+\subsection{Βασική Δομή}
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=1.8cm,
+    level 1/.style={sibling distance=4cm},
+    level 2/.style={sibling distance=2cm},
+    edge from parent/.style={draw, arrow}
+]
+    \node[treenode, fill=ntua-blue!30, font=\bfseries] {Root}
+        child {
+            node[treenode] {Internal}
+            child {node[leafnode] {Class A}}
+            child {node[leafnode] {Class B}}
+        }
+        child {
+            node[treenode] {Internal}
+            child {node[leafnode] {Class A}}
+        };
+\end{tikzpicture}
+\end{center}
+
+\begin{definitionbox}[Βασικοί Όροι]
+\begin{itemize}
+    \item \textbf{Root Node}: Αρχικός κόμβος (feature με μεγαλύτερη διαχωριστική ικανότητα)
+    \item \textbf{Internal Node}: Ενδιάμεσος κόμβος (test σε κάποιο attribute)
+    \item \textbf{Leaf Node}: Τελικός κόμβος (class label/prediction)
+    \item \textbf{Branch}: Σύνδεση μεταξύ κόμβων (outcome του test)
+\end{itemize}
+\end{definitionbox}
+
+% =============================================================================
+\section{Βασικές Έννοιες \& Τύποι}
+
+\subsection{Entropy (Εντροπία)}
+
+Μετράει την \keyword{αβεβαιότητα} ή \keyword{impurity} ενός συνόλου δεδομένων.
+
+\begin{formulabox}[Entropy]
+\begin{equation}
+H(S) = -\sum_{i=1}^{c} p_i \cdot \log_2(p_i)
+\end{equation}
+
+όπου $p_i$ = πιθανότητα της κλάσης $i$ στο σύνολο $S$, και $c$ = αριθμός κλάσεων
+\end{formulabox}
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        width=10cm,
+        height=6cm,
+        xlabel={$p$ (πιθανότητα class 1)},
+        ylabel={Entropy $H$},
+        domain=0.01:0.99,
+        samples=100,
+        grid=both,
+        grid style={line width=.1pt, draw=gray!30},
+        axis lines=middle,
+        ymin=0, ymax=1.1,
+        xmin=0, xmax=1,
+        title={\textbf{Entropy για Binary Classification}},
+        title style={font=\small}
+    ]
+        \addplot[thick, secondary, smooth] {-x*ln(x)/ln(2) - (1-x)*ln(1-x)/ln(2)};
+        \node[pin={[pin edge={secondary, thick}]above right:{Max at $p=0.5$}}, secondary]
+            at (axis cs:0.5,1) {};
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Ιδιότητες Entropy]
+\begin{itemize}
+    \item $H(S) = 0$ → \textbf{Τέλεια καθαρότητα} (όλα της ίδιας κλάσης)
+    \item $H(S) = 1$ → \textbf{Μέγιστη αβεβαιότητα} (για 2 κλάσεις: 50-50 split)
+    \item $H(S) \in [0, \log_2(c)]$ όπου $c$ = αριθμός κλάσεων
+\end{itemize}
+\end{infobox}
+
+\begin{examplebox}[Υπολογισμός Entropy]
+Dataset $S$: 9 ``Yes'', 5 ``No'' (Total: 14 samples)
+
+\begin{align*}
+p(\text{Yes}) &= \frac{9}{14} = 0.643 \\
+p(\text{No}) &= \frac{5}{14} = 0.357 \\[10pt]
+H(S) &= -\left(\frac{9}{14}\right)\log_2\left(\frac{9}{14}\right) - \left(\frac{5}{14}\right)\log_2\left(\frac{5}{14}\right) \\
+&= -(0.643)(-0.637) - (0.357)(-1.485) \\
+&= 0.410 + 0.530 = \boxed{0.940 \text{ bits}}
+\end{align*}
+\end{examplebox}
+
+% =============================================================================
+\subsection{Information Gain}
+
+Μετράει τη \keyword{μείωση της αβεβαιότητας} όταν διαχωρίζουμε με βάση ένα attribute.
+
+\begin{formulabox}[Information Gain]
+\begin{equation}
+IG(S, A) = H(S) - \sum_{v \in \text{Values}(A)} \frac{|S_v|}{|S|} \cdot H(S_v)
+\end{equation}
+
+\begin{itemize}
+    \item $H(S)$ = entropy πριν το split
+    \item $S_v$ = subset όπου attribute $A = v$
+    \item $|S_v|/|S|$ = weighted proportion
+\end{itemize}
+\end{formulabox}
+
+\begin{warningbox}[Κανόνας Επιλογής]
+Διαλέγουμε το attribute με το \textbf{ΜΕΓΑΛΥΤΕΡΟ Information Gain}!
+\end{warningbox}
+
+% =============================================================================
+\subsection{Gain Ratio (C4.5)}
+
+Το Information Gain \important{ευνοεί attributes με πολλές τιμές}. Το Gain Ratio το διορθώνει.
+
+\begin{formulabox}[Gain Ratio]
+\begin{equation}
+\text{GainRatio}(S, A) = \frac{IG(S, A)}{\text{SplitInfo}(S, A)}
+\end{equation}
+
+\begin{equation}
+\text{SplitInfo}(S, A) = -\sum_{v \in \text{Values}(A)} \frac{|S_v|}{|S|} \cdot \log_2\left(\frac{|S_v|}{|S|}\right)
+\end{equation}
+\end{formulabox}
+
+% =============================================================================
+\subsection{Gini Index}
+
+Εναλλακτικό μέτρο impurity (χρησιμοποιείται στο CART).
+
+\begin{formulabox}[Gini Index]
+\begin{equation}
+\text{Gini}(S) = 1 - \sum_{i=1}^{c} p_i^2
+\end{equation}
+
+\begin{itemize}
+    \item $\text{Gini} = 0$ → pure (μία κλάση)
+    \item $\text{Gini} = 0.5$ → max impurity (2 κλάσεις 50-50)
+\end{itemize}
+\end{formulabox}
+
+% =============================================================================
+\section{Αλγόριθμοι}
+
+\subsection{ID3 Algorithm}
+
+\begin{algorithmbox}[ID3 (Iterative Dichotomiser 3)]
+\begin{lstlisting}[language=pseudo]
+function ID3(S, Attributes):
+    if all samples in S belong to same class C:
+        return Leaf(C)
+
+    if Attributes is empty:
+        return Leaf(majority class in S)
+
+    A_best = argmax IG(S, A) for A in Attributes
+
+    Create Node for A_best
+
+    for each value v of A_best:
+        S_v = samples where A_best = v
+        if S_v is empty:
+            Add Leaf(majority class of S)
+        else:
+            Add ID3(S_v, Attributes - {A_best})
+
+    return Node
+\end{lstlisting}
+\end{algorithmbox}
+
+\subsection{Σύγκριση Αλγορίθμων}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=2.8cm,
+            minimum height=1cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Algorithm & Criterion & Splits & Special \\
+        ID3 & Information Gain & Multi-way & Categorical only \\
+        C4.5 & Gain Ratio & Multi-way & Handles missing \\
+        CART & Gini Index & Binary only & Regression support \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Worked Example: Κατασκευή Δέντρου}
+
+\begin{examplebox}[Play Tennis Dataset]
+Κατασκευάζουμε decision tree για το Play Tennis dataset.
+\end{examplebox}
+
+\begin{center}
+\begin{tabular}{cccc|c}
+\toprule
+\textbf{Outlook} & \textbf{Temp} & \textbf{Humidity} & \textbf{Wind} & \textbf{Play?} \\
+\midrule
+Sunny & Hot & High & Weak & No \\
+Sunny & Hot & High & Strong & No \\
+Overcast & Hot & High & Weak & Yes \\
+Rain & Mild & High & Weak & Yes \\
+Rain & Cool & Normal & Weak & Yes \\
+Rain & Cool & Normal & Strong & No \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Βήμα 1: Υπολογισμός $H(S)$}
+\begin{align*}
+H(S) &= -\frac{9}{14}\log_2\frac{9}{14} - \frac{5}{14}\log_2\frac{5}{14} = 0.940 \text{ bits}
+\end{align*}
+
+\textbf{Βήμα 2: Υπολογισμός IG για κάθε attribute}
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{axis}[
+        ybar,
+        width=10cm,
+        height=5cm,
+        bar width=1.2cm,
+        ylabel={Information Gain},
+        symbolic x coords={Outlook, Humidity, Wind, Temperature},
+        xtick=data,
+        nodes near coords,
+        nodes near coords align={vertical},
+        ymin=0,
+        ymax=0.35,
+        title={\textbf{Information Gain για κάθε Attribute}}
+    ]
+        \addplot[fill=secondary!70] coordinates {
+            (Outlook, 0.246)
+            (Humidity, 0.151)
+            (Wind, 0.048)
+            (Temperature, 0.029)
+        };
+    \end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textbf{Βήμα 3: Επιλογή Root} → \keyword{Outlook} (μέγιστο IG = 0.246)
+
+\textbf{Τελικό Decision Tree:}
+
+\begin{center}
+\begin{tikzpicture}[
+    level distance=2cm,
+    level 1/.style={sibling distance=4cm},
+    level 2/.style={sibling distance=2cm},
+    edge from parent/.style={draw, ->, >=Stealth, thick}
+]
+    \node[treenode, fill=ntua-blue!30, minimum size=1.2cm, font=\bfseries] {Outlook}
+        child {
+            node[treenode, minimum size=1cm] {Humidity}
+            child {node[leafnode, fill=accent!30] {No} edge from parent node[left, font=\scriptsize] {High}}
+            child {node[leafnode, fill=success!30] {Yes} edge from parent node[right, font=\scriptsize] {Normal}}
+            edge from parent node[left, font=\small] {Sunny}
+        }
+        child {
+            node[leafnode, fill=success!30, minimum height=0.8cm] {Yes}
+            edge from parent node[left, font=\small] {Overcast}
+        }
+        child {
+            node[treenode, minimum size=1cm] {Wind}
+            child {node[leafnode, fill=success!30] {Yes} edge from parent node[left, font=\scriptsize] {Weak}}
+            child {node[leafnode, fill=accent!30] {No} edge from parent node[right, font=\scriptsize] {Strong}}
+            edge from parent node[right, font=\small] {Rain}
+        };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Pruning (Κλάδεμα)}
+
+\begin{center}
+\begin{tikzpicture}
+    % Pre-pruning
+    \node[draw=success, fill=success!20, rounded corners=10pt,
+          minimum width=5cm, minimum height=2.5cm] (pre) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (pre.north) {Pre-Pruning};
+    \node[anchor=center, align=center, font=\small] at (pre.center) {
+        Σταματάει νωρίς\\[3pt]
+        • Max depth\\
+        • Min samples per leaf\\
+        • Min IG threshold
+    };
+
+    % Post-pruning
+    \node[draw=secondary, fill=secondary!20, rounded corners=10pt,
+          minimum width=5cm, minimum height=2.5cm] (post) at (7,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (post.north) {Post-Pruning};
+    \node[anchor=center, align=center, font=\small] at (post.center) {
+        Χτίζει πλήρες,\\
+        μετά κόβει\\[3pt]
+        • Reduced Error\\
+        • Cost Complexity
+    };
+
+    % Arrow
+    \draw[->, >=Stealth, thick, dashed] (pre.east) -- (post.west)
+        node[midway, above, font=\small] {vs};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Συχνά Λάθη}
+
+\begin{warningbox}[Κοινά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{Λάθος Entropy}: $H = p \cdot \log_2(p)$ \\
+          \textcolor{success}{Σωστό}: $H = \mathbf{-}p \cdot \log_2(p)$
+
+    \item \textbf{Weighted Average}: $H(S|A) = \frac{H(S_1) + H(S_2)}{2}$ \\
+          \textcolor{success}{Σωστό}: $H(S|A) = \frac{|S_1|}{|S|}H(S_1) + \frac{|S_2|}{|S|}H(S_2)$
+
+    \item \textbf{Σύγχυση ID3/C4.5}:
+          \begin{itemize}
+              \item ID3 → Information Gain
+              \item C4.5 → Gain Ratio
+          \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Σύνοψη - Key Points}
+
+\begin{center}
+\begin{tikzpicture}
+    % Summary boxes
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt,
+          minimum width=14cm, minimum height=8cm] (main) at (0,0) {};
+
+    % Formulas section
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}]
+        at ([xshift=5pt, yshift=-5pt]main.north west) {Τύποι (ΑΠΟΜΝΗΜΟΝΕΥΣΕ!)};
+
+    \node[anchor=north west, align=left] at ([xshift=10pt, yshift=-30pt]main.north west) {
+        \begin{tabular}{ll}
+            \textbf{Entropy} & $H(S) = -\sum p_i \log_2(p_i)$ \\[5pt]
+            \textbf{Info Gain} & $IG = H(S) - H(S|A)$ \\[5pt]
+            \textbf{Gain Ratio} & $GR = IG / \text{SplitInfo}$ \\[5pt]
+            \textbf{Gini} & $G(S) = 1 - \sum p_i^2$ \\
+        \end{tabular}
+    };
+
+    % Algorithms section
+    \node[anchor=west, align=left] at ([xshift=10pt, yshift=-50pt]main.west) {
+        \begin{tabular}{lll}
+            \textbf{ID3} & Information Gain & Multi-way splits \\
+            \textbf{C4.5} & Gain Ratio & Handles continuous \\
+            \textbf{CART} & Gini Index & Binary splits only \\
+        \end{tabular}
+    };
+
+    % Key properties
+    \node[anchor=south west, align=left, font=\small]
+        at ([xshift=10pt, yshift=10pt]main.south west) {
+        \textcolor{success}{$H = 0$} → Pure node |
+        \textcolor{accent}{$H = 1$} → Max uncertainty |
+        \textcolor{secondary}{Bigger IG = Better split}
+    };
+\end{tikzpicture}
+\end{center}

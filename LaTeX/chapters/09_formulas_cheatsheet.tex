@@ -1,0 +1,261 @@
+% =============================================================================
+% Chapter: Formulas Cheatsheet
+% =============================================================================
+
+\chapter{Formulas Cheatsheet}
+
+\begin{center}
+\textit{Συγκεντρωτικός οδηγός όλων των τύπων για γρήγορη αναφορά}
+\end{center}
+
+% =============================================================================
+\section{Decision Trees}
+
+\begin{center}
+\begin{tikzpicture}
+    % Entropy
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=7cm, minimum height=2.2cm] (ent) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (ent.north) {Entropy (Εντροπία)};
+    \node[anchor=center] at (ent.center) {$H(S) = -\sum_{i=1}^{c} p_i \cdot \log_2(p_i)$};
+    \node[anchor=south, font=\scriptsize] at (ent.south) {$H=0$: pure, $H=1$: max uncertainty (2 classes)};
+
+    % Information Gain
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=7cm, minimum height=2.2cm] (ig) at (8,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (ig.north) {Information Gain};
+    \node[anchor=center] at (ig.center) {$IG(S,A) = H(S) - \sum_{v} \frac{|S_v|}{|S|} H(S_v)$};
+    \node[anchor=south, font=\scriptsize] at (ig.south) {Higher IG = Better split};
+
+    % Gini Index
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=7cm, minimum height=2.2cm] (gini) at (0,-3) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (gini.north) {Gini Index};
+    \node[anchor=center] at (gini.center) {$Gini(S) = 1 - \sum_{i=1}^{c} p_i^2$};
+    \node[anchor=south, font=\scriptsize] at (gini.south) {$Gini=0$: pure, $Gini=0.5$: max (2 classes)};
+
+    % Gain Ratio
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=7cm, minimum height=2.2cm] (gr) at (8,-3) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (gr.north) {Gain Ratio (C4.5)};
+    \node[anchor=center] at (gr.center) {$GainRatio = \frac{IG(S,A)}{SplitInfo(S,A)}$};
+    \node[anchor=south, font=\scriptsize] at (gr.south) {Corrects bias for many-valued attributes};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Clustering}
+
+\begin{center}
+\begin{tikzpicture}
+    % K-means
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=14cm, minimum height=2.5cm] (km) at (4,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (km.north) {K-Means Centroid Update};
+    \node[anchor=center] at (km.center) {$\mu_k^{(new)} = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$};
+
+    % DBSCAN
+    \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=14cm, minimum height=3cm] (db) at (4,-3.5) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (db.north) {DBSCAN Point Classification};
+    \node[anchor=center, align=left] at (db.center) {
+        \textbf{Core Point}: $|N_\varepsilon(p)| \geq MinPts$ (neighbors within $\varepsilon$)\\
+        \textbf{Border Point}: Not core, but in $\varepsilon$-neighborhood of core point\\
+        \textbf{Noise Point}: Neither core nor border
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Association Rules}
+
+\begin{center}
+\begin{tikzpicture}
+    % Support
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6.5cm, minimum height=2.2cm] (sup) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (sup.north) {Support};
+    \node[anchor=center] at (sup.center) {$Support(X) = \frac{|T \text{ containing } X|}{|T|}$};
+
+    % Confidence
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6.5cm, minimum height=2.2cm] (conf) at (7.5,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (conf.north) {Confidence};
+    \node[anchor=center] at (conf.center) {$Conf(X \to Y) = \frac{Sup(X \cup Y)}{Sup(X)}$};
+
+    % Lift
+    \node[draw=info, fill=info!20, rounded corners=5pt, minimum width=14cm, minimum height=2.2cm] (lift) at (3.75,-2.8) {};
+    \node[anchor=north, font=\bfseries\color{info}] at (lift.north) {Lift};
+    \node[anchor=center] at (lift.center) {$Lift(X \to Y) = \frac{Conf(X \to Y)}{Sup(Y)} = \frac{Sup(X \cup Y)}{Sup(X) \times Sup(Y)}$};
+    \node[anchor=south, font=\scriptsize] at (lift.south) {$Lift=1$: independent, $>1$: positive, $<1$: negative correlation};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Distance Metrics}
+
+\begin{center}
+\begin{tikzpicture}
+    % Euclidean
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6.5cm, minimum height=2cm] (euc) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (euc.north) {Euclidean};
+    \node[anchor=center] at (euc.center) {$d = \sqrt{\sum_i (x_i - y_i)^2}$};
+
+    % Manhattan
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6.5cm, minimum height=2cm] (man) at (7.5,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (man.north) {Manhattan};
+    \node[anchor=center] at (man.center) {$d = \sum_i |x_i - y_i|$};
+
+    % Cosine
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6.5cm, minimum height=2cm] (cos) at (0,-2.7) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (cos.north) {Cosine Similarity};
+    \node[anchor=center] at (cos.center) {$\cos(\theta) = \frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \|\mathbf{y}\|}$};
+
+    % Jaccard
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6.5cm, minimum height=2cm] (jac) at (7.5,-2.7) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (jac.north) {Jaccard (Sets)};
+    \node[anchor=center] at (jac.center) {$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{DTW (Dynamic Time Warping)}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=accent, fill=accent!15, rounded corners=8pt, minimum width=14cm, minimum height=3cm] (dtw) at (4,0) {};
+    \node[anchor=north, font=\bfseries\Large\color{accent}] at (dtw.north) {DTW Recurrence};
+    \node[anchor=center] at (dtw.center) {
+        $DTW(i,j) = d(x_i, y_j) + \min\{DTW(i-1,j-1), DTW(i-1,j), DTW(i,j-1)\}$
+    };
+    \node[anchor=south, font=\small] at (dtw.south) {Base: $DTW(0,0)=0$, $DTW(i,0)=DTW(0,j)=\infty$ for $i,j>0$. Answer: $DTW(n,m)$};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Classification Metrics}
+
+\begin{center}
+\begin{tikzpicture}
+    % Confusion Matrix
+    \node[anchor=center] at (-3,1.5) {
+        \begin{tabular}{c|cc}
+            & P+ & P-- \\
+            \hline
+            A+ & TP & FN \\
+            A-- & FP & TN \\
+        \end{tabular}
+    };
+
+    % Accuracy
+    \node[draw=secondary, fill=box-blue, rounded corners=3pt, minimum width=5cm, minimum height=1.3cm] at (3,2) {};
+    \node at (3,2) {Acc $= \frac{TP+TN}{TP+TN+FP+FN}$};
+
+    % Precision
+    \node[draw=success, fill=box-green, rounded corners=3pt, minimum width=5cm, minimum height=1.3cm] at (9,2) {};
+    \node at (9,2) {Precision $= \frac{TP}{TP+FP}$};
+
+    % Recall
+    \node[draw=success, fill=box-green, rounded corners=3pt, minimum width=5cm, minimum height=1.3cm] at (3,0.3) {};
+    \node at (3,0.3) {Recall $= \frac{TP}{TP+FN}$};
+
+    % Specificity
+    \node[draw=info, fill=info!20, rounded corners=3pt, minimum width=5cm, minimum height=1.3cm] at (9,0.3) {};
+    \node at (9,0.3) {Specificity $= \frac{TN}{TN+FP}$};
+
+    % F1
+    \node[draw=accent, fill=accent!15, rounded corners=3pt, minimum width=5cm, minimum height=1.3cm] at (3,-1.4) {};
+    \node at (3,-1.4) {F1 $= \frac{2 \cdot P \cdot R}{P+R}$};
+
+    % FPR
+    \node[draw=warning, fill=warning!20, rounded corners=3pt, minimum width=5cm, minimum height=1.3cm] at (9,-1.4) {};
+    \node at (9,-1.4) {FPR $= \frac{FP}{FP+TN} = 1 - $ Spec};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Bayesian Networks}
+
+\begin{center}
+\begin{tikzpicture}
+    % Bayes' Theorem
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=7cm, minimum height=2.5cm] (bayes) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (bayes.north) {Bayes' Theorem};
+    \node[anchor=center] at (bayes.center) {$P(A|B) = \frac{P(B|A) \cdot P(A)}{P(B)}$};
+
+    % Total Probability
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=7cm, minimum height=2.5cm] (tot) at (8,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (tot.north) {Total Probability};
+    \node[anchor=center, font=\small] at (tot.center) {$P(B) = P(B|A)P(A) + P(B|\neg A)P(\neg A)$};
+
+    % Chain Rule
+    \node[draw=accent, fill=accent!15, rounded corners=5pt, minimum width=14cm, minimum height=2cm] (chain) at (4,-2.8) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (chain.north) {Chain Rule (Joint Probability)};
+    \node[anchor=center] at (chain.center) {$P(X_1, \ldots, X_n) = \prod_i P(X_i | Parents(X_i))$};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{TF-IDF}
+
+\begin{center}
+\begin{tikzpicture}
+    % TF
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4.5cm, minimum height=2cm] (tf) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (tf.north) {TF};
+    \node[anchor=center] at (tf.center) {count of $t$ in $d$};
+
+    % IDF
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4.5cm, minimum height=2cm] (idf) at (5.5,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (idf.north) {IDF};
+    \node[anchor=center] at (idf.center) {$\log\left(\frac{N}{df(t)}\right)$};
+
+    % TF-IDF
+    \node[draw=accent, fill=accent!15, rounded corners=5pt, minimum width=4.5cm, minimum height=2cm] (tfidf) at (11,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (tfidf.north) {TF-IDF};
+    \node[anchor=center] at (tfidf.center) {$TF \times IDF$};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Privacy}
+
+\begin{center}
+\begin{tikzpicture}
+    % K-Anonymity
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4.2cm, minimum height=2.5cm] (kanon) at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at (kanon.north) {K-Anonymity};
+    \node[anchor=center, font=\small, align=center] at (kanon.center) {Each equiv. class\\has $\geq k$ records};
+
+    % L-Diversity
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=4.2cm, minimum height=2.5cm] (ldiv) at (5,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (ldiv.north) {L-Diversity};
+    \node[anchor=center, font=\small, align=center] at (ldiv.center) {Each equiv. class\\has $\geq L$ distinct\\sensitive values};
+
+    % T-Closeness
+    \node[draw=accent, fill=accent!15, rounded corners=5pt, minimum width=4.2cm, minimum height=2.5cm] (tclo) at (10,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (tclo.north) {T-Closeness};
+    \node[anchor=center, font=\small, align=center] at (tclo.center) {Class distribution\\$\approx$ overall\\(distance $\leq t$)};
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Quick Reference Table}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Topic} & \textbf{Key Formula} & \textbf{Notes} \\
+\midrule
+Entropy & $H = -\sum p_i \log_2 p_i$ & $H=0$: pure, $H=1$: max \\
+Info Gain & $IG = H(S) - \sum \frac{|S_v|}{|S|} H(S_v)$ & Higher = better \\
+Gini & $G = 1 - \sum p_i^2$ & Used in CART \\
+\midrule
+Support & $|T \text{ with } X| / |T|$ & Frequency \\
+Confidence & $Sup(X \cup Y) / Sup(X)$ & Conditional prob \\
+Lift & $Conf / Sup(Y)$ & $1$=indep, $>1$=pos \\
+\midrule
+DTW & $d(x_i,y_j) + \min\{...\}$ & Handles time shift \\
+Cosine & $(\mathbf{x} \cdot \mathbf{y}) / (\|\mathbf{x}\| \|\mathbf{y}\|)$ & Direction only \\
+\midrule
+Precision & $TP/(TP+FP)$ & Predicted + \\
+Recall & $TP/(TP+FN)$ & Actual + \\
+F1 & $2PR/(P+R)$ & Harmonic mean \\
+\midrule
+Bayes & $P(A|B) = P(B|A)P(A)/P(B)$ & Posterior \\
+TF-IDF & $TF \times \log(N/df)$ & Word importance \\
+\bottomrule
+\end{tabular}
+\end{center}

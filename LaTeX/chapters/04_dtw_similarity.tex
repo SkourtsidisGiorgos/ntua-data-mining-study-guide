@@ -1,0 +1,533 @@
+% =============================================================================
+% Chapter: DTW & Similarity Measures
+% =============================================================================
+
+\chapter{DTW \& Similarity Measures}
+
+\section{Εισαγωγή}
+
+\keyword{Similarity/Distance Measures} αξιολογούν πόσο "κοντά" ή "μακριά" είναι δύο αντικείμενα. Η επιλογή του κατάλληλου μέτρου εξαρτάται από τον τύπο δεδομένων.
+
+\begin{center}
+\begin{tikzpicture}
+    % Visualization of different distance concepts
+    \draw[thick, ->] (0,0) -- (5,0) node[anchor=north] {$x_1$};
+    \draw[thick, ->] (0,0) -- (0,4) node[anchor=east] {$x_2$};
+
+    % Points
+    \fill[secondary] (1,1) circle (3pt) node[anchor=north east] {A};
+    \fill[accent] (4,3) circle (3pt) node[anchor=south west] {B};
+
+    % Euclidean distance
+    \draw[thick, success, dashed] (1,1) -- (4,3) node[midway, above, sloped, font=\small] {Euclidean};
+
+    % Manhattan distance
+    \draw[thick, info] (1,1) -- (4,1) -- (4,3);
+    \node[info, font=\small] at (2.5,0.6) {Manhattan};
+
+    % Legend
+    \node[anchor=north west] at (6,4) {
+        \begin{tabular}{ll}
+            \textcolor{success}{---} & Euclidean\\
+            \textcolor{info}{---} & Manhattan
+        \end{tabular}
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Μέτρα Απόστασης (Distance Metrics)}
+
+\subsection{Euclidean Distance}
+
+Η "ευθεία γραμμή" απόσταση στον n-διάστατο χώρο.
+
+\begin{formulabox}[Euclidean Distance]
+\begin{equation}
+d(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
+\end{equation}
+
+2D: $d = \sqrt{(x_1 - y_1)^2 + (x_2 - y_2)^2}$
+\end{formulabox}
+
+\begin{examplebox}[Υπολογισμός Euclidean]
+\textbf{Points}: $\mathbf{x} = (1, 2, 3)$, $\mathbf{y} = (4, 6, 3)$
+
+\begin{align*}
+d &= \sqrt{(1-4)^2 + (2-6)^2 + (3-3)^2} \\
+  &= \sqrt{9 + 16 + 0} \\
+  &= \sqrt{25} = \boxed{5}
+\end{align*}
+\end{examplebox}
+
+\subsection{Manhattan Distance (City Block / L1)}
+
+Η "ταξί" απόσταση - κίνηση μόνο οριζόντια/κάθετα.
+
+\begin{formulabox}[Manhattan Distance]
+\begin{equation}
+d(\mathbf{x}, \mathbf{y}) = \sum_{i=1}^{n} |x_i - y_i|
+\end{equation}
+
+2D: $d = |x_1 - y_1| + |x_2 - y_2|$
+\end{formulabox}
+
+\begin{examplebox}[Υπολογισμός Manhattan]
+\textbf{Points}: $\mathbf{x} = (1, 2)$, $\mathbf{y} = (4, 6)$
+
+\[
+d = |1-4| + |2-6| = 3 + 4 = \boxed{7}
+\]
+\end{examplebox}
+
+\subsection{Minkowski Distance (Generalized)}
+
+\begin{formulabox}[Minkowski Distance]
+\begin{equation}
+d(\mathbf{x}, \mathbf{y}) = \left(\sum_{i=1}^{n} |x_i - y_i|^p\right)^{1/p}
+\end{equation}
+
+\begin{itemize}
+    \item $p = 1$: Manhattan Distance
+    \item $p = 2$: Euclidean Distance
+    \item $p \to \infty$: Chebyshev Distance ($\max_i |x_i - y_i|$)
+\end{itemize}
+\end{formulabox}
+
+\subsection{Cosine Similarity}
+
+Μετράει τη γωνία μεταξύ δύο vectors (χρήσιμο για text/sparse data).
+
+\begin{formulabox}[Cosine Similarity]
+\begin{equation}
+\cos(\theta) = \frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \times \|\mathbf{y}\|} = \frac{\sum_i x_i y_i}{\sqrt{\sum_i x_i^2} \times \sqrt{\sum_i y_i^2}}
+\end{equation}
+
+\begin{center}
+\begin{tikzpicture}
+    \node[draw=success, fill=success!20, rounded corners=3pt, minimum width=2cm] at (0,0) {$\cos = 1$};
+    \node[font=\small] at (0,-0.6) {Identical};
+
+    \node[draw=warning, fill=warning!20, rounded corners=3pt, minimum width=2cm] at (4,0) {$\cos = 0$};
+    \node[font=\small] at (4,-0.6) {Orthogonal};
+
+    \node[draw=accent, fill=accent!20, rounded corners=3pt, minimum width=2cm] at (8,0) {$\cos = -1$};
+    \node[font=\small] at (8,-0.6) {Opposite};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Cosine Distance} = $1 - \cos(\theta)$
+\end{formulabox}
+
+\begin{examplebox}[Υπολογισμός Cosine Similarity]
+\textbf{Vectors}: $\mathbf{x} = (1, 2, 3)$, $\mathbf{y} = (2, 4, 6)$
+
+\begin{align*}
+\cos(\theta) &= \frac{1 \times 2 + 2 \times 4 + 3 \times 6}{\sqrt{1+4+9} \times \sqrt{4+16+36}} \\
+&= \frac{2 + 8 + 18}{\sqrt{14} \times \sqrt{56}} = \frac{28}{28} = \boxed{1.0}
+\end{align*}
+
+Τα vectors έχουν ίδια κατεύθυνση ($\mathbf{y} = 2\mathbf{x}$)
+\end{examplebox}
+
+\subsection{Jaccard Similarity}
+
+Για sets - μετράει overlap.
+
+\begin{formulabox}[Jaccard Similarity]
+\begin{equation}
+J(A, B) = \frac{|A \cap B|}{|A \cup B|}
+\end{equation}
+
+\begin{itemize}
+    \item Range: $[0, 1]$
+    \item $J = 1$: identical sets
+    \item $J = 0$: no common elements
+\end{itemize}
+
+\textbf{Jaccard Distance} = $1 - J(A, B)$
+\end{formulabox}
+
+\begin{examplebox}[Υπολογισμός Jaccard]
+\textbf{Sets}: $A = \{\text{apple, banana, orange}\}$, $B = \{\text{banana, orange, grape}\}$
+
+\begin{align*}
+A \cap B &= \{\text{banana, orange}\} \quad \Rightarrow |A \cap B| = 2 \\
+A \cup B &= \{\text{apple, banana, orange, grape}\} \quad \Rightarrow |A \cup B| = 4 \\[5pt]
+J(A, B) &= \frac{2}{4} = \boxed{0.5}
+\end{align*}
+\end{examplebox}
+
+\subsection{Σύγκριση Μέτρων}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=3.2cm,
+            minimum height=1cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Metric & Best For & Property \\
+        Euclidean & Continuous, dense & Sensitive to magnitude \\
+        Manhattan & Grid-like, sparse & Robust to outliers \\
+        Cosine & Text, high-dim & Only direction \\
+        Jaccard & Sets, binary & Ignores frequency \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Dynamic Time Warping (DTW)}
+
+\subsection{Το Πρόβλημα}
+
+\begin{center}
+\begin{tikzpicture}
+    % Euclidean problem visualization
+    \node[draw=accent, fill=accent!10, rounded corners=10pt, minimum width=6cm, minimum height=3.5cm] at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{accent}] at (0,1.5) {Euclidean Problem};
+
+    % Time series 1
+    \draw[thick, secondary] (-2.5,-0.5) -- (-1.5,-0.5) -- (-0.5,0) -- (0.5,0.5) -- (1.5,0.5);
+    \node[secondary, font=\small] at (2.2,-0.5) {X};
+
+    % Time series 2 (shifted)
+    \draw[thick, success] (-2.5,-1) -- (-1.5,-1) -- (-0.5,-1) -- (0.5,-0.5) -- (1.5,0);
+    \node[success, font=\small] at (2.2,-1) {Y (shifted)};
+
+    % Point-to-point connections (bad)
+    \draw[dashed, accent] (-2.5,-0.5) -- (-2.5,-1);
+    \draw[dashed, accent] (-1.5,-0.5) -- (-1.5,-1);
+    \draw[dashed, accent] (-0.5,0) -- (-0.5,-1);
+    \draw[dashed, accent] (0.5,0.5) -- (0.5,-0.5);
+
+    \node[font=\small, text=accent] at (0,-2) {Point-to-point = BIG distance!};
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}
+    % DTW solution
+    \node[draw=success, fill=success!10, rounded corners=10pt, minimum width=6cm, minimum height=3.5cm] at (0,0) {};
+    \node[anchor=north, font=\bfseries\color{success}] at (0,1.5) {DTW Solution};
+
+    % Time series 1
+    \draw[thick, secondary] (-2.5,-0.5) -- (-1.5,-0.5) -- (-0.5,0) -- (0.5,0.5) -- (1.5,0.5);
+    \node[secondary, font=\small] at (2.2,-0.5) {X};
+
+    % Time series 2 (shifted)
+    \draw[thick, success] (-2.5,-1) -- (-1.5,-1) -- (-0.5,-1) -- (0.5,-0.5) -- (1.5,0);
+    \node[success, font=\small] at (2.2,-1) {Y};
+
+    % Warped connections (good)
+    \draw[dashed, info, thick] (-2.5,-0.5) -- (-1.5,-1);
+    \draw[dashed, info, thick] (-1.5,-0.5) -- (-0.5,-1);
+    \draw[dashed, info, thick] (-0.5,0) -- (0.5,-0.5);
+    \draw[dashed, info, thick] (0.5,0.5) -- (1.5,0);
+
+    \node[font=\small, text=success] at (0,-2) {Non-linear alignment!};
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[DTW Advantage]
+\textbf{DTW} επιτρέπει \textbf{non-linear alignment} (warping) - βρίσκει optimal matching ακόμα κι αν οι ακολουθίες έχουν διαφορετική ταχύτητα ή είναι shifted.
+\end{infobox}
+
+\subsection{DTW Recurrence Relation}
+
+\begin{formulabox}[DTW Recurrence - ΑΠΟΜΝΗΜΟΝΕΥΣΕ!]
+\begin{equation}
+\text{DTW}(i, j) = d(x_i, y_j) + \min \begin{cases}
+\text{DTW}(i-1, j-1) & \text{(diagonal)}\\
+\text{DTW}(i-1, j) & \text{(vertical)}\\
+\text{DTW}(i, j-1) & \text{(horizontal)}
+\end{cases}
+\end{equation}
+
+\textbf{Local cost}: $d(x_i, y_j) = |x_i - y_j|$ ή $(x_i - y_j)^2$
+
+\textbf{Base cases}:
+\begin{itemize}
+    \item $\text{DTW}(0, 0) = 0$
+    \item $\text{DTW}(i, 0) = \infty$ για $i > 0$
+    \item $\text{DTW}(0, j) = \infty$ για $j > 0$
+\end{itemize}
+
+\textbf{Final answer}: $\text{DTW}(n, m)$
+\end{formulabox}
+
+\subsection{Transition Directions}
+
+\begin{center}
+\begin{tikzpicture}[scale=1.2]
+    % Grid
+    \draw[thick] (0,0) grid (2,2);
+
+    % Labels
+    \node[font=\small] at (-0.3,0.5) {$i$};
+    \node[font=\small] at (-0.3,1.5) {$i-1$};
+    \node[font=\small] at (0.5,-0.3) {$j-1$};
+    \node[font=\small] at (1.5,-0.3) {$j$};
+
+    % Arrows
+    \draw[->, >=Stealth, thick, success] (0.5,1.5) -- (1.4,0.6);
+    \node[success, font=\small] at (0.5,2) {Diagonal};
+
+    \draw[->, >=Stealth, thick, secondary] (1.5,1.5) -- (1.5,0.6);
+    \node[secondary, font=\small] at (2.2,1) {Vertical};
+
+    \draw[->, >=Stealth, thick, info] (0.5,0.5) -- (1.4,0.5);
+    \node[info, font=\small] at (1,-0.1) {Horizontal};
+
+    % Target cell
+    \node[draw=accent, fill=accent!20, minimum size=0.8cm] at (1.5,0.5) {$(i,j)$};
+
+    % Explanations
+    \node[anchor=west, align=left, font=\small] at (3.5,1.5) {
+        \textcolor{success}{Diagonal}: Normal 1-1 match\\
+        \textcolor{secondary}{Vertical}: Repeat Y element\\
+        \textcolor{info}{Horizontal}: Repeat X element
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Worked Example (ΤΥΠΙΚΟ ΘΕΜΑ ΕΞΕΤΑΣΕΩΝ!)}
+
+\begin{examplebox}[DTW - Πλήρες Παράδειγμα]
+\textbf{Sequences}:
+\begin{itemize}
+    \item $X = [1, 3, 4, 2]$ (n=4)
+    \item $Y = [2, 4, 3]$ (m=3)
+\end{itemize}
+\textbf{Distance}: $d(x_i, y_j) = |x_i - y_j|$
+\end{examplebox}
+
+\subsection{Βήμα 1: Cost Matrix $d(x_i, y_j)$}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=1.2cm,
+            minimum height=1cm,
+            anchor=center
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        X$\backslash$Y & 2 & 4 & 3 \\
+        1 & 1 & 3 & 2 \\
+        3 & 1 & 1 & 0 \\
+        4 & 2 & 0 & 1 \\
+        2 & 0 & 2 & 1 \\
+    };
+
+    % Example calculations
+    \node[anchor=west, font=\small] at (6,0) {
+        $d(1,2) = |1-2| = 1$\\
+        $d(3,4) = |3-4| = 1$\\
+        $d(4,4) = |4-4| = 0$\\
+        $d(2,3) = |2-3| = 1$
+    };
+\end{tikzpicture}
+\end{center}
+
+\subsection{Βήμα 2: DTW Matrix (Cumulative Cost)}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.85]
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=1.3cm,
+            minimum height=1cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        X$\backslash$Y & - & 2 & 4 & 3 \\
+        - & 0 & $\infty$ & $\infty$ & $\infty$ \\
+        1 & $\infty$ & 1 & 4 & 6 \\
+        3 & $\infty$ & 2 & 2 & 2 \\
+        4 & $\infty$ & 4 & 2 & 3 \\
+        2 & $\infty$ & 4 & 4 & |[fill=success!30]| 3 \\
+    };
+
+    % Highlight path
+    \draw[thick, accent, ->] (m-2-2.center) -- (m-3-3.center);
+    \draw[thick, accent, ->] (m-3-3.center) -- (m-4-4.center);
+    \draw[thick, accent, ->] (m-4-4.center) -- (m-5-4.center);
+    \draw[thick, accent, ->] (m-5-4.center) -- (m-6-5.center);
+
+    % Answer
+    \node[anchor=west, font=\large\bfseries, text=success] at (6,-0.5) {DTW Distance = 3};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Υπολογισμοί κελιών} (παραδείγματα):
+\begin{align*}
+\text{DTW}(1,1) &= d(1,2) + \min(\underbrace{\text{DTW}(0,0)}_{0}, \underbrace{\text{DTW}(0,1)}_{\infty}, \underbrace{\text{DTW}(1,0)}_{\infty}) = 1 + 0 = 1 \\
+\text{DTW}(2,2) &= d(3,4) + \min(\underbrace{\text{DTW}(1,1)}_{1}, \underbrace{\text{DTW}(1,2)}_{4}, \underbrace{\text{DTW}(2,1)}_{2}) = 1 + 1 = 2 \\
+\text{DTW}(4,3) &= d(2,3) + \min(\underbrace{\text{DTW}(3,2)}_{2}, \underbrace{\text{DTW}(3,3)}_{3}, \underbrace{\text{DTW}(4,2)}_{4}) = 1 + 2 = \boxed{3}
+\end{align*}
+
+\subsection{Βήμα 3: Optimal Warping Path (Backtracking)}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.9]
+    % DTW matrix with path
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=1.2cm,
+            minimum height=1cm,
+            anchor=center
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        & 2 & 4 & 3 \\
+        1 & |[fill=accent!30]| $\bullet$ & & \\
+        3 & & |[fill=accent!30]| $\bullet$ & \\
+        4 & & |[fill=accent!30]| $\bullet$ & \\
+        2 & & & |[fill=accent!30]| $\bullet$ \\
+    };
+
+    % Path arrows
+    \draw[thick, accent, ->, >=Stealth] (m-2-2.south east) -- (m-3-3.north west);
+    \draw[thick, accent, ->, >=Stealth] (m-3-3.south) -- (m-4-3.north);
+    \draw[thick, accent, ->, >=Stealth] (m-4-3.south east) -- (m-5-4.north west);
+
+    % Alignment explanation
+    \node[anchor=west, align=left] at (5,0) {
+        \textbf{Warping Path}:\\[0.5em]
+        $(0,0) \to (1,1) \to (2,2) \to (3,2) \to (4,3)$\\[1em]
+        \textbf{Alignment}:\\[0.3em]
+        $X[1]=1 \leftrightarrow Y[1]=2$\\
+        $X[2]=3 \leftrightarrow Y[2]=4$\\
+        $X[3]=4 \leftrightarrow Y[2]=4$ \textcolor{info}{(Y reused!)}\\
+        $X[4]=2 \leftrightarrow Y[3]=3$
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{DTW vs Euclidean}
+
+\begin{center}
+\begin{tikzpicture}
+    \matrix (m) [
+        matrix of nodes,
+        nodes={
+            draw=primary,
+            minimum width=3.5cm,
+            minimum height=1cm,
+            anchor=center,
+            font=\small
+        },
+        column 1/.style={nodes={fill=ntua-blue!20, font=\bfseries}},
+        row 1/.style={nodes={fill=secondary!30, font=\bfseries}},
+        column sep=-\pgflinewidth,
+        row sep=-\pgflinewidth
+    ] {
+        Property & Euclidean & DTW \\
+        Alignment & 1-to-1 & Many-to-many \\
+        Complexity & $O(n)$ & $O(n \times m)$ \\
+        Stretch/Shift & Sensitive & \textcolor{success}{Robust} \\
+        Triangle Ineq. & Yes & No \\
+    };
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Συχνά Λάθη}
+
+\begin{warningbox}[Κοινά Λάθη στις Εξετάσεις]
+\begin{enumerate}
+    \item \textbf{DTW Base Cases}:
+    \begin{itemize}
+        \item[$\times$] $\text{DTW}(0,j) = 0$ ή $\text{DTW}(i,0) = 0$
+        \item[\checkmark] $\text{DTW}(i,0) = \text{DTW}(0,j) = \infty$ για $i,j > 0$
+        \item[\checkmark] Μόνο $\text{DTW}(0,0) = 0$!
+    \end{itemize}
+
+    \item \textbf{Cost vs Distance}:
+    \begin{itemize}
+        \item[$\times$] $d(x,y) = x - y$ (μπορεί να είναι αρνητικό!)
+        \item[\checkmark] $d(x,y) = |x - y|$ ή $(x-y)^2$
+    \end{itemize}
+
+    \item \textbf{Cosine}:
+    \begin{itemize}
+        \item[$\times$] Cosine similarity = distance
+        \item[\checkmark] Cosine Distance $= 1 - \cos(\theta)$
+    \end{itemize}
+
+    \item \textbf{Jaccard Denominator}:
+    \begin{itemize}
+        \item[$\times$] $J = |A \cap B| / \max(|A|, |B|)$
+        \item[\checkmark] $J = |A \cap B| / |A \cup B|$
+    \end{itemize}
+\end{enumerate}
+\end{warningbox}
+
+% =============================================================================
+\section{Σύνοψη - Key Points}
+
+\begin{center}
+\begin{tikzpicture}
+    % Main summary box
+    \node[draw=ntua-blue, fill=ntua-blue!10, rounded corners=5pt, minimum width=14cm, minimum height=10cm] (main) at (0,0) {};
+
+    % Distance Metrics section
+    \node[anchor=north west, font=\bfseries\Large\color{ntua-blue}] at ([xshift=5pt, yshift=-5pt]main.north west) {Distance Metrics (ΑΠΟΜΝΗΜΟΝΕΥΣΕ!)};
+
+    \node[anchor=north west, align=left] at ([xshift=10pt, yshift=-35pt]main.north west) {
+        \begin{tabular}{ll}
+            \textbf{Euclidean} & $d = \sqrt{\sum(x_i - y_i)^2}$ \\[8pt]
+            \textbf{Manhattan} & $d = \sum|x_i - y_i|$ \\[8pt]
+            \textbf{Cosine sim} & $\cos(\theta) = \frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \times \|\mathbf{y}\|}$ \\[8pt]
+            \textbf{Jaccard} & $J = |A \cap B| / |A \cup B|$
+        \end{tabular}
+    };
+
+    % DTW section
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=12cm, minimum height=3.5cm]
+        at ([yshift=1cm]main.south) {};
+    \node[anchor=north, font=\bfseries\color{secondary}] at ([yshift=2.5cm]main.south) {DTW Recurrence (ΑΠΟΜΝΗΜΟΝΕΥΣΕ!)};
+
+    \node[anchor=center, align=center] at ([yshift=0.5cm]main.south) {
+        $\text{DTW}(i, j) = d(x_i, y_j) + \min\{\text{DTW}(i-1,j-1), \text{DTW}(i-1,j), \text{DTW}(i,j-1)\}$\\[0.5em]
+        Base: $\text{DTW}(0,0) = 0$, \quad $\text{DTW}(i,0) = \text{DTW}(0,j) = \infty$\\[0.5em]
+        Answer: $\text{DTW}(n, m)$
+    };
+
+    % Quick reference
+    \node[draw=success, fill=box-green, rounded corners=3pt, minimum width=4cm, minimum height=1.5cm]
+        at ([xshift=4.5cm, yshift=-1.5cm]main.north west) {};
+    \node[align=center, font=\small] at ([xshift=4.5cm, yshift=-1.5cm]main.north west) {
+        \textbf{Distance from Similarity}\\
+        $d = 1 - \text{similarity}$
+    };
+\end{tikzpicture}
+\end{center}
