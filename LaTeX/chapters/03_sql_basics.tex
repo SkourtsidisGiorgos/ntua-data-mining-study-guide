@@ -313,8 +313,8 @@ WHERE salary = (SELECT MAX(salary) FROM Employee);
     };
 
     \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=6cm, minimum height=2cm]
-        at ([xshift=-3cm, yshift=1.5cm]main.south) {};
-    \node[align=center, font=\small] at ([xshift=-3cm, yshift=1.5cm]main.south) {
+        at ([xshift=-3cm, yshift=0.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=-3cm, yshift=0.5cm]main.south) {
         \textbf{Key Pattern:}\\
         \texttt{SELECT cols, AGG()}\\
         \texttt{FROM T GROUP BY cols}\\
@@ -322,8 +322,8 @@ WHERE salary = (SELECT MAX(salary) FROM Employee);
     };
 
     \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=2cm]
-        at ([xshift=3.5cm, yshift=1.5cm]main.south) {};
-    \node[align=center, font=\small] at ([xshift=3.5cm, yshift=1.5cm]main.south) {
+        at ([xshift=3.5cm, yshift=0.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=3.5cm, yshift=0.5cm]main.south) {
         \textbf{Remember:}\\
         WHERE: before grouping\\
         HAVING: after grouping

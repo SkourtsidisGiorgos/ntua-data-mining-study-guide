@@ -347,16 +347,16 @@ R(A, B) \div S(B) = \text{tuples } a \text{ such that for ALL } b \in S, (a,b) \
     };
 
     \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=6cm, minimum height=1.8cm]
-        at ([xshift=-3cm, yshift=1.5cm]main.south) {};
-    \node[align=center, font=\small] at ([xshift=-3cm, yshift=1.5cm]main.south) {
+        at ([xshift=-3cm, yshift=0.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=-3cm, yshift=0.5cm]main.south) {
         \textbf{SQL → RA Mapping:}\\
         WHERE = $\sigma$, SELECT = $\pi$\\
         JOIN ON = $\bowtie_\theta$
     };
 
     \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.8cm]
-        at ([xshift=3.5cm, yshift=1.5cm]main.south) {};
-    \node[align=center, font=\small] at ([xshift=3.5cm, yshift=1.5cm]main.south) {
+        at ([xshift=3.5cm, yshift=0.5cm]main.south) {};
+    \node[align=center, font=\small] at ([xshift=3.5cm, yshift=0.5cm]main.south) {
         \textbf{Common Pattern:}\\
         $\pi_{cols}(\sigma_{cond}(R \bowtie S))$
     };
