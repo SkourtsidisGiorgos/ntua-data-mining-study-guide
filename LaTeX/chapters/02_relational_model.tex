@@ -281,6 +281,13 @@ Result = \pi_{name}(R_3)
 \[
 R(A, B) \div S(B) = \text{tuples } a \text{ such that for ALL } b \in S, (a,b) \in R
 \]
+
+\textbf{Implementation using basic operators:}
+\[
+R \div S = \pi_A(R) - \pi_A\left((\pi_A(R) \times S) - R\right)
+\]
+
+\textit{Intuition: Start with all A values, then subtract those that are missing at least one B value.}
 \end{examplebox}
 
 % =============================================================================

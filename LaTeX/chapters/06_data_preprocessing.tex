@@ -139,6 +139,33 @@ d_{Manhattan}(\mathbf{x}, \mathbf{y}) = \sum_{i=1}^{n} |x_i - y_i|
 \end{itemize}
 \end{formulabox}
 
+\subsection{Jaccard Similarity}
+
+\begin{formulabox}[Jaccard Similarity]
+\[
+J(A, B) = \frac{|A \cap B|}{|A \cup B|}
+\]
+
+\textbf{Properties:}
+\begin{itemize}
+    \item Range: $[0, 1]$ (1 = identical sets, 0 = no overlap)
+    \item Best for \textbf{binary/set data}
+    \item Common for document comparison, recommendation systems
+\end{itemize}
+
+\textbf{Jaccard Distance:} $d_J(A, B) = 1 - J(A, B)$
+\end{formulabox}
+
+\begin{examplebox}[Jaccard Similarity Calculation]
+\textbf{Sets:} $A = \{1, 2, 3, 4\}$, $B = \{2, 3, 5, 6\}$
+
+\begin{align*}
+A \cap B &= \{2, 3\} \quad \Rightarrow |A \cap B| = 2 \\
+A \cup B &= \{1, 2, 3, 4, 5, 6\} \quad \Rightarrow |A \cup B| = 6 \\
+J(A, B) &= \frac{2}{6} = \frac{1}{3} \approx 0.33
+\end{align*}
+\end{examplebox}
+
 \begin{examplebox}[Distance Calculation]
 \textbf{Points:} $A = (1, 2)$, $B = (4, 6)$
 

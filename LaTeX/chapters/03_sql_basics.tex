@@ -226,7 +226,7 @@ WHERE salary = (SELECT MAX(salary) FROM Employee);
         matrix of nodes,
         nodes={
             draw=primary,
-            minimum width=5cm,
+            minimum width=9cm,
             minimum height=1.5cm,
             anchor=center,
             font=\small,
@@ -238,14 +238,10 @@ WHERE salary = (SELECT MAX(salary) FROM Employee);
         row sep=-\pgflinewidth
     ] {
         Pattern & SQL Template \\
-        Count per group & |[align=left]| \texttt{SELECT g, COUNT(*)}\\
-                          \texttt{FROM T GROUP BY g} \\
-        Top N per group & |[align=left]| \texttt{WITH ranked AS (...)}\\
-                          \texttt{ROW\_NUMBER() OVER} \\
-        Self-join & |[align=left]| \texttt{FROM T t1, T t2}\\
-                    \texttt{WHERE t1.x = t2.y} \\
-        NOT IN pattern & |[align=left]| \texttt{WHERE x NOT IN}\\
-                         \texttt{(SELECT x FROM ...)} \\
+        Count per group & |[align=left]| \texttt{SELECT g, COUNT(*) FROM T GROUP BY g} \\
+        Top N per group & |[align=left]| \texttt{WITH ranked AS (...) ROW\_NUMBER() OVER} \\
+        Self-join & |[align=left]| \texttt{FROM T t1, T t2 WHERE t1.x = t2.y} \\
+        NOT IN pattern & |[align=left]| \texttt{WHERE x NOT IN (SELECT x FROM ...)} \\
     };
 \end{tikzpicture}
 \end{center}

@@ -206,7 +206,7 @@ while not end of R and not end of S:
         matrix of nodes,
         nodes={
             draw=primary,
-            minimum width=3.5cm,
+            minimum width=4cm,
             minimum height=1.2cm,
             anchor=center,
             font=\small
@@ -346,15 +346,15 @@ while not end of R and not end of S:
     };
 
     \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
-        at ([xshift=-4cm, yshift=0.5cm]main.south) {};
-    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=0.5cm]main.south) {
+        at ([xshift=-4cm, yshift=0cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=0cm]main.south) {
         \textbf{Materialized:} Store full result\\
         \textbf{Pipelined:} Stream tuples
     };
 
     \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
-        at ([xshift=2cm, yshift=0.5cm]main.south) {};
-    \node[align=center, font=\footnotesize] at ([xshift=2cm, yshift=0.5cm]main.south) {
+        at ([xshift=2cm, yshift=0cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=2cm, yshift=0cm]main.south) {
         \textbf{Optimize by:}\\
         Push $\sigma$ down, use indexes
     };

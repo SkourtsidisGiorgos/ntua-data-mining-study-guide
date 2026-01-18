@@ -213,6 +213,38 @@ WHERE rn <= 3;
 \end{lstlisting}
 \end{examplebox}
 
+\begin{examplebox}[RANK vs DENSE\_RANK vs ROW\_NUMBER]
+\textbf{Data:} Scores = [100, 100, 90, 80]
+
+\begin{center}
+\begin{tabular}{clll}
+\toprule
+\textbf{Score} & \textbf{ROW\_NUMBER} & \textbf{RANK} & \textbf{DENSE\_RANK} \\
+\midrule
+100 & 1 & 1 & 1 \\
+100 & 2 & 1 & 1 \\
+90 & 3 & 3 & 2 \\
+80 & 4 & 4 & 3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Key Differences:}
+\begin{itemize}
+    \item \texttt{ROW\_NUMBER}: Always unique, arbitrary for ties
+    \item \texttt{RANK}: Same rank for ties, \textbf{skips} next ranks (gap after tie)
+    \item \texttt{DENSE\_RANK}: Same rank for ties, \textbf{no gaps}
+\end{itemize}
+
+\begin{lstlisting}[language=SQL]
+SELECT score,
+       ROW_NUMBER() OVER (ORDER BY score DESC) AS row_num,
+       RANK() OVER (ORDER BY score DESC) AS rank,
+       DENSE_RANK() OVER (ORDER BY score DESC) AS dense_rank
+FROM Scores;
+\end{lstlisting}
+\end{examplebox}
+
 % =============================================================================
 \section{Common Table Expressions (CTE)}
 
@@ -329,15 +361,15 @@ SELECT * FROM A LEFT JOIN B ON A.id = B.id AND B.value = 'x';
     };
 
     \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
-        at ([xshift=-4cm, yshift=0.5cm]main.south) {};
-    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=0.5cm]main.south) {
+        at ([xshift=-4cm, yshift=-0.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=-4cm, yshift=-0.5cm]main.south) {
         \textbf{INNER}: Only matches\\
         \textbf{LEFT}: All left + matches
     };
 
     \node[draw=accent, fill=box-red, rounded corners=5pt, minimum width=5cm, minimum height=1.5cm]
-        at ([xshift=2cm, yshift=0.5cm]main.south) {};
-    \node[align=center, font=\footnotesize] at ([xshift=2cm, yshift=0.5cm]main.south) {
+        at ([xshift=2cm, yshift=-0.5cm]main.south) {};
+    \node[align=center, font=\footnotesize] at ([xshift=2cm, yshift=-0.5cm]main.south) {
         \textbf{Hash Join}: Equality, memory\\
         \textbf{Merge Join}: Sorted data
     };

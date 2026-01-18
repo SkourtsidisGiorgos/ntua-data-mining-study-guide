@@ -13,7 +13,7 @@
 
 \begin{center}
 \begin{tikzpicture}
-    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=14cm, minimum height=4cm] (ra) at (0,0) {};
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=14cm, minimum height=5cm] (ra) at (0,0) {};
     \node[anchor=north, font=\bfseries\Large\color{secondary}] at (ra.north) {Relational Algebra Operators};
     \node[anchor=center, align=left] at (ra.center) {
         \begin{tabular}{llll}
@@ -34,7 +34,7 @@
 
 \begin{center}
 \begin{tikzpicture}
-    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=14cm, minimum height=3cm] (sql) at (0,0) {};
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=15cm, minimum height=3cm] (sql) at (0,0) {};
     \node[anchor=north, font=\bfseries\Large\color{success}] at (sql.north) {SQL Execution Order};
     \node[anchor=center] at (sql.center) {
         \textbf{FROM} → \textbf{WHERE} → \textbf{GROUP BY} → \textbf{HAVING} → \textbf{SELECT} → \textbf{ORDER BY}
@@ -101,10 +101,10 @@
     % Confusion Matrix mini
     \node[anchor=center] at (-4,0) {
         \begin{tabular}{c|cc}
-            & P+ & P-- \\
+            & Pred+ & Pred- \\
             \hline
-            A+ & TP & FN \\
-            A-- & FP & TN \\
+            Act+ & TP & FN \\
+            Act- & FP & TN \\
         \end{tabular}
     };
 
@@ -116,6 +116,35 @@
     \node[draw=accent, fill=accent!20, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (1,-1.5) {F1 $= \frac{2 \cdot P \cdot R}{P+R}$};
     \node[draw=warning, fill=warning!20, rounded corners=3pt, minimum width=3.5cm, minimum height=1cm] at (5.5,-1.5) {FPR $= 1 - $ Spec};
 \end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\section{Decision Trees}
+
+\begin{center}
+\begin{tikzpicture}
+    % Entropy
+    \node[draw=secondary, fill=box-blue, rounded corners=5pt, minimum width=4.5cm, minimum height=2.5cm] (ent) at (0,0) {};
+    \node[anchor=north, font=\bfseries] at (ent.north) {Entropy};
+    \node[anchor=center] at (ent.center) {$H(S) = -\sum_i p_i \log_2 p_i$};
+    \node[anchor=south, font=\footnotesize] at (ent.south) {Μέτρο ακαθαρσίας};
+
+    % Information Gain
+    \node[draw=success, fill=box-green, rounded corners=5pt, minimum width=5.5cm, minimum height=2.5cm] (ig) at (6,0) {};
+    \node[anchor=north, font=\bfseries] at (ig.north) {Information Gain};
+    \node[anchor=center] at (ig.center) {$IG(S,A) = H(S) - \sum_v \frac{|S_v|}{|S|} H(S_v)$};
+    \node[anchor=south, font=\footnotesize] at (ig.south) {Μείωση entropy με split};
+
+    % Gini Index
+    \node[draw=accent, fill=accent!20, rounded corners=5pt, minimum width=4.5cm, minimum height=2.5cm] (gini) at (12,0) {};
+    \node[anchor=north, font=\bfseries] at (gini.north) {Gini Index};
+    \node[anchor=center] at (gini.center) {$Gini(S) = 1 - \sum_i p_i^2$};
+    \node[anchor=south, font=\footnotesize] at (gini.south) {Alternative to entropy};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\textbf{Goal:} Maximize Information Gain (or minimize Gini) at each split
 \end{center}
 
 % =============================================================================
@@ -162,7 +191,7 @@
         matrix of nodes,
         nodes={
             draw=primary,
-            minimum width=4cm,
+            minimum width=6cm,
             minimum height=1cm,
             anchor=center,
             font=\small

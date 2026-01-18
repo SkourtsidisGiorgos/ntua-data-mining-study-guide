@@ -1,0 +1,2469 @@
+% =============================================================================
+% Chapter 12: Συλλογή Λυμένων Ασκήσεων
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{Συλλογή Λυμένων Ασκήσεων}
+\label{ch:solved-exercises}
+
+Αυτό το κεφάλαιο περιέχει μια ολοκληρωμένη συλλογή λυμένων ασκήσεων που καλύπτουν
+όλη την ύλη του μαθήματος Data Mining. Κάθε άσκηση συνοδεύεται από αναλυτική
+επεξήγηση βήμα-βήμα.
+
+% =============================================================================
+% SECTION 1: E-R Model
+% =============================================================================
+\section{E-R Μοντέλο και Σχεδιασμός Βάσεων Δεδομένων}
+
+% -----------------------------------------------------------------------------
+% Exercise 1.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 1.1: Σχεδιασμός E-R από Απαιτήσεις}
+
+\begin{formulabox}[Εκφώνηση]
+Σχεδιάστε ένα E-R διάγραμμα για ένα σύστημα music streaming με τις εξής απαιτήσεις:
+\begin{itemize}
+    \item Κάθε \textbf{τραγούδι} έχει μοναδικό ID, τίτλο, διάρκεια και έτος κυκλοφορίας
+    \item Κάθε \textbf{καλλιτέχνης} έχει μοναδικό ID, όνομα και χώρα προέλευσης
+    \item Κάθε τραγούδι ανήκει σε ακριβώς έναν καλλιτέχνη, αλλά ένας καλλιτέχνης μπορεί να έχει πολλά τραγούδια
+    \item Οι \textbf{χρήστες} έχουν ID, username και email
+    \item Οι χρήστες δημιουργούν \textbf{playlists} με όνομα και ημερομηνία δημιουργίας
+    \item Μια playlist μπορεί να περιέχει πολλά τραγούδια και ένα τραγούδι μπορεί να είναι σε πολλές playlists
+\end{itemize}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Αναγνώριση Οντοτήτων}
+
+\textit{Γιατί:} Πρώτα εντοπίζουμε τα «αντικείμενα» του συστήματος που έχουν ανεξάρτητη ύπαρξη.
+
+Οντότητες:
+\begin{itemize}
+    \item \texttt{Song} (τραγούδι)
+    \item \texttt{Artist} (καλλιτέχνης)
+    \item \texttt{User} (χρήστης)
+    \item \texttt{Playlist}
+\end{itemize}
+
+\textbf{Βήμα 2: Αναγνώριση Γνωρισμάτων}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Οντότητα} & \textbf{Γνωρίσματα} \\
+\midrule
+Song & \underline{song\_id}, title, duration, release\_year \\
+Artist & \underline{artist\_id}, name, country \\
+User & \underline{user\_id}, username, email \\
+Playlist & \underline{playlist\_id}, name, created\_date \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Βήμα 3: Αναγνώριση Συσχετίσεων και Cardinality}
+
+\begin{itemize}
+    \item \texttt{Artist} --- \texttt{creates} --- \texttt{Song}: \textbf{1:N}
+    \item \texttt{User} --- \texttt{owns} --- \texttt{Playlist}: \textbf{1:N}
+    \item \texttt{Playlist} --- \texttt{contains} --- \texttt{Song}: \textbf{M:N}
+\end{itemize}
+
+\textbf{Βήμα 4: E-R Διάγραμμα}
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm,
+    entity/.style={rectangle, draw=primary, fill=box-blue, minimum width=2cm, minimum height=1cm, font=\bfseries},
+    relationship/.style={diamond, draw=secondary, fill=box-yellow, aspect=2, font=\small},
+    attribute/.style={ellipse, draw=gray, fill=light-gray, font=\small\ttfamily, inner sep=2pt}]
+
+    % Entities
+    \node[entity] (artist) {Artist};
+    \node[entity, right=4cm of artist] (song) {Song};
+    \node[entity, below=3cm of artist] (user) {User};
+    \node[entity, right=4cm of user] (playlist) {Playlist};
+
+    % Relationships
+    \node[relationship] (creates) at ($(artist)!0.5!(song)$) {creates};
+    \node[relationship] (owns) at ($(user)!0.5!(playlist)$) {owns};
+    \node[relationship] (contains) at ($(playlist)!0.5!(song)$) {contains};
+
+    % Connections with cardinality
+    \draw[thick] (artist) -- node[above] {1} (creates);
+    \draw[thick] (creates) -- node[above] {N} (song);
+    \draw[thick] (user) -- node[above] {1} (owns);
+    \draw[thick] (owns) -- node[above] {N} (playlist);
+    \draw[thick] (playlist) -- node[left] {M} (contains);
+    \draw[thick] (contains) -- node[right] {N} (song);
+
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}[Συνήθες Λάθος]
+Πολλοί φοιτητές ξεχνούν ότι η σχέση \texttt{contains} είναι M:N και χρειάζεται
+ενδιάμεσο πίνακα στο σχεσιακό μοντέλο!
+\end{warningbox}
+
+\textbf{Τελική Απάντηση:} Το E-R διάγραμμα περιλαμβάνει 4 οντότητες και 3 συσχετίσεις
+(1:N, 1:N, M:N).
+
+% -----------------------------------------------------------------------------
+% Exercise 1.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 1.2: Μετατροπή E-R σε Σχεσιακό (M:N)}
+
+\begin{formulabox}[Εκφώνηση]
+Μετατρέψτε την M:N σχέση \texttt{contains} μεταξύ \texttt{Playlist} και \texttt{Song}
+σε σχεσιακούς πίνακες. Η σχέση έχει επιπλέον γνώρισμα \texttt{position} που δηλώνει
+τη θέση του τραγουδιού στη playlist.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Κανόνας Μετατροπής M:N}
+
+\textit{Γιατί:} Οι M:N σχέσεις δεν μπορούν να αναπαρασταθούν με ξένα κλειδιά σε έναν
+από τους δύο πίνακες. Χρειάζεται ενδιάμεσος πίνακας.
+
+\textbf{Βήμα 2: Δημιουργία Πινάκων}
+
+\begin{lstlisting}[language=SQL]
+-- Πίνακας Playlist
+CREATE TABLE Playlist (
+    playlist_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    created_date DATE,
+    user_id INT REFERENCES User(user_id)
+);
+
+-- Πίνακας Song
+CREATE TABLE Song (
+    song_id INT PRIMARY KEY,
+    title VARCHAR(200),
+    duration INT,
+    release_year INT,
+    artist_id INT REFERENCES Artist(artist_id)
+);
+
+-- Ενδιάμεσος πίνακας για M:N
+CREATE TABLE Playlist_Song (
+    playlist_id INT REFERENCES Playlist(playlist_id),
+    song_id INT REFERENCES Song(song_id),
+    position INT,  -- Γνώρισμα της σχέσης
+    PRIMARY KEY (playlist_id, song_id)
+);
+\end{lstlisting}
+
+\begin{infobox}[Σημαντικό]
+Το πρωτεύον κλειδί του ενδιάμεσου πίνακα είναι το συνδυασμένο κλειδί
+\texttt{(playlist\_id, song\_id)} που αποτρέπει διπλότυπες εγγραφές.
+\end{infobox}
+
+\textbf{Τελική Απάντηση:} Δημιουργούνται 3 πίνακες: \texttt{Playlist}, \texttt{Song},
+και \texttt{Playlist\_Song} (ενδιάμεσος).
+
+% -----------------------------------------------------------------------------
+% Exercise 1.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 1.3: Weak Entity Μετατροπή}
+
+\begin{formulabox}[Εκφώνηση]
+Ένα σύστημα διαχείρισης παραγγελιών έχει:
+\begin{itemize}
+    \item \texttt{Order} με \underline{order\_id} και order\_date
+    \item \texttt{OrderItem} (weak entity) με \underline{item\_number}, quantity, price
+\end{itemize}
+Το \texttt{OrderItem} εξαρτάται από το \texttt{Order} για την αναγνώρισή του.
+Μετατρέψτε σε σχεσιακό μοντέλο.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Αναγνώριση Weak Entity}
+
+\textit{Γιατί:} Μια weak entity δεν έχει αρκετά γνωρίσματα για να ταυτοποιηθεί μόνη
+της. Το \texttt{item\_number} (π.χ. 1, 2, 3) επαναλαμβάνεται μεταξύ διαφορετικών
+παραγγελιών.
+
+\textbf{Βήμα 2: Σύνθετο Πρωτεύον Κλειδί}
+
+Το πρωτεύον κλειδί της weak entity σχηματίζεται από:
+\begin{itemize}
+    \item Το πρωτεύον κλειδί της «ιδιοκτήτριας» οντότητας (owner entity)
+    \item Το μερικό κλειδί (partial key) της weak entity
+\end{itemize}
+
+\textbf{Βήμα 3: Σχεσιακοί Πίνακες}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE Order (
+    order_id INT PRIMARY KEY,
+    order_date DATE
+);
+
+CREATE TABLE OrderItem (
+    order_id INT REFERENCES Order(order_id),
+    item_number INT,
+    quantity INT,
+    price DECIMAL(10,2),
+    PRIMARY KEY (order_id, item_number)  -- Σύνθετο κλειδί
+);
+\end{lstlisting}
+
+\begin{warningbox}[Συνήθες Λάθος]
+Μην ξεχνάτε: το ξένο κλειδί (\texttt{order\_id}) γίνεται \textbf{μέρος} του
+πρωτεύοντος κλειδιού στη weak entity, όχι απλά ξένο κλειδί!
+\end{warningbox}
+
+\textbf{Τελική Απάντηση:} PK του OrderItem = \texttt{(order\_id, item\_number)}
+
+% -----------------------------------------------------------------------------
+% Exercise 1.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 1.4: Cardinality Constraints}
+
+\begin{formulabox}[Εκφώνηση]
+Για τις παρακάτω περιγραφές, προσδιορίστε το cardinality (1:1, 1:N, M:N):
+
+\begin{enumerate}
+    \item Ένας φοιτητής εγγράφεται σε πολλά μαθήματα, ένα μάθημα έχει πολλούς φοιτητές
+    \item Κάθε υπάλληλος έχει ακριβώς έναν διευθυντή, ένας διευθυντής διευθύνει πολλούς υπαλλήλους
+    \item Κάθε χώρα έχει μία πρωτεύουσα, κάθε πρωτεύουσα ανήκει σε μία χώρα
+    \item Ένας συγγραφέας γράφει πολλά βιβλία, ένα βιβλίο μπορεί να έχει πολλούς συγγραφείς
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Μέθοδος:} Για κάθε περίπτωση ρωτάμε:
+\begin{itemize}
+    \item Πόσες οντότητες Β συνδέονται με μία οντότητα Α;
+    \item Πόσες οντότητες Α συνδέονται με μία οντότητα Β;
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{clcl}
+\toprule
+\textbf{\#} & \textbf{Σχέση} & \textbf{Cardinality} & \textbf{Εξήγηση} \\
+\midrule
+1 & Student-Course & \textbf{M:N} & Πολλοί-σε-πολλούς \\
+2 & Employee-Manager & \textbf{N:1} & Πολλοί υπάλληλοι, ένας διευθυντής \\
+3 & Country-Capital & \textbf{1:1} & Ένα-προς-ένα \\
+4 & Author-Book & \textbf{M:N} & Πολλοί-σε-πολλούς \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Υλοποίηση σε Σχεσιακό]
+\begin{itemize}
+    \item \textbf{1:1}: FK σε οποιονδήποτε πίνακα (+ UNIQUE)
+    \item \textbf{1:N}: FK στην πλευρά του N
+    \item \textbf{M:N}: Ενδιάμεσος πίνακας (junction table)
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 1.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 1.5: Σύνθετο Schema (Hospital System)}
+
+\begin{formulabox}[Εκφώνηση]
+Σχεδιάστε E-R και μετατρέψτε σε σχεσιακό για νοσοκομειακό σύστημα:
+\begin{itemize}
+    \item \texttt{Doctor}: doctor\_id, name, specialty
+    \item \texttt{Patient}: patient\_id, name, birth\_date
+    \item \texttt{Appointment}: date, time, diagnosis (σχέση μεταξύ Doctor-Patient)
+    \item Ένας γιατρός έχει πολλά ραντεβού, ένας ασθενής έχει πολλά ραντεβού
+    \item Ένα ραντεβού συνδέει ακριβώς έναν γιατρό με έναν ασθενή
+\end{itemize}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Ανάλυση}
+
+Η σχέση Doctor-Patient είναι M:N (ένας γιατρός βλέπει πολλούς ασθενείς, ένας ασθενής
+επισκέπτεται πολλούς γιατρούς), αλλά κάθε \textit{συγκεκριμένο} ραντεβού αφορά
+ακριβώς έναν γιατρό και έναν ασθενή.
+
+\textbf{Βήμα 2: E-R Διάγραμμα}
+
+\begin{center}
+\begin{tikzpicture}[node distance=4cm,
+    entity/.style={rectangle, draw=primary, fill=box-blue, minimum width=2cm, minimum height=1cm, font=\bfseries},
+    relationship/.style={diamond, draw=secondary, fill=box-yellow, aspect=2.5, font=\small}]
+
+    \node[entity] (doctor) {Doctor};
+    \node[entity, right=5cm of doctor] (patient) {Patient};
+    \node[relationship] (appointment) at ($(doctor)!0.5!(patient)$) {Appointment};
+
+    \draw[thick] (doctor) -- node[above] {1} (appointment);
+    \draw[thick] (appointment) -- node[above] {N} (patient);
+    \draw[thick] (patient) -- node[below] {1} (appointment);
+    \draw[thick] (appointment) -- node[below] {M} (doctor);
+
+    % Attributes of relationship
+    \node[ellipse, draw=gray, fill=light-gray, font=\small, above=0.5cm of appointment] (date) {date, time};
+    \node[ellipse, draw=gray, fill=light-gray, font=\small, below=0.5cm of appointment] (diag) {diagnosis};
+    \draw[dashed] (appointment) -- (date);
+    \draw[dashed] (appointment) -- (diag);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Βήμα 3: Σχεσιακό Μοντέλο}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE Doctor (
+    doctor_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    specialty VARCHAR(50)
+);
+
+CREATE TABLE Patient (
+    patient_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    birth_date DATE
+);
+
+CREATE TABLE Appointment (
+    appointment_id INT PRIMARY KEY,
+    doctor_id INT REFERENCES Doctor(doctor_id),
+    patient_id INT REFERENCES Patient(patient_id),
+    appointment_date DATE,
+    appointment_time TIME,
+    diagnosis TEXT
+);
+\end{lstlisting}
+
+\textbf{Τελική Απάντηση:} 3 πίνακες με τον \texttt{Appointment} να περιέχει FKs και
+προς τους δύο.
+
+
+% =============================================================================
+% SECTION 2: Relational Algebra
+% =============================================================================
+\section{Σχεσιακή Άλγεβρα}
+
+\begin{infobox}[Σύνοψη Τελεστών]
+\begin{center}
+\begin{tabular}{cll}
+\toprule
+\textbf{Σύμβολο} & \textbf{Όνομα} & \textbf{Περιγραφή} \\
+\midrule
+$\sigma$ & Selection & Επιλογή γραμμών \\
+$\pi$ & Projection & Επιλογή στηλών \\
+$\cup$ & Union & Ένωση συνόλων \\
+$\cap$ & Intersection & Τομή συνόλων \\
+$-$ & Difference & Διαφορά συνόλων \\
+$\times$ & Cartesian Product & Καρτεσιανό γινόμενο \\
+$\bowtie$ & Natural Join & Φυσική σύζευξη \\
+$\bowtie_\theta$ & Theta Join & Σύζευξη με συνθήκη \\
+$\div$ & Division & Διαίρεση \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.1: Selection και Projection}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται ο πίνακας \texttt{Employee(emp\_id, name, department, salary)}.
+
+Γράψτε σε σχεσιακή άλγεβρα: «Βρες τα ονόματα των υπαλλήλων του τμήματος IT με
+μισθό πάνω από 50000».
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Selection (επιλογή γραμμών)}
+
+\textit{Γιατί:} Πρώτα φιλτράρουμε τις γραμμές που πληρούν τις συνθήκες.
+
+$$\sigma_{department='IT' \land salary > 50000}(Employee)$$
+
+\textbf{Βήμα 2: Projection (επιλογή στηλών)}
+
+\textit{Γιατί:} Μετά κρατάμε μόνο τη στήλη που μας ενδιαφέρει.
+
+$$\pi_{name}(\sigma_{department='IT' \land salary > 50000}(Employee))$$
+
+\begin{warningbox}[Σειρά Εφαρμογής]
+Η σειρά Selection $\to$ Projection είναι σημαντική για βελτιστοποίηση! Αν κάνουμε
+πρώτα projection, χάνουμε τις στήλες που χρειαζόμαστε για το φιλτράρισμα.
+\end{warningbox}
+
+\textbf{Τελική Απάντηση:} $\pi_{name}(\sigma_{department='IT' \land salary > 50000}(Employee))$
+
+% -----------------------------------------------------------------------------
+% Exercise 2.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.2: Natural Join}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Student(sid, sname, dept)}
+    \item \texttt{Enrollment(sid, cid, grade)}
+    \item \texttt{Course(cid, cname, credits)}
+\end{itemize}
+
+Βρείτε τα ονόματα φοιτητών και τα μαθήματα στα οποία είναι εγγεγραμμένοι.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Αναγνώριση κοινών γνωρισμάτων}
+
+\begin{itemize}
+    \item Student $\bowtie$ Enrollment: κοινό \texttt{sid}
+    \item Enrollment $\bowtie$ Course: κοινό \texttt{cid}
+\end{itemize}
+
+\textbf{Βήμα 2: Natural Join αλυσίδα}
+
+$$Student \bowtie Enrollment \bowtie Course$$
+
+\textbf{Βήμα 3: Projection}
+
+$$\pi_{sname, cname}(Student \bowtie Enrollment \bowtie Course)$$
+
+\begin{infobox}[Πώς λειτουργεί το Natural Join]
+Το $\bowtie$ συνδέει πλειάδες που έχουν \textbf{ίδιες τιμές} στα κοινά γνωρίσματα
+(αυτά με το ίδιο όνομα). Οι κοινές στήλες εμφανίζονται μία φορά στο αποτέλεσμα.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.3: Theta Join}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Employee(eid, ename, salary, manager\_id)}
+    \item \texttt{Manager(mid, mname, bonus)}
+\end{itemize}
+
+Βρείτε ζεύγη (υπάλληλος, διευθυντής) όπου ο μισθός του υπαλλήλου είναι
+μεγαλύτερος από το bonus του διευθυντή του.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Σύνδεση υπαλλήλου με διευθυντή}
+
+Πρώτα συνδέουμε με βάση το \texttt{manager\_id = mid}:
+$$Employee \bowtie_{manager\_id = mid} Manager$$
+
+\textbf{Βήμα 2: Φιλτράρισμα}
+
+Εφαρμόζουμε τη συνθήκη \texttt{salary > bonus}:
+$$\sigma_{salary > bonus}(Employee \bowtie_{manager\_id = mid} Manager)$$
+
+\textbf{Βήμα 3: Projection}
+
+$$\pi_{ename, mname}(\sigma_{salary > bonus}(Employee \bowtie_{manager\_id = mid} Manager))$$
+
+\textbf{Εναλλακτικά (ενιαίο Theta Join):}
+$$\pi_{ename, mname}(Employee \bowtie_{manager\_id = mid \land salary > bonus} Manager)$$
+
+% -----------------------------------------------------------------------------
+% Exercise 2.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.4: Set Difference}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{AllStudents(sid, sname)}
+    \item \texttt{Enrollment(sid, cid)}
+\end{itemize}
+
+Βρείτε τους φοιτητές που \textbf{δεν} είναι εγγεγραμμένοι σε κανένα μάθημα.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Εύρεση εγγεγραμμένων φοιτητών}
+
+$$EnrolledStudents = \pi_{sid}(Enrollment)$$
+
+\textbf{Βήμα 2: Set Difference}
+
+\textit{Γιατί:} Το $A - B$ δίνει τα στοιχεία που είναι στο A αλλά όχι στο B.
+
+$$NotEnrolled = \pi_{sid}(AllStudents) - \pi_{sid}(Enrollment)$$
+
+\textbf{Βήμα 3: Επαναφορά ονομάτων (αν χρειάζεται)}
+
+$$\pi_{sname}(AllStudents \bowtie NotEnrolled)$$
+
+\begin{warningbox}[Απαίτηση Συμβατότητας]
+Για τελεστές συνόλων ($\cup$, $\cap$, $-$), οι σχέσεις πρέπει να έχουν:
+\begin{enumerate}
+    \item Ίδιο αριθμό γνωρισμάτων
+    \item Συμβατά domains στις αντίστοιχες θέσεις
+\end{enumerate}
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.5: Intersection με Projection}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{CS\_Students(sid, sname)} -- Φοιτητές πληροφορικής
+    \item \texttt{Math\_Students(sid, sname)} -- Φοιτητές μαθηματικών
+\end{itemize}
+
+Βρείτε τους φοιτητές που σπουδάζουν \textbf{και} πληροφορική \textbf{και} μαθηματικά.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+$$CS\_Students \cap Math\_Students$$
+
+ή ισοδύναμα (αν θέλουμε μόνο ονόματα):
+
+$$\pi_{sname}(CS\_Students \cap Math\_Students)$$
+
+\begin{infobox}[Ισοδυναμία]
+Η τομή μπορεί να εκφραστεί με διαφορά:
+$$A \cap B = A - (A - B)$$
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.6
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.6: Division (Απλή)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Takes(sid, cid)} -- φοιτητής παίρνει μάθημα
+    \item \texttt{Required(cid)} -- υποχρεωτικά μαθήματα: $\{C1, C2\}$
+\end{itemize}
+
+Βρείτε τους φοιτητές που έχουν πάρει \textbf{όλα} τα υποχρεωτικά μαθήματα.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Η Division ($\div$) απαντά σε ερωτήματα «για όλα»:}
+
+$$Takes \div Required$$
+
+\textbf{Βήμα-βήμα αλγόριθμος:}
+
+\begin{enumerate}
+    \item Βρες όλους τους φοιτητές: $\pi_{sid}(Takes)$
+    \item Βρες τι «θα έπρεπε» να έχει πάρει κάθε φοιτητής: $\pi_{sid}(Takes) \times Required$
+    \item Βρες τι «δεν έχει» πάρει: $(\pi_{sid}(Takes) \times Required) - Takes$
+    \item Αφαίρεσε όσους «δεν έχουν» κάτι: $\pi_{sid}(Takes) - \pi_{sid}((\pi_{sid}(Takes) \times Required) - Takes)$
+\end{enumerate}
+
+\textbf{Παράδειγμα:}
+
+\begin{center}
+\begin{tabular}{cc}
+\textbf{Takes} & \\
+\toprule
+sid & cid \\
+\midrule
+S1 & C1 \\
+S1 & C2 \\
+S1 & C3 \\
+S2 & C1 \\
+S3 & C1 \\
+S3 & C2 \\
+\bottomrule
+\end{tabular}
+\quad\quad
+\begin{tabular}{c}
+\textbf{Required} \\
+\toprule
+cid \\
+\midrule
+C1 \\
+C2 \\
+\bottomrule
+\end{tabular}
+\quad\quad
+\begin{tabular}{c}
+\textbf{Result} \\
+\toprule
+sid \\
+\midrule
+S1 \\
+S3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.7
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.7: Division (Σύνθετη)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Supplies(supplier, part)}
+    \item \texttt{Project(pname, part)} -- έργα και τα parts που χρειάζονται
+\end{itemize}
+
+Βρείτε τους προμηθευτές που μπορούν να προμηθεύσουν \textbf{όλα} τα parts που
+χρειάζεται το έργο «Rocket».
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Βρες τα parts του Rocket}
+
+$$RocketParts = \pi_{part}(\sigma_{pname='Rocket'}(Project))$$
+
+\textbf{Βήμα 2: Division}
+
+$$Supplies \div RocketParts$$
+
+\textbf{Σε SQL (για κατανόηση):}
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT s1.supplier
+FROM Supplies s1
+WHERE NOT EXISTS (
+    SELECT part FROM Project WHERE pname = 'Rocket'
+    EXCEPT
+    SELECT part FROM Supplies s2
+    WHERE s2.supplier = s1.supplier
+);
+\end{lstlisting}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.8
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 2.8: Σύνθετη Έκφραση}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Employee(eid, ename, dept\_id, salary)}
+    \item \texttt{Department(dept\_id, dname, budget)}
+    \item \texttt{Project(pid, pname, dept\_id)}
+    \item \texttt{WorksOn(eid, pid, hours)}
+\end{itemize}
+
+Βρείτε τα ονόματα υπαλλήλων του τμήματος «Research» που εργάζονται πάνω από 20 ώρες
+σε κάποιο project.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Εύρεση dept\_id του Research}
+
+$$ResearchDept = \sigma_{dname='Research'}(Department)$$
+
+\textbf{Βήμα 2: Υπάλληλοι του Research}
+
+$$ResearchEmps = Employee \bowtie ResearchDept$$
+
+\textbf{Βήμα 3: Υπάλληλοι με >20 ώρες}
+
+$$HighHours = \sigma_{hours > 20}(WorksOn)$$
+
+\textbf{Βήμα 4: Συνδυασμός}
+
+$$Result = \pi_{ename}(ResearchEmps \bowtie HighHours)$$
+
+\textbf{Ενιαία έκφραση:}
+
+$$\pi_{ename}(\sigma_{dname='Research'}(Department) \bowtie Employee \bowtie \sigma_{hours>20}(WorksOn))$$
+
+
+% =============================================================================
+% SECTION 3: SQL
+% =============================================================================
+\section{SQL}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.1: SELECT με WHERE}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται ο πίνακας \texttt{Products(pid, pname, category, price, stock)}.
+
+Γράψτε SQL query για να βρείτε τα προϊόντα κατηγορίας «Electronics» με τιμή μεταξύ
+100 και 500 ευρώ, ταξινομημένα κατά τιμή (φθίνουσα).
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT pid, pname, price
+FROM Products
+WHERE category = 'Electronics'
+  AND price BETWEEN 100 AND 500
+ORDER BY price DESC;
+\end{lstlisting}
+
+\begin{infobox}[BETWEEN]
+Το \texttt{BETWEEN 100 AND 500} είναι ισοδύναμο με \texttt{price >= 100 AND price <= 500}
+(περιλαμβάνει τα όρια).
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.2: JOINs (INNER, LEFT)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Customers(cid, cname, city)}
+    \item \texttt{Orders(oid, cid, order\_date, total)}
+\end{itemize}
+
+\begin{enumerate}
+    \item Βρείτε όλους τους πελάτες με τις παραγγελίες τους
+    \item Βρείτε όλους τους πελάτες, ακόμα κι αν δεν έχουν παραγγελίες
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(a) INNER JOIN -- μόνο πελάτες με παραγγελίες:}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname, o.oid, o.total
+FROM Customers c
+INNER JOIN Orders o ON c.cid = o.cid;
+\end{lstlisting}
+
+\textbf{(b) LEFT JOIN -- όλοι οι πελάτες:}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname, o.oid, o.total
+FROM Customers c
+LEFT JOIN Orders o ON c.cid = o.cid;
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+    % INNER JOIN
+    \begin{scope}[xshift=-4cm]
+        \draw[fill=box-blue, fill opacity=0.5] (0,0) circle (1.2);
+        \draw[fill=box-green, fill opacity=0.5] (1.5,0) circle (1.2);
+        \fill[secondary, opacity=0.7] (0.75,0) circle (0.5);
+        \node at (0.75,-2) {\small INNER JOIN};
+    \end{scope}
+    % LEFT JOIN
+    \begin{scope}[xshift=4cm]
+        \draw[fill=secondary, fill opacity=0.5] (0,0) circle (1.2);
+        \draw[fill=box-green, fill opacity=0.3] (1.5,0) circle (1.2);
+        \node at (0.75,-2) {\small LEFT JOIN};
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.3: GROUP BY με COUNT}
+
+\begin{formulabox}[Εκφώνηση]
+Χρησιμοποιώντας τους πίνακες \texttt{Orders} και \texttt{Customers}, βρείτε πόσες
+παραγγελίες έχει κάνει κάθε πελάτης.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cid, c.cname, COUNT(o.oid) AS order_count
+FROM Customers c
+LEFT JOIN Orders o ON c.cid = o.cid
+GROUP BY c.cid, c.cname;
+\end{lstlisting}
+
+\begin{warningbox}[LEFT vs INNER JOIN]
+Χρησιμοποιούμε LEFT JOIN για να συμπεριλάβουμε πελάτες με 0 παραγγελίες.
+Με INNER JOIN θα χάναμε αυτούς τους πελάτες!
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.4: GROUP BY με HAVING}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τις πόλεις που έχουν περισσότερους από 5 πελάτες και εμφανίστε τον αριθμό
+πελατών ανά πόλη.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT city, COUNT(*) AS customer_count
+FROM Customers
+GROUP BY city
+HAVING COUNT(*) > 5
+ORDER BY customer_count DESC;
+\end{lstlisting}
+
+\begin{infobox}[WHERE vs HAVING]
+\begin{itemize}
+    \item \textbf{WHERE}: Φιλτράρει \textit{γραμμές} \textbf{πριν} το grouping
+    \item \textbf{HAVING}: Φιλτράρει \textit{groups} \textbf{μετά} το grouping
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.5: Subquery με IN}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους πελάτες που έχουν κάνει παραγγελία με total > 1000.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Μέθοδος 1: Subquery με IN}
+
+\begin{lstlisting}[language=SQL]
+SELECT cname
+FROM Customers
+WHERE cid IN (
+    SELECT cid
+    FROM Orders
+    WHERE total > 1000
+);
+\end{lstlisting}
+
+\textbf{Μέθοδος 2: JOIN (ισοδύναμο)}
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT c.cname
+FROM Customers c
+JOIN Orders o ON c.cid = o.cid
+WHERE o.total > 1000;
+\end{lstlisting}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.6
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.6: Correlated Subquery}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους υπαλλήλους που έχουν μισθό μεγαλύτερο από τον μέσο όρο του τμήματός τους.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT e1.ename, e1.salary, e1.dept_id
+FROM Employee e1
+WHERE e1.salary > (
+    SELECT AVG(e2.salary)
+    FROM Employee e2
+    WHERE e2.dept_id = e1.dept_id  -- Correlated!
+);
+\end{lstlisting}
+
+\begin{infobox}[Correlated Subquery]
+Το subquery εξαρτάται από το εξωτερικό query (αναφέρεται στο \texttt{e1.dept\_id}).
+Εκτελείται μία φορά \textbf{για κάθε γραμμή} του εξωτερικού query.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.7
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.7: NOT EXISTS Pattern}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους πελάτες που \textbf{δεν} έχουν κάνει καμία παραγγελία.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Μέθοδος 1: NOT EXISTS}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname
+FROM Customers c
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Orders o
+    WHERE o.cid = c.cid
+);
+\end{lstlisting}
+
+\textbf{Μέθοδος 2: LEFT JOIN + IS NULL}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname
+FROM Customers c
+LEFT JOIN Orders o ON c.cid = o.cid
+WHERE o.oid IS NULL;
+\end{lstlisting}
+
+\textbf{Μέθοδος 3: NOT IN}
+
+\begin{lstlisting}[language=SQL]
+SELECT cname
+FROM Customers
+WHERE cid NOT IN (SELECT cid FROM Orders);
+\end{lstlisting}
+
+\begin{warningbox}[NOT IN με NULL]
+Αν το subquery του NOT IN επιστρέψει NULL, το αποτέλεσμα είναι κενό!
+Προτιμήστε NOT EXISTS για ασφάλεια.
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.8
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.8: SQL Division (Double NOT EXISTS)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Enrollment(sid, cid)}
+    \item \texttt{Course(cid, cname)}
+\end{itemize}
+
+Βρείτε τους φοιτητές που έχουν εγγραφεί σε \textbf{όλα} τα μαθήματα.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Λογική:} «Δεν υπάρχει μάθημα στο οποίο ο φοιτητής να μην έχει εγγραφεί»
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT e1.sid
+FROM Enrollment e1
+WHERE NOT EXISTS (
+    -- Μαθήματα που ΔΕΝ έχει πάρει ο e1.sid
+    SELECT c.cid
+    FROM Course c
+    WHERE NOT EXISTS (
+        -- Έλεγχος αν ο e1.sid έχει πάρει το c.cid
+        SELECT 1
+        FROM Enrollment e2
+        WHERE e2.sid = e1.sid AND e2.cid = c.cid
+    )
+);
+\end{lstlisting}
+
+\begin{infobox}[Ερμηνεία Double NOT EXISTS]
+\begin{enumerate}
+    \item Εσωτερικό NOT EXISTS: Βρες μαθήματα που \textbf{δεν} έχει πάρει ο φοιτητής
+    \item Εξωτερικό NOT EXISTS: Κράτα φοιτητές που \textbf{δεν} έχουν τέτοια μαθήματα
+\end{enumerate}
+Δηλαδή: φοιτητές χωρίς «κενά» στο πρόγραμμα.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.9
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.9: Multiple JOINs με Aggregation}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Orders(oid, cid, order\_date)}
+    \item \texttt{OrderItems(oid, pid, quantity, unit\_price)}
+    \item \texttt{Products(pid, pname, category)}
+\end{itemize}
+
+Βρείτε το συνολικό έσοδο (revenue) ανά κατηγορία προϊόντος.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    p.category,
+    SUM(oi.quantity * oi.unit_price) AS total_revenue
+FROM Products p
+JOIN OrderItems oi ON p.pid = oi.pid
+GROUP BY p.category
+ORDER BY total_revenue DESC;
+\end{lstlisting}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.10
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 3.10: Complex Query}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους top 3 πελάτες (με βάση συνολικές αγορές) που έχουν αγοράσει προϊόντα
+από τουλάχιστον 2 διαφορετικές κατηγορίες.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    c.cid,
+    c.cname,
+    SUM(oi.quantity * oi.unit_price) AS total_spent,
+    COUNT(DISTINCT p.category) AS categories_bought
+FROM Customers c
+JOIN Orders o ON c.cid = o.cid
+JOIN OrderItems oi ON o.oid = oi.oid
+JOIN Products p ON oi.pid = p.pid
+GROUP BY c.cid, c.cname
+HAVING COUNT(DISTINCT p.category) >= 2
+ORDER BY total_spent DESC
+LIMIT 3;
+\end{lstlisting}
+
+\begin{infobox}[Σειρά Εκτέλεσης SQL]
+\begin{enumerate}
+    \item FROM / JOIN
+    \item WHERE
+    \item GROUP BY
+    \item HAVING
+    \item SELECT
+    \item ORDER BY
+    \item LIMIT
+\end{enumerate}
+\end{infobox}
+
+
+% =============================================================================
+% SECTION 4: Query Processing
+% =============================================================================
+\section{Query Processing}
+
+% -----------------------------------------------------------------------------
+% Exercise 4.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 4.1: Pipelining vs Materialization}
+
+\begin{formulabox}[Εκφώνηση]
+Για το query: $\pi_{name}(\sigma_{salary>50000}(Employee \bowtie Department))$
+
+Ταξινομήστε τους τελεστές σε pipelined ή materialized και εξηγήστε γιατί.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Ορισμοί:}
+\begin{itemize}
+    \item \textbf{Pipelining:} Τα αποτελέσματα περνάνε αμέσως στον επόμενο τελεστή χωρίς αποθήκευση
+    \item \textbf{Materialization:} Τα αποτελέσματα αποθηκεύονται προσωρινά πριν περάσουν στον επόμενο τελεστή
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Τελεστής} & \textbf{Τύπος} & \textbf{Λόγος} \\
+\midrule
+$\bowtie$ (Join) & Materialized & Χρειάζεται πλήρη δεδομένα για hash/sort \\
+$\sigma$ (Selection) & Pipelined & Φιλτράρει γραμμή-γραμμή \\
+$\pi$ (Projection) & Pipelined & Επεξεργάζεται γραμμή-γραμμή \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Pipeline Breakers]
+Οι τελεστές που \textbf{δεν} μπορούν να είναι pipelined ονομάζονται «pipeline breakers»:
+\begin{itemize}
+    \item Sort
+    \item Hash Join (build phase)
+    \item Group By / Aggregation
+    \item Duplicate elimination (DISTINCT)
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 4.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 4.2: Επιλογή Join Algorithm}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται δύο πίνακες:
+\begin{itemize}
+    \item $R$: 10,000 tuples, 100 tuples/page $\Rightarrow$ 100 pages
+    \item $S$: 1,000 tuples, 100 tuples/page $\Rightarrow$ 10 pages
+    \item Buffer: 12 pages
+\end{itemize}
+
+Ποιος αλγόριθμος join είναι καλύτερος; Υπολογίστε το I/O cost.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Nested Loop Join:}
+
+$$Cost_{NLJ} = B_R + B_R \cdot B_S = 100 + 100 \cdot 10 = 1100 \text{ I/Os}$$
+
+(με το μικρότερο ως outer: $10 + 10 \cdot 100 = 1010$ I/Os)
+
+\textbf{Block Nested Loop Join:}
+
+Με buffer $B = 12$ pages, κρατάμε $B-2 = 10$ pages για τον outer.
+
+$$Cost_{BNLJ} = B_R + \lceil B_R / (B-2) \rceil \cdot B_S$$
+
+Με $S$ ως outer (μικρότερο):
+$$Cost = 10 + \lceil 10/10 \rceil \cdot 100 = 10 + 100 = 110 \text{ I/Os}$$
+
+\textbf{Hash Join:}
+
+$$Cost_{Hash} = 3 \cdot (B_R + B_S) = 3 \cdot 110 = 330 \text{ I/Os}$$
+
+\textbf{Sort-Merge Join:}
+
+$$Cost_{SM} = Sort(R) + Sort(S) + B_R + B_S$$
+$$= 2 \cdot 100 \cdot \lceil \log_{11}(10) \rceil + 2 \cdot 10 \cdot \lceil \log_{11}(1) \rceil + 110$$
+$$\approx 200 \cdot 1 + 20 \cdot 1 + 110 = 330 \text{ I/Os}$$
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Algorithm} & \textbf{I/O Cost} \\
+\midrule
+Simple NLJ (R outer) & 1,100 \\
+Simple NLJ (S outer) & 1,010 \\
+Block NLJ (S outer) & \textbf{110} \\
+Hash Join & 330 \\
+Sort-Merge & $\sim$330 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Τελική Απάντηση:} Block Nested Loop Join με S ως outer (110 I/Os).
+
+% -----------------------------------------------------------------------------
+% Exercise 4.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 4.3: Query Optimization (Push Selection)}
+
+\begin{formulabox}[Εκφώνηση]
+Βελτιστοποιήστε το query tree για:
+
+$$\pi_{ename}(\sigma_{dname='Sales'}(Employee \bowtie Department))$$
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Αρχικό Query Tree:}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    op/.style={circle, draw=secondary, fill=box-blue, minimum size=0.8cm},
+    rel/.style={rectangle, draw=primary, fill=box-green, rounded corners, minimum width=1.5cm}]
+
+    \node[op] (proj) {$\pi$};
+    \node[op, below=of proj] (sel) {$\sigma$};
+    \node[op, below=of sel] (join) {$\bowtie$};
+    \node[rel, below left=1cm and 0.5cm of join] (emp) {Employee};
+    \node[rel, below right=1cm and 0.5cm of join] (dept) {Department};
+
+    \draw[arrow] (sel) -- (proj);
+    \draw[arrow] (join) -- (sel);
+    \draw[arrow] (emp) -- (join);
+    \draw[arrow] (dept) -- (join);
+
+    \node[right=0.3cm of proj, font=\small] {$name$};
+    \node[right=0.3cm of sel, font=\small] {$dname='Sales'$};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Βελτιστοποιημένο Query Tree (Push Selection Down):}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    op/.style={circle, draw=secondary, fill=box-blue, minimum size=0.8cm},
+    rel/.style={rectangle, draw=primary, fill=box-green, rounded corners, minimum width=1.5cm}]
+
+    \node[op] (proj) {$\pi$};
+    \node[op, below=of proj] (join) {$\bowtie$};
+    \node[rel, below left=1cm and 0.5cm of join] (emp) {Employee};
+    \node[op, below right=1cm and 0.5cm of join] (sel) {$\sigma$};
+    \node[rel, below=of sel] (dept) {Department};
+
+    \draw[arrow] (join) -- (proj);
+    \draw[arrow] (emp) -- (join);
+    \draw[arrow] (sel) -- (join);
+    \draw[arrow] (dept) -- (sel);
+
+    \node[right=0.3cm of proj, font=\small] {$name$};
+    \node[right=0.3cm of sel, font=\small] {$dname='Sales'$};
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Κανόνες Βελτιστοποίησης]
+\begin{enumerate}
+    \item \textbf{Push selections down}: Μειώνει το μέγεθος ενδιάμεσων αποτελεσμάτων
+    \item \textbf{Push projections down}: Μειώνει το πλάτος tuples
+    \item \textbf{Join ordering}: Μικρότερα ενδιάμεσα αποτελέσματα πρώτα
+\end{enumerate}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 4.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 4.4: Cost Comparison}
+
+\begin{formulabox}[Εκφώνηση]
+Για τον πίνακα $R$ με 10,000 tuples και index στο attribute $A$:
+
+Συγκρίνετε το cost για: $\sigma_{A=5}(R)$
+
+\begin{enumerate}
+    \item Table scan
+    \item B+-tree index (height = 3, clustering factor = 1.0)
+    \item Hash index
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+Έστω $B_R = 100$ pages, selectivity = 1\% (100 tuples match).
+
+\textbf{(a) Table Scan:}
+$$Cost = B_R = 100 \text{ page I/Os}$$
+
+\textbf{(b) B+-tree Index (clustered):}
+$$Cost = height + \text{matching pages} = 3 + 1 = 4 \text{ I/Os}$$
+(Clustered = τα matching tuples είναι συνεχόμενα)
+
+\textbf{(c) Hash Index:}
+$$Cost = 1.2 \text{ (average bucket access)} = \approx 2 \text{ I/Os}$$
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Method} & \textbf{I/O Cost} \\
+\midrule
+Table Scan & 100 \\
+B+-tree (clustered) & 4 \\
+Hash Index & $\sim$2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warningbox}[Unclustered Index]
+Αν ο B+-tree index ήταν unclustered, το cost θα ήταν:
+$$Cost = 3 + 100 = 103 \text{ I/Os (χειρότερο από scan!)}$$
+\end{warningbox}
+
+
+% =============================================================================
+% SECTION 5: Data Preprocessing
+% =============================================================================
+\section{Προεπεξεργασία Δεδομένων}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.1: Ταξινόμηση Attribute Types (NOIR)}
+
+\begin{formulabox}[Εκφώνηση]
+Ταξινομήστε τα παρακάτω attributes σε Nominal, Ordinal, Interval, ή Ratio:
+
+\begin{enumerate}
+    \item Αριθμός τηλεφώνου
+    \item Θερμοκρασία σε Celsius
+    \item Εκπαιδευτικό επίπεδο (Λύκειο, Πτυχίο, Μεταπτυχιακό, PhD)
+    \item Ηλικία σε έτη
+    \item Χρώμα ματιών
+    \item Ημερομηνία γέννησης
+    \item Βαθμολογία 1-5 αστέρια
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Attribute} & \textbf{Type} & \textbf{Εξήγηση} \\
+\midrule
+Αρ. τηλεφώνου & \textbf{Nominal} & Αναγνωριστικό, δεν έχει νόημα η σειρά/αριθμητικές πράξεις \\
+Θερμοκρασία (°C) & \textbf{Interval} & Διαφορές έχουν νόημα, αλλά 0°C δεν = «καμία θερμοκρασία» \\
+Εκπαιδευτικό επίπεδο & \textbf{Ordinal} & Σειρά έχει νόημα, αλλά διαφορές όχι \\
+Ηλικία & \textbf{Ratio} & Υπάρχει απόλυτο 0, λόγοι έχουν νόημα (διπλάσια ηλικία) \\
+Χρώμα ματιών & \textbf{Nominal} & Κατηγορικό, χωρίς σειρά \\
+Ημερομηνία γέννησης & \textbf{Interval} & Διαφορές έχουν νόημα, δεν υπάρχει «0 ημερομηνία» \\
+Rating 1-5 & \textbf{Ordinal} & Σειρά έχει νόημα, αλλά 4★ δεν = 2×2★ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[NOIR Summary]
+\begin{itemize}
+    \item \textbf{N}ominal: Κατηγορίες, mode μόνο
+    \item \textbf{O}rdinal: + Σειρά, median
+    \item \textbf{I}nterval: + Διαφορές, mean
+    \item \textbf{R}atio: + Λόγοι, geometric mean
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.2: Equal-Width Binning}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται οι τιμές: $\{4, 8, 9, 15, 21, 21, 24, 25, 26, 28, 29, 34\}$
+
+Εφαρμόστε equal-width binning με 3 bins.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Υπολογισμός εύρους}
+
+$$\text{Range} = \max - \min = 34 - 4 = 30$$
+
+\textbf{Βήμα 2: Υπολογισμός πλάτους bin}
+
+$$\text{Width} = \frac{\text{Range}}{\text{num\_bins}} = \frac{30}{3} = 10$$
+
+\textbf{Βήμα 3: Καθορισμός ορίων}
+
+\begin{itemize}
+    \item Bin 1: $[4, 14)$
+    \item Bin 2: $[14, 24)$
+    \item Bin 3: $[24, 34]$
+\end{itemize}
+
+\textbf{Βήμα 4: Κατανομή τιμών}
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{Bin} & \textbf{Τιμές} \\
+\midrule
+Bin 1 $[4, 14)$ & 4, 8, 9 \\
+Bin 2 $[14, 24)$ & 15, 21, 21 \\
+Bin 3 $[24, 34]$ & 24, 25, 26, 28, 29, 34 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warningbox}[Μειονέκτημα Equal-Width]
+Τα bins μπορεί να έχουν πολύ άνιση κατανομή (Bin 3 έχει 6 τιμές, Bin 1 έχει 3).
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.3: Equal-Frequency Binning}
+
+\begin{formulabox}[Εκφώνηση]
+Για τις ίδιες τιμές: $\{4, 8, 9, 15, 21, 21, 24, 25, 26, 28, 29, 34\}$
+
+Εφαρμόστε equal-frequency (equal-depth) binning με 3 bins.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Υπολογισμός μεγέθους bin}
+
+$$\text{Bin size} = \frac{n}{\text{num\_bins}} = \frac{12}{3} = 4 \text{ τιμές/bin}$$
+
+\textbf{Βήμα 2: Κατανομή (sorted)}
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{Bin} & \textbf{Τιμές} \\
+\midrule
+Bin 1 & 4, 8, 9, 15 \\
+Bin 2 & 21, 21, 24, 25 \\
+Bin 3 & 26, 28, 29, 34 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Equal-Frequency vs Equal-Width]
+\begin{itemize}
+    \item \textbf{Equal-Width}: Ίδιο εύρος ανά bin, διαφορετικό πλήθος
+    \item \textbf{Equal-Frequency}: Ίδιο πλήθος ανά bin, διαφορετικό εύρος
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.4: Smoothing by Bin Means}
+
+\begin{formulabox}[Εκφώνηση]
+Χρησιμοποιώντας τα equal-frequency bins από την προηγούμενη άσκηση, εφαρμόστε
+smoothing by bin means.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Υπολογισμός μέσου όρου κάθε bin}
+
+\begin{align*}
+\text{Mean}_1 &= \frac{4 + 8 + 9 + 15}{4} = \frac{36}{4} = 9 \\
+\text{Mean}_2 &= \frac{21 + 21 + 24 + 25}{4} = \frac{91}{4} = 22.75 \\
+\text{Mean}_3 &= \frac{26 + 28 + 29 + 34}{4} = \frac{117}{4} = 29.25
+\end{align*}
+
+\textbf{Βήμα 2: Αντικατάσταση}
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Bin} & \textbf{Original} & \textbf{Smoothed} \\
+\midrule
+Bin 1 & 4, 8, 9, 15 & 9, 9, 9, 9 \\
+Bin 2 & 21, 21, 24, 25 & 22.75, 22.75, 22.75, 22.75 \\
+Bin 3 & 26, 28, 29, 34 & 29.25, 29.25, 29.25, 29.25 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.5: Smoothing by Bin Boundaries}
+
+\begin{formulabox}[Εκφώνηση]
+Για τα ίδια bins, εφαρμόστε smoothing by bin boundaries.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Μέθοδος:} Κάθε τιμή αντικαθίσταται με το πλησιέστερο όριο του bin της.
+
+\textbf{Bin 1: [4, 15]}
+\begin{itemize}
+    \item 4 $\to$ 4 (είναι το κάτω όριο)
+    \item 8 $\to$ 4 (πιο κοντά στο 4 παρά στο 15)
+    \item 9 $\to$ 4 (πιο κοντά στο 4)
+    \item 15 $\to$ 15 (είναι το άνω όριο)
+\end{itemize}
+
+\textbf{Bin 2: [21, 25]}
+\begin{itemize}
+    \item 21 $\to$ 21
+    \item 21 $\to$ 21
+    \item 24 $\to$ 25 (πιο κοντά στο 25)
+    \item 25 $\to$ 25
+\end{itemize}
+
+\textbf{Bin 3: [26, 34]}
+\begin{itemize}
+    \item 26 $\to$ 26
+    \item 28 $\to$ 26 (πιο κοντά στο 26)
+    \item 29 $\to$ 26 (ή 34, ίση απόσταση - επιλέγουμε το κοντινότερο)
+    \item 34 $\to$ 34
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Bin} & \textbf{Original} & \textbf{Smoothed} \\
+\midrule
+Bin 1 & 4, 8, 9, 15 & 4, 4, 4, 15 \\
+Bin 2 & 21, 21, 24, 25 & 21, 21, 25, 25 \\
+Bin 3 & 26, 28, 29, 34 & 26, 26, 26, 34 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.6
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.6: Min-Max Normalization}
+
+\begin{formulabox}[Εκφώνηση]
+Κανονικοποιήστε τις τιμές $\{10, 20, 30, 40, 50\}$ στο διάστημα $[0, 1]$
+χρησιμοποιώντας Min-Max normalization.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Τύπος Min-Max Normalization:}
+
+$$x' = \frac{x - \min}{\max - \min}$$
+
+\textbf{Υπολογισμοί:}
+
+$\min = 10$, $\max = 50$, $\text{range} = 40$
+
+\begin{align*}
+10' &= \frac{10 - 10}{40} = 0.00 \\
+20' &= \frac{20 - 10}{40} = 0.25 \\
+30' &= \frac{30 - 10}{40} = 0.50 \\
+40' &= \frac{40 - 10}{40} = 0.75 \\
+50' &= \frac{50 - 10}{40} = 1.00
+\end{align*}
+
+\begin{infobox}[Γενική Μορφή]
+Για normalization στο διάστημα $[a, b]$:
+$$x' = \frac{x - \min}{\max - \min} \cdot (b - a) + a$$
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.7
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.7: Z-Score Standardization}
+
+\begin{formulabox}[Εκφώνηση]
+Για τις ίδιες τιμές $\{10, 20, 30, 40, 50\}$, εφαρμόστε Z-score standardization.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Τύπος Z-Score:}
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+\textbf{Βήμα 1: Υπολογισμός μέσου όρου}
+
+$$\mu = \frac{10 + 20 + 30 + 40 + 50}{5} = 30$$
+
+\textbf{Βήμα 2: Υπολογισμός τυπικής απόκλισης}
+
+$$\sigma = \sqrt{\frac{\sum(x_i - \mu)^2}{n}} = \sqrt{\frac{400 + 100 + 0 + 100 + 400}{5}} = \sqrt{200} \approx 14.14$$
+
+\textbf{Βήμα 3: Υπολογισμός z-scores}
+
+\begin{align*}
+z_{10} &= \frac{10 - 30}{14.14} \approx -1.41 \\
+z_{20} &= \frac{20 - 30}{14.14} \approx -0.71 \\
+z_{30} &= \frac{30 - 30}{14.14} = 0.00 \\
+z_{40} &= \frac{40 - 30}{14.14} \approx +0.71 \\
+z_{50} &= \frac{50 - 30}{14.14} \approx +1.41
+\end{align*}
+
+\begin{infobox}[Min-Max vs Z-Score]
+\begin{itemize}
+    \item \textbf{Min-Max}: Bounded $[0,1]$, ευαίσθητο σε outliers
+    \item \textbf{Z-Score}: Unbounded, μέσος=0, std=1, λιγότερο ευαίσθητο σε outliers
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.8
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 5.8: Υπολογισμός Αποστάσεων}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται τα διανύσματα:
+\begin{itemize}
+    \item $\mathbf{x} = (1, 2, 3)$
+    \item $\mathbf{y} = (4, 6, 3)$
+\end{itemize}
+
+Υπολογίστε: (a) Euclidean distance, (b) Manhattan distance, (c) Cosine similarity
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(a) Euclidean Distance:}
+
+$$d_E(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}$$
+
+$$d_E = \sqrt{(1-4)^2 + (2-6)^2 + (3-3)^2} = \sqrt{9 + 16 + 0} = \sqrt{25} = 5$$
+
+\textbf{(b) Manhattan Distance:}
+
+$$d_M(\mathbf{x}, \mathbf{y}) = \sum_{i=1}^{n} |x_i - y_i|$$
+
+$$d_M = |1-4| + |2-6| + |3-3| = 3 + 4 + 0 = 7$$
+
+\textbf{(c) Cosine Similarity:}
+
+$$\cos(\mathbf{x}, \mathbf{y}) = \frac{\mathbf{x} \cdot \mathbf{y}}{||\mathbf{x}|| \cdot ||\mathbf{y}||}$$
+
+\begin{align*}
+\mathbf{x} \cdot \mathbf{y} &= 1 \cdot 4 + 2 \cdot 6 + 3 \cdot 3 = 4 + 12 + 9 = 25 \\
+||\mathbf{x}|| &= \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14} \\
+||\mathbf{y}|| &= \sqrt{4^2 + 6^2 + 3^2} = \sqrt{61} \\
+\cos(\mathbf{x}, \mathbf{y}) &= \frac{25}{\sqrt{14} \cdot \sqrt{61}} = \frac{25}{\sqrt{854}} \approx 0.855
+\end{align*}
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Distance Metric} & \textbf{Value} \\
+\midrule
+Euclidean & 5.00 \\
+Manhattan & 7 \\
+Cosine Similarity & 0.855 \\
+Cosine Distance & $1 - 0.855 = 0.145$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+% =============================================================================
+% SECTION 6: Data Streams
+% =============================================================================
+\section{Data Streams}
+
+% -----------------------------------------------------------------------------
+% Exercise 6.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 6.1: Bloom Filter Insert \& Lookup}
+
+\begin{formulabox}[Εκφώνηση]
+Ένα Bloom Filter έχει μέγεθος $m = 10$ bits και χρησιμοποιεί 2 hash functions:
+\begin{itemize}
+    \item $h_1(x) = x \mod 10$
+    \item $h_2(x) = (2x + 3) \mod 10$
+\end{itemize}
+
+\begin{enumerate}
+    \item Εισάγετε τα στοιχεία: 15, 23, 36
+    \item Ελέγξτε αν υπάρχουν: 23, 42
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βήμα 1: Αρχικοποίηση}
+
+Bit array: $[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]$
+
+\textbf{Βήμα 2: Insert 15}
+
+\begin{align*}
+h_1(15) &= 15 \mod 10 = 5 \\
+h_2(15) &= (30 + 3) \mod 10 = 3
+\end{align*}
+
+Set bits 3, 5: $[0, 0, 0, \mathbf{1}, 0, \mathbf{1}, 0, 0, 0, 0]$
+
+\textbf{Βήμα 3: Insert 23}
+
+\begin{align*}
+h_1(23) &= 23 \mod 10 = 3 \\
+h_2(23) &= (46 + 3) \mod 10 = 9
+\end{align*}
+
+Set bits 3, 9: $[0, 0, 0, \mathbf{1}, 0, 1, 0, 0, 0, \mathbf{1}]$
+
+\textbf{Βήμα 4: Insert 36}
+
+\begin{align*}
+h_1(36) &= 36 \mod 10 = 6 \\
+h_2(36) &= (72 + 3) \mod 10 = 5
+\end{align*}
+
+Set bits 5, 6: $[0, 0, 0, 1, 0, \mathbf{1}, \mathbf{1}, 0, 0, 1]$
+
+\textbf{Final bit array:} $[0, 0, 0, 1, 0, 1, 1, 0, 0, 1]$
+
+\textbf{Lookup 23:}
+\begin{itemize}
+    \item $h_1(23) = 3$ $\to$ bit[3] = 1 $\checkmark$
+    \item $h_2(23) = 9$ $\to$ bit[9] = 1 $\checkmark$
+\end{itemize}
+Αποτέλεσμα: \textbf{Probably in set}
+
+\textbf{Lookup 42:}
+\begin{align*}
+h_1(42) &= 42 \mod 10 = 2 \\
+h_2(42) &= (84 + 3) \mod 10 = 7
+\end{align*}
+\begin{itemize}
+    \item bit[2] = 0 $\times$
+\end{itemize}
+Αποτέλεσμα: \textbf{Definitely not in set}
+
+% -----------------------------------------------------------------------------
+% Exercise 6.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 6.2: Bloom Filter False Positive}
+
+\begin{formulabox}[Εκφώνηση]
+Με το ίδιο Bloom Filter από την προηγούμενη άσκηση, ελέγξτε αν το 13 είναι
+false positive.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+Bit array: $[0, 0, 0, 1, 0, 1, 1, 0, 0, 1]$
+
+\textbf{Lookup 13:}
+\begin{align*}
+h_1(13) &= 13 \mod 10 = 3 \\
+h_2(13) &= (26 + 3) \mod 10 = 9
+\end{align*}
+
+\begin{itemize}
+    \item bit[3] = 1 $\checkmark$
+    \item bit[9] = 1 $\checkmark$
+\end{itemize}
+
+Αποτέλεσμα: «Probably in set»
+
+\textbf{Αλλά:} Το 13 \textbf{δεν} εισήχθη ποτέ! Αυτό είναι \textbf{FALSE POSITIVE}.
+
+\begin{warningbox}[False Positive Rate]
+Η πιθανότητα false positive είναι περίπου:
+$$P_{fp} \approx \left(1 - e^{-kn/m}\right)^k$$
+όπου $k$ = hash functions, $n$ = inserted elements, $m$ = bits.
+
+Για $k=2$, $n=3$, $m=10$:
+$$P_{fp} \approx (1 - e^{-0.6})^2 \approx (0.45)^2 \approx 0.20 = 20\%$$
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 6.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 6.3: Count-Min Sketch Query}
+
+\begin{formulabox}[Εκφώνηση]
+Ένα Count-Min Sketch έχει $d = 2$ hash functions και $w = 5$ counters ανά row.
+Μετά από updates, ο πίνακας είναι:
+
+\begin{center}
+\begin{tabular}{c|ccccc}
+ & 0 & 1 & 2 & 3 & 4 \\
+\hline
+$h_1$ & 3 & 7 & 2 & 5 & 1 \\
+$h_2$ & 4 & 2 & 8 & 3 & 6 \\
+\end{tabular}
+\end{center}
+
+Αν $h_1(\text{``apple''}) = 1$ και $h_2(\text{``apple''}) = 3$, ποια είναι η εκτίμηση
+για το count του ``apple''?
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Count-Min Sketch Query:}
+
+$$\hat{f}(x) = \min_{i=1}^{d} \text{CMS}[i][h_i(x)]$$
+
+\textbf{Υπολογισμός:}
+\begin{align*}
+\text{CMS}[1][h_1(\text{``apple''})] &= \text{CMS}[1][1] = 7 \\
+\text{CMS}[2][h_2(\text{``apple''})] &= \text{CMS}[2][3] = 3
+\end{align*}
+
+$$\hat{f}(\text{``apple''}) = \min(7, 3) = 3$$
+
+\begin{infobox}[Γιατί Minimum?]
+Τα counts μπορούν να αυξηθούν λόγω collisions με άλλα στοιχεία.
+Το minimum δίνει την καλύτερη (μικρότερη) εκτίμηση, που είναι εγγυημένα $\geq$ actual count.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 6.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 6.4: Count-Min Sketch Update}
+
+\begin{formulabox}[Εκφώνηση]
+Χρησιμοποιώντας τον ίδιο CMS, εκτελέστε: Update(``banana'', +2)
+
+Δίνεται: $h_1(\text{``banana''}) = 4$, $h_2(\text{``banana''}) = 2$
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Update operation:}
+
+Για κάθε row $i$: $\text{CMS}[i][h_i(x)] \mathrel{+}= c$
+
+\textbf{Πριν:}
+\begin{center}
+\begin{tabular}{c|ccccc}
+ & 0 & 1 & 2 & 3 & 4 \\
+\hline
+$h_1$ & 3 & 7 & 2 & 5 & 1 \\
+$h_2$ & 4 & 2 & 8 & 3 & 6 \\
+\end{tabular}
+\end{center}
+
+\textbf{Update:}
+\begin{align*}
+\text{CMS}[1][4] &= 1 + 2 = 3 \\
+\text{CMS}[2][2] &= 8 + 2 = 10
+\end{align*}
+
+\textbf{Μετά:}
+\begin{center}
+\begin{tabular}{c|ccccc}
+ & 0 & 1 & 2 & 3 & 4 \\
+\hline
+$h_1$ & 3 & 7 & 2 & 5 & \textbf{3} \\
+$h_2$ & 4 & 2 & \textbf{10} & 3 & 6 \\
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 6.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 6.5: Error Bounds}
+
+\begin{formulabox}[Εκφώνηση]
+Σχεδιάστε Count-Min Sketch με error $\varepsilon = 0.01$ και failure probability
+$\delta = 0.05$. Υπολογίστε τις διαστάσεις.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Τύποι:}
+
+$$w = \lceil e / \varepsilon \rceil \approx \lceil 2.718 / 0.01 \rceil = 272$$
+
+$$d = \lceil \ln(1/\delta) \rceil = \lceil \ln(20) \rceil = \lceil 3.0 \rceil = 3$$
+
+\textbf{Εγγύηση:}
+
+Με πιθανότητα τουλάχιστον $1 - \delta = 95\%$:
+$$\hat{f}(x) \leq f(x) + \varepsilon \cdot N$$
+
+όπου $N$ = συνολικό count όλων των updates.
+
+\textbf{Απαιτούμενη μνήμη:}
+$$\text{Memory} = w \times d \times \text{counter\_size} = 272 \times 3 \times 4 = 3264 \text{ bytes}$$
+
+% -----------------------------------------------------------------------------
+% Exercise 6.6
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 6.6: Bloom Filter vs Count-Min Sketch}
+
+\begin{formulabox}[Εκφώνηση]
+Για κάθε σενάριο, επιλέξτε την κατάλληλη δομή (Bloom Filter ή Count-Min Sketch):
+
+\begin{enumerate}
+    \item Έλεγχος αν ένα URL έχει επισκεφθεί πριν
+    \item Καταμέτρηση επισκέψεων ανά URL
+    \item Spam filter: έλεγχος αν email είναι σε blacklist
+    \item Εύρεση heavy hitters σε network traffic
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{clp{6cm}}
+\toprule
+\textbf{\#} & \textbf{Δομή} & \textbf{Αιτιολόγηση} \\
+\midrule
+1 & \textbf{Bloom Filter} & Membership test μόνο (yes/no) \\
+2 & \textbf{Count-Min Sketch} & Χρειάζεται καταμέτρηση, όχι μόνο membership \\
+3 & \textbf{Bloom Filter} & Membership test σε blacklist \\
+4 & \textbf{Count-Min Sketch} & Heavy hitters = υψηλά counts \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Σύγκριση]
+\begin{itemize}
+    \item \textbf{Bloom Filter}: Membership queries ($\in$?), no deletions, no counts
+    \item \textbf{Count-Min Sketch}: Frequency queries (count?), supports negative updates
+\end{itemize}
+\end{infobox}
+
+
+% =============================================================================
+% SECTION 7: HMM & Sequences
+% =============================================================================
+\section{HMM και Διακριτές Ακολουθίες}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 7.1: Υποακολουθίες}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται η ακολουθία $S = \langle A, B, C, D \rangle$.
+
+\begin{enumerate}
+    \item Πόσες υποακολουθίες (subsequences) έχει;
+    \item Απαριθμήστε όλες τις υποακολουθίες μήκους 2.
+    \item Είναι η $\langle B, D \rangle$ υποακολουθία της $S$;
+    \item Είναι η $\langle C, B \rangle$ υποακολουθία της $S$;
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Αριθμός υποακολουθιών:}
+
+Κάθε στοιχείο μπορεί να είναι ή να μην είναι στην υποακολουθία:
+$$\text{Total} = 2^n = 2^4 = 16 \text{ (συμπεριλαμβανομένης της κενής)}$$
+
+\textbf{(2) Υποακολουθίες μήκους 2:}
+
+$$\binom{4}{2} = 6 \text{ υποακολουθίες}$$
+
+$\langle A, B \rangle$, $\langle A, C \rangle$, $\langle A, D \rangle$,
+$\langle B, C \rangle$, $\langle B, D \rangle$, $\langle C, D \rangle$
+
+\textbf{(3) $\langle B, D \rangle$ υποακολουθία;} \textbf{ΝΑΙ}
+
+Το B εμφανίζεται πριν το D στην $S$: $A, \mathbf{B}, C, \mathbf{D}$
+
+\textbf{(4) $\langle C, B \rangle$ υποακολουθία;} \textbf{ΟΧΙ}
+
+Στην $S$ το B έρχεται πριν το C, όχι μετά.
+
+\begin{infobox}[Υποακολουθία vs Υποσυμβολοσειρά]
+\begin{itemize}
+    \item \textbf{Subsequence}: Διατήρηση σειράς, όχι απαραίτητα συνεχόμενα
+    \item \textbf{Substring}: Συνεχόμενα στοιχεία
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 7.2: Forward Algorithm - Απλό}
+
+\begin{formulabox}[Εκφώνηση]
+Ένα HMM έχει 2 καταστάσεις (H: Hot, C: Cold) και 2 παρατηρήσεις (S: Sun, R: Rain).
+
+\textbf{Παράμετροι:}
+\begin{itemize}
+    \item Initial: $\pi_H = 0.6$, $\pi_C = 0.4$
+    \item Transitions: $a_{HH} = 0.7$, $a_{HC} = 0.3$, $a_{CH} = 0.4$, $a_{CC} = 0.6$
+    \item Emissions: $b_H(S) = 0.8$, $b_H(R) = 0.2$, $b_C(S) = 0.3$, $b_C(R) = 0.7$
+\end{itemize}
+
+Υπολογίστε την πιθανότητα της παρατήρησης $O = \langle S, R \rangle$.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Forward Algorithm:}
+
+$$\alpha_t(j) = P(o_1, o_2, ..., o_t, q_t = j | \lambda)$$
+
+\textbf{Βήμα 1: Αρχικοποίηση ($t=1$, $o_1 = S$)}
+
+\begin{align*}
+\alpha_1(H) &= \pi_H \cdot b_H(S) = 0.6 \times 0.8 = 0.48 \\
+\alpha_1(C) &= \pi_C \cdot b_C(S) = 0.4 \times 0.3 = 0.12
+\end{align*}
+
+\textbf{Βήμα 2: Induction ($t=2$, $o_2 = R$)}
+
+\begin{align*}
+\alpha_2(H) &= \left[\alpha_1(H) \cdot a_{HH} + \alpha_1(C) \cdot a_{CH}\right] \cdot b_H(R) \\
+&= [0.48 \times 0.7 + 0.12 \times 0.4] \times 0.2 \\
+&= [0.336 + 0.048] \times 0.2 = 0.384 \times 0.2 = 0.0768 \\[5pt]
+\alpha_2(C) &= \left[\alpha_1(H) \cdot a_{HC} + \alpha_1(C) \cdot a_{CC}\right] \cdot b_C(R) \\
+&= [0.48 \times 0.3 + 0.12 \times 0.6] \times 0.7 \\
+&= [0.144 + 0.072] \times 0.7 = 0.216 \times 0.7 = 0.1512
+\end{align*}
+
+\textbf{Βήμα 3: Termination}
+
+$$P(O | \lambda) = \alpha_2(H) + \alpha_2(C) = 0.0768 + 0.1512 = 0.228$$
+
+\textbf{Τελική Απάντηση:} $P(\langle S, R \rangle) = 0.228$
+
+% -----------------------------------------------------------------------------
+% Exercise 7.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 7.3: Forward Algorithm - Πίνακας}
+
+\begin{formulabox}[Εκφώνηση]
+Με το ίδιο HMM, υπολογίστε $P(O = \langle S, S, R \rangle)$ χρησιμοποιώντας πίνακα.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{c|ccc}
+\toprule
+ & $t=1$ (S) & $t=2$ (S) & $t=3$ (R) \\
+\midrule
+$\alpha_t(H)$ & $0.6 \times 0.8 = 0.48$ & $0.2976$ & $0.0655$ \\
+$\alpha_t(C)$ & $0.4 \times 0.3 = 0.12$ & $0.0648$ & $0.1197$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Υπολογισμοί $t=2$:}
+\begin{align*}
+\alpha_2(H) &= [0.48 \times 0.7 + 0.12 \times 0.4] \times 0.8 = 0.384 \times 0.8 = 0.3072 \\
+\alpha_2(C) &= [0.48 \times 0.3 + 0.12 \times 0.6] \times 0.3 = 0.216 \times 0.3 = 0.0648
+\end{align*}
+
+\textbf{Υπολογισμοί $t=3$:}
+\begin{align*}
+\alpha_3(H) &= [0.3072 \times 0.7 + 0.0648 \times 0.4] \times 0.2 = 0.2409 \times 0.2 = 0.0482 \\
+\alpha_3(C) &= [0.3072 \times 0.3 + 0.0648 \times 0.6] \times 0.7 = 0.1310 \times 0.7 = 0.0917
+\end{align*}
+
+$$P(O) = 0.0482 + 0.0917 = 0.1399$$
+
+% -----------------------------------------------------------------------------
+% Exercise 7.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 7.4: Viterbi Algorithm}
+
+\begin{formulabox}[Εκφώνηση]
+Με το ίδιο HMM, βρείτε την πιο πιθανή ακολουθία καταστάσεων για $O = \langle S, R \rangle$.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Viterbi Algorithm:}
+
+$$\delta_t(j) = \max_{q_1,...,q_{t-1}} P(q_1,...,q_{t-1}, q_t=j, o_1,...,o_t | \lambda)$$
+
+\textbf{Βήμα 1: Αρχικοποίηση ($t=1$, $o_1 = S$)}
+
+\begin{align*}
+\delta_1(H) &= \pi_H \cdot b_H(S) = 0.6 \times 0.8 = 0.48 \\
+\delta_1(C) &= \pi_C \cdot b_C(S) = 0.4 \times 0.3 = 0.12
+\end{align*}
+
+$\psi_1(H) = \psi_1(C) = 0$ (αρχή)
+
+\textbf{Βήμα 2: Recursion ($t=2$, $o_2 = R$)}
+
+\begin{align*}
+\delta_2(H) &= \max[\delta_1(H) \cdot a_{HH}, \delta_1(C) \cdot a_{CH}] \cdot b_H(R) \\
+&= \max[0.48 \times 0.7, 0.12 \times 0.4] \times 0.2 \\
+&= \max[0.336, 0.048] \times 0.2 = 0.336 \times 0.2 = 0.0672 \\
+\psi_2(H) &= H \text{ (επειδή } 0.336 > 0.048\text{)}
+\end{align*}
+
+\begin{align*}
+\delta_2(C) &= \max[\delta_1(H) \cdot a_{HC}, \delta_1(C) \cdot a_{CC}] \cdot b_C(R) \\
+&= \max[0.48 \times 0.3, 0.12 \times 0.6] \times 0.7 \\
+&= \max[0.144, 0.072] \times 0.7 = 0.144 \times 0.7 = 0.1008 \\
+\psi_2(C) &= H \text{ (επειδή } 0.144 > 0.072\text{)}
+\end{align*}
+
+\textbf{Βήμα 3: Termination}
+
+$$q_2^* = \arg\max[\delta_2(H), \delta_2(C)] = \arg\max[0.0672, 0.1008] = C$$
+
+\textbf{Βήμα 4: Backtracking}
+
+$$q_1^* = \psi_2(C) = H$$
+
+\textbf{Τελική Απάντηση:} Πιο πιθανή ακολουθία: $\langle H, C \rangle$
+
+\begin{center}
+\begin{tikzpicture}[
+    state/.style={circle, draw=secondary, fill=box-blue, minimum size=1cm, font=\bfseries},
+    node distance=3cm]
+
+    \node[state] (h1) {H};
+    \node[state, below=1.5cm of h1] (c1) {C};
+    \node[state, right=of h1] (h2) {H};
+    \node[state, below=1.5cm of h2] (c2) {C};
+
+    \draw[arrow, thick, accent] (h1) -- (c2);
+    \draw[arrow, dashed, gray] (h1) -- (h2);
+    \draw[arrow, dashed, gray] (c1) -- (h2);
+    \draw[arrow, dashed, gray] (c1) -- (c2);
+
+    \node[above=0.3cm of h1] {$t=1$: S};
+    \node[above=0.3cm of h2] {$t=2$: R};
+\end{tikzpicture}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 7.5: Ερμηνεία HMM Παραμέτρων}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται HMM για αναγνώριση δραστηριότητας με καταστάσεις \{Walk, Run, Sit\} και
+παρατηρήσεις \{Low, Medium, High\} (accelerometer readings).
+
+Οι παράμετροι είναι:
+\begin{center}
+\begin{tabular}{c|ccc}
+$A$ & Walk & Run & Sit \\
+\hline
+Walk & 0.7 & 0.2 & 0.1 \\
+Run & 0.1 & 0.8 & 0.1 \\
+Sit & 0.2 & 0.1 & 0.7 \\
+\end{tabular}
+\quad
+\begin{tabular}{c|ccc}
+$B$ & Low & Med & High \\
+\hline
+Walk & 0.1 & 0.7 & 0.2 \\
+Run & 0.05 & 0.15 & 0.8 \\
+Sit & 0.8 & 0.15 & 0.05 \\
+\end{tabular}
+\end{center}
+
+Τι μας λένε αυτές οι παράμετροι για τη συμπεριφορά του μοντέλου;
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Transition Matrix $A$ - Ερμηνεία:}
+
+\begin{itemize}
+    \item Υψηλές διαγώνιες τιμές (0.7-0.8): Οι δραστηριότητες τείνουν να \textbf{συνεχίζονται}
+    \item $a_{Walk \to Run} = 0.2$: Σχετικά πιθανή η μετάβαση από περπάτημα σε τρέξιμο
+    \item $a_{Run \to Sit} = 0.1$: Σπάνια απότομη διακοπή τρεξίματος
+    \item $a_{Sit \to Run} = 0.1$: Σπάνια άμεση μετάβαση από κάθισμα σε τρέξιμο
+\end{itemize}
+
+\textbf{Emission Matrix $B$ - Ερμηνεία:}
+
+\begin{itemize}
+    \item \textbf{Sit}: Κυρίως χαμηλές ενδείξεις (0.8) - λογικό, καθιστή θέση
+    \item \textbf{Run}: Κυρίως υψηλές ενδείξεις (0.8) - έντονη κίνηση
+    \item \textbf{Walk}: Κυρίως μεσαίες ενδείξεις (0.7) - μέτρια κίνηση
+\end{itemize}
+
+\begin{infobox}[Χρησιμότητα HMM]
+Το HMM μπορεί να «εξομαλύνει» θορυβώδεις μετρήσεις χρησιμοποιώντας την πληροφορία
+ότι οι καταστάσεις τείνουν να παραμένουν σταθερές.
+\end{infobox}
+
+
+% =============================================================================
+% SECTION 8: OLAP & Data Warehousing
+% =============================================================================
+\section{OLAP και Data Warehousing}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 8.1: OLAP Operations Ταξινόμηση}
+
+\begin{formulabox}[Εκφώνηση]
+Ταξινομήστε κάθε λειτουργία σε Roll-up, Drill-down, Slice, Dice, ή Pivot:
+
+\begin{enumerate}
+    \item Από πωλήσεις ανά ημέρα σε πωλήσεις ανά μήνα
+    \item Εμφάνιση μόνο των πωλήσεων του 2024
+    \item Από πωλήσεις ανά χώρα σε πωλήσεις ανά πόλη
+    \item Πωλήσεις για συγκεκριμένη περιοχή ΚΑΙ κατηγορία προϊόντος
+    \item Αλλαγή από Product×Time σε Region×Time
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{clp{6cm}}
+\toprule
+\textbf{\#} & \textbf{Operation} & \textbf{Εξήγηση} \\
+\midrule
+1 & \textbf{Roll-up} & Aggregation σε υψηλότερο επίπεδο ιεραρχίας (ημέρα → μήνας) \\
+2 & \textbf{Slice} & Επιλογή μιας τιμής σε μία διάσταση (year = 2024) \\
+3 & \textbf{Drill-down} & Μετάβαση σε χαμηλότερο επίπεδο λεπτομέρειας \\
+4 & \textbf{Dice} & Επιλογή εύρους τιμών σε πολλές διαστάσεις \\
+5 & \textbf{Pivot} & Αναδιάταξη διαστάσεων/αλλαγή οπτικής γωνίας \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+    % Hierarchy visualization
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,3) {Year};
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,2) {Quarter};
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,1) {Month};
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,0) {Day};
+
+    \draw[arrow, thick, success] (1.8,0.5) -- (1.8,2.5) node[midway, right] {Roll-up};
+    \draw[arrow, thick, accent] (-1.8,2.5) -- (-1.8,0.5) node[midway, left] {Drill-down};
+\end{tikzpicture}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 8.2: Roll-up και Drill-down Sequence}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται cube με διαστάσεις: Time (Day → Month → Quarter → Year),
+Product (Item → Category → Department), Location (City → Region → Country).
+
+Ξεκινώντας από (Day, Item, City), περιγράψτε τη σειρά operations για να φτάσετε σε
+(Year, Department, Country).
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Απαιτούμενα Roll-ups:}
+
+\begin{enumerate}
+    \item \textbf{Time}: Day → Month → Quarter → Year (3 roll-ups)
+    \item \textbf{Product}: Item → Category → Department (2 roll-ups)
+    \item \textbf{Location}: City → Region → Country (2 roll-ups)
+\end{enumerate}
+
+\textbf{Σύνολο:} 7 consecutive roll-up operations
+
+\begin{center}
+\begin{tikzpicture}[node distance=0.8cm, font=\small]
+    \node[draw, fill=box-green, rounded corners] (start) {(Day, Item, City)};
+    \node[draw, fill=box-blue, rounded corners, below=of start] (s1) {(Month, Item, City)};
+    \node[draw, fill=box-blue, rounded corners, below=of s1] (s2) {(Quarter, Category, Region)};
+    \node[draw, fill=box-green, rounded corners, below=of s2] (end) {(Year, Department, Country)};
+
+    \draw[arrow] (start) -- (s1) node[midway, right] {roll-up Time};
+    \draw[arrow] (s1) -- (s2) node[midway, right] {roll-up all};
+    \draw[arrow] (s2) -- (end) node[midway, right] {roll-up all};
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Optimization]
+Στην πράξη, τα roll-ups μπορούν να γίνουν παράλληλα σε διαφορετικές διαστάσεις
+αν υπάρχουν pre-computed aggregates.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 8.3: Slice vs Dice}
+
+\begin{formulabox}[Εκφώνηση]
+Για cube πωλήσεων με διαστάσεις (Product, Location, Time), εκφράστε σε OLAP
+operations:
+
+\begin{enumerate}
+    \item Πωλήσεις για τον Ιανουάριο 2024
+    \item Πωλήσεις για Electronics σε Athens τον Ιανουάριο 2024
+    \item Πωλήσεις για όλα τα προϊόντα, στην Ελλάδα, για Q1 2024
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Slice}
+
+$$\text{SLICE}(Cube, Time = \text{``Jan 2024''})$$
+
+Μειώνει τον cube κατά μία διάσταση.
+
+\textbf{(2) Dice}
+
+$$\text{DICE}(Cube, Product = \text{``Electronics''}, Location = \text{``Athens''}, Time = \text{``Jan 2024''})$$
+
+Επιλογή σε πολλαπλές διαστάσεις ταυτόχρονα.
+
+\textbf{(3) Slice + Roll-up (ή Dice)}
+
+\begin{enumerate}
+    \item Roll-up Location: City → Country (Ελλάδα)
+    \item Roll-up Time: Month → Quarter (Q1)
+    \item Slice: Country = ``Greece'', Quarter = ``Q1 2024''
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 8.4: Cube Calculations}
+
+\begin{formulabox}[Εκφώνηση]
+Ένας cube έχει 3 διαστάσεις: Product (100 values), Location (50 values),
+Time (365 days).
+
+\begin{enumerate}
+    \item Πόσα cells έχει ο base cube;
+    \item Πόσα συνολικά cells έχει ο πλήρης CUBE (με όλα τα aggregations);
+    \item Αν κάθε cell χρειάζεται 8 bytes, πόση μνήμη απαιτείται;
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Base Cube Cells:}
+
+$$|Product| \times |Location| \times |Time| = 100 \times 50 \times 365 = 1,825,000$$
+
+\textbf{(2) Full CUBE:}
+
+Για κάθε διάσταση, μπορεί να έχουμε τις τιμές της ή το ALL (aggregation):
+
+$$(|Product| + 1) \times (|Location| + 1) \times (|Time| + 1)$$
+$$= 101 \times 51 \times 366 = 1,884,666$$
+
+Εναλλακτικά (για cuboids):
+$$\text{Cuboids} = 2^3 = 8$$
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+\textbf{Cuboid} & \textbf{Cells} \\
+\midrule
+(P, L, T) & $100 \times 50 \times 365 = 1,825,000$ \\
+(P, L, *) & $100 \times 50 = 5,000$ \\
+(P, *, T) & $100 \times 365 = 36,500$ \\
+(*, L, T) & $50 \times 365 = 18,250$ \\
+(P, *, *) & $100$ \\
+(*, L, *) & $50$ \\
+(*, *, T) & $365$ \\
+(*, *, *) & $1$ \\
+\midrule
+\textbf{Total} & \textbf{1,885,266} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(3) Memory:}
+
+$$1,885,266 \times 8 \text{ bytes} = 15,082,128 \text{ bytes} \approx 14.4 \text{ MB}$$
+
+% -----------------------------------------------------------------------------
+% Exercise 8.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 8.5: Star Schema Design}
+
+\begin{formulabox}[Εκφώνηση]
+Σχεδιάστε star schema για ηλεκτρονικό κατάστημα με τα εξής requirements:
+\begin{itemize}
+    \item Παρακολούθηση πωλήσεων (ποσότητα, τιμή, έκπτωση)
+    \item Διαστάσεις: Προϊόν, Πελάτης, Ημερομηνία, Κατάστημα
+    \item Ιεραρχία προϊόντων: Product → Subcategory → Category → Department
+\end{itemize}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tikzpicture}[
+    fact/.style={rectangle, draw=accent, fill=box-red, minimum width=3cm, minimum height=2cm, font=\small, align=center},
+    dim/.style={rectangle, draw=secondary, fill=box-blue, minimum width=2.5cm, minimum height=1.8cm, font=\small, align=center}]
+
+    % Fact table
+    \node[fact] (fact) {
+        \textbf{Sales\_Fact}\\
+        \underline{product\_sk}\\
+        \underline{customer\_sk}\\
+        \underline{date\_sk}\\
+        \underline{store\_sk}\\
+        quantity\\
+        unit\_price\\
+        discount
+    };
+
+    % Dimension tables
+    \node[dim, above left=1cm and 2cm of fact] (product) {
+        \textbf{Dim\_Product}\\
+        \underline{product\_sk}\\
+        product\_id\\
+        name\\
+        subcategory\\
+        category\\
+        department
+    };
+
+    \node[dim, above right=1cm and 2cm of fact] (customer) {
+        \textbf{Dim\_Customer}\\
+        \underline{customer\_sk}\\
+        customer\_id\\
+        name\\
+        city\\
+        country
+    };
+
+    \node[dim, below left=1cm and 2cm of fact] (date) {
+        \textbf{Dim\_Date}\\
+        \underline{date\_sk}\\
+        date\\
+        day\_of\_week\\
+        month\\
+        quarter\\
+        year
+    };
+
+    \node[dim, below right=1cm and 2cm of fact] (store) {
+        \textbf{Dim\_Store}\\
+        \underline{store\_sk}\\
+        store\_id\\
+        name\\
+        city\\
+        region
+    };
+
+    % Connections
+    \draw[thick] (product) -- (fact);
+    \draw[thick] (customer) -- (fact);
+    \draw[thick] (date) -- (fact);
+    \draw[thick] (store) -- (fact);
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Surrogate Keys (\_sk)]
+Χρησιμοποιούμε surrogate keys (τεχνητά κλειδιά) αντί για natural keys για:
+\begin{itemize}
+    \item Καλύτερη απόδοση (μικρότερα integers)
+    \item Διαχείριση slowly changing dimensions
+    \item Ανεξαρτησία από source systems
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.6
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 8.6: OLAP Queries σε SQL}
+
+\begin{formulabox}[Εκφώνηση]
+Χρησιμοποιώντας το star schema της προηγούμενης άσκησης, γράψτε SQL queries για:
+
+\begin{enumerate}
+    \item Συνολικές πωλήσεις ανά κατηγορία προϊόντος
+    \item Top 5 πελάτες με βάση το συνολικό ποσό αγορών
+    \item Πωλήσεις ανά μήνα για το 2024
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Πωλήσεις ανά κατηγορία (Roll-up):}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    p.category,
+    SUM(f.quantity * f.unit_price * (1 - f.discount)) AS total_revenue
+FROM Sales_Fact f
+JOIN Dim_Product p ON f.product_sk = p.product_sk
+GROUP BY p.category
+ORDER BY total_revenue DESC;
+\end{lstlisting}
+
+\textbf{(2) Top 5 πελάτες:}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    c.name,
+    SUM(f.quantity * f.unit_price * (1 - f.discount)) AS total_spent
+FROM Sales_Fact f
+JOIN Dim_Customer c ON f.customer_sk = c.customer_sk
+GROUP BY c.customer_sk, c.name
+ORDER BY total_spent DESC
+LIMIT 5;
+\end{lstlisting}
+
+\textbf{(3) Πωλήσεις ανά μήνα 2024 (Slice + Roll-up):}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    d.year,
+    d.month,
+    SUM(f.quantity * f.unit_price * (1 - f.discount)) AS monthly_revenue
+FROM Sales_Fact f
+JOIN Dim_Date d ON f.date_sk = d.date_sk
+WHERE d.year = 2024
+GROUP BY d.year, d.month
+ORDER BY d.month;
+\end{lstlisting}
+
+\begin{warningbox}[Performance]
+Στα data warehouses, οι dimension tables είναι συνήθως denormalized για αποφυγή
+πολλαπλών JOINs. Αυτό αυξάνει το μέγεθος αλλά βελτιώνει την απόδοση των queries.
+\end{warningbox}
+
