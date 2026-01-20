@@ -1,0 +1,350 @@
+% =============================================================================
+% Chapter 16: Προεπεξεργασία Δεδομένων - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{Προεπεξεργασία Δεδομένων - Λυμένες Ασκήσεις}
+\label{ch:data-preprocessing-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για προεπεξεργασία δεδομένων,
+κανονικοποίηση και υπολογισμό αποστάσεων.
+
+% -----------------------------------------------------------------------------
+% Exercise 5.1
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.1: Ταξινόμηση Attribute Types (NOIR)}
+
+\begin{formulabox}[Εκφώνηση]
+Ταξινομήστε τα παρακάτω attributes σε Nominal, Ordinal, Interval, ή Ratio:
+
+\begin{enumerate}
+    \item Αριθμός τηλεφώνου
+    \item Θερμοκρασία σε Celsius
+    \item Εκπαιδευτικό επίπεδο (Λύκειο, Πτυχίο, Μεταπτυχιακό, PhD)
+    \item Ηλικία σε έτη
+    \item Χρώμα ματιών
+    \item Ημερομηνία γέννησης
+    \item Βαθμολογία 1-5 αστέρια
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{llp{7cm}}
+\toprule
+\textbf{Attribute} & \textbf{Type} & \textbf{Εξήγηση} \\
+\midrule
+Αρ. τηλεφώνου & \textbf{Nominal} & Αναγνωριστικό, δεν έχει νόημα η σειρά/αριθμητικές πράξεις \\
+Θερμοκρασία (°C) & \textbf{Interval} & Διαφορές έχουν νόημα, αλλά 0°C δεν = «καμία θερμοκρασία» \\
+Εκπαιδευτικό επίπεδο & \textbf{Ordinal} & Σειρά έχει νόημα, αλλά διαφορές όχι \\
+Ηλικία & \textbf{Ratio} & Υπάρχει απόλυτο 0, λόγοι έχουν νόημα (διπλάσια ηλικία) \\
+Χρώμα ματιών & \textbf{Nominal} & Κατηγορικό, χωρίς σειρά \\
+Ημερομηνία γέννησης & \textbf{Interval} & Διαφορές έχουν νόημα, δεν υπάρχει «0 ημερομηνία» \\
+Rating 1-5 & \textbf{Ordinal} & Σειρά έχει νόημα, αλλά 4★ δεν = 2×2★ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[NOIR Summary]
+\begin{itemize}
+    \item \textbf{N}ominal: Κατηγορίες, mode μόνο
+    \item \textbf{O}rdinal: + Σειρά, median
+    \item \textbf{I}nterval: + Διαφορές, mean
+    \item \textbf{R}atio: + Λόγοι, geometric mean
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.2
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.2: Equal-Width Binning}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται οι τιμές: $\{4, 8, 9, 15, 21, 21, 24, 25, 26, 28, 29, 34\}$
+
+Εφαρμόστε equal-width binning με 3 bins.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Υπολογισμός εύρους}
+
+$$\text{Range} = \max - \min = 34 - 4 = 30$$
+
+\textbf{Βήμα 2: Υπολογισμός πλάτους bin}
+
+$$\text{Width} = \frac{\text{Range}}{\text{num\_bins}} = \frac{30}{3} = 10$$
+
+\textbf{Βήμα 3: Καθορισμός ορίων}
+
+\begin{itemize}
+    \item Bin 1: $[4, 14)$
+    \item Bin 2: $[14, 24)$
+    \item Bin 3: $[24, 34]$
+\end{itemize}
+
+\textbf{Βήμα 4: Κατανομή τιμών}
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{Bin} & \textbf{Τιμές} \\
+\midrule
+Bin 1 $[4, 14)$ & 4, 8, 9 \\
+Bin 2 $[14, 24)$ & 15, 21, 21 \\
+Bin 3 $[24, 34]$ & 24, 25, 26, 28, 29, 34 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warningbox}[Μειονέκτημα Equal-Width]
+Τα bins μπορεί να έχουν πολύ άνιση κατανομή (Bin 3 έχει 6 τιμές, Bin 1 έχει 3).
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.3
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.3: Equal-Frequency Binning}
+
+\begin{formulabox}[Εκφώνηση]
+Για τις ίδιες τιμές: $\{4, 8, 9, 15, 21, 21, 24, 25, 26, 28, 29, 34\}$
+
+Εφαρμόστε equal-frequency (equal-depth) binning με 3 bins.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Υπολογισμός μεγέθους bin}
+
+$$\text{Bin size} = \frac{n}{\text{num\_bins}} = \frac{12}{3} = 4 \text{ τιμές/bin}$$
+
+\textbf{Βήμα 2: Κατανομή (sorted)}
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{Bin} & \textbf{Τιμές} \\
+\midrule
+Bin 1 & 4, 8, 9, 15 \\
+Bin 2 & 21, 21, 24, 25 \\
+Bin 3 & 26, 28, 29, 34 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Equal-Frequency vs Equal-Width]
+\begin{itemize}
+    \item \textbf{Equal-Width}: Ίδιο εύρος ανά bin, διαφορετικό πλήθος
+    \item \textbf{Equal-Frequency}: Ίδιο πλήθος ανά bin, διαφορετικό εύρος
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.4
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.4: Smoothing by Bin Means}
+
+\begin{formulabox}[Εκφώνηση]
+Χρησιμοποιώντας τα equal-frequency bins από την προηγούμενη άσκηση, εφαρμόστε
+smoothing by bin means.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Υπολογισμός μέσου όρου κάθε bin}
+
+\begin{align*}
+\text{Mean}_1 &= \frac{4 + 8 + 9 + 15}{4} = \frac{36}{4} = 9 \\
+\text{Mean}_2 &= \frac{21 + 21 + 24 + 25}{4} = \frac{91}{4} = 22.75 \\
+\text{Mean}_3 &= \frac{26 + 28 + 29 + 34}{4} = \frac{117}{4} = 29.25
+\end{align*}
+
+\textbf{Βήμα 2: Αντικατάσταση}
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Bin} & \textbf{Original} & \textbf{Smoothed} \\
+\midrule
+Bin 1 & 4, 8, 9, 15 & 9, 9, 9, 9 \\
+Bin 2 & 21, 21, 24, 25 & 22.75, 22.75, 22.75, 22.75 \\
+Bin 3 & 26, 28, 29, 34 & 29.25, 29.25, 29.25, 29.25 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.5
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.5: Smoothing by Bin Boundaries}
+
+\begin{formulabox}[Εκφώνηση]
+Για τα ίδια bins, εφαρμόστε smoothing by bin boundaries.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Μέθοδος:} Κάθε τιμή αντικαθίσταται με το πλησιέστερο όριο του bin της.
+
+\textbf{Bin 1: [4, 15]}
+\begin{itemize}
+    \item 4 $\to$ 4 (είναι το κάτω όριο)
+    \item 8 $\to$ 4 (πιο κοντά στο 4 παρά στο 15)
+    \item 9 $\to$ 4 (πιο κοντά στο 4)
+    \item 15 $\to$ 15 (είναι το άνω όριο)
+\end{itemize}
+
+\textbf{Bin 2: [21, 25]}
+\begin{itemize}
+    \item 21 $\to$ 21
+    \item 21 $\to$ 21
+    \item 24 $\to$ 25 (πιο κοντά στο 25)
+    \item 25 $\to$ 25
+\end{itemize}
+
+\textbf{Bin 3: [26, 34]}
+\begin{itemize}
+    \item 26 $\to$ 26
+    \item 28 $\to$ 26 (πιο κοντά στο 26)
+    \item 29 $\to$ 26 (ή 34, ίση απόσταση - επιλέγουμε το κοντινότερο)
+    \item 34 $\to$ 34
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{Bin} & \textbf{Original} & \textbf{Smoothed} \\
+\midrule
+Bin 1 & 4, 8, 9, 15 & 4, 4, 4, 15 \\
+Bin 2 & 21, 21, 24, 25 & 21, 21, 25, 25 \\
+Bin 3 & 26, 28, 29, 34 & 26, 26, 26, 34 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.6
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.6: Min-Max Normalization}
+
+\begin{formulabox}[Εκφώνηση]
+Κανονικοποιήστε τις τιμές $\{10, 20, 30, 40, 50\}$ στο διάστημα $[0, 1]$
+χρησιμοποιώντας Min-Max normalization.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Τύπος Min-Max Normalization:}
+
+$$x' = \frac{x - \min}{\max - \min}$$
+
+\textbf{Υπολογισμοί:}
+
+$\min = 10$, $\max = 50$, $\text{range} = 40$
+
+\begin{align*}
+10' &= \frac{10 - 10}{40} = 0.00 \\
+20' &= \frac{20 - 10}{40} = 0.25 \\
+30' &= \frac{30 - 10}{40} = 0.50 \\
+40' &= \frac{40 - 10}{40} = 0.75 \\
+50' &= \frac{50 - 10}{40} = 1.00
+\end{align*}
+
+\begin{infobox}[Γενική Μορφή]
+Για normalization στο διάστημα $[a, b]$:
+$$x' = \frac{x - \min}{\max - \min} \cdot (b - a) + a$$
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.7
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.7: Z-Score Standardization}
+
+\begin{formulabox}[Εκφώνηση]
+Για τις ίδιες τιμές $\{10, 20, 30, 40, 50\}$, εφαρμόστε Z-score standardization.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Τύπος Z-Score:}
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+\textbf{Βήμα 1: Υπολογισμός μέσου όρου}
+
+$$\mu = \frac{10 + 20 + 30 + 40 + 50}{5} = 30$$
+
+\textbf{Βήμα 2: Υπολογισμός τυπικής απόκλισης}
+
+$$\sigma = \sqrt{\frac{\sum(x_i - \mu)^2}{n}} = \sqrt{\frac{400 + 100 + 0 + 100 + 400}{5}} = \sqrt{200} \approx 14.14$$
+
+\textbf{Βήμα 3: Υπολογισμός z-scores}
+
+\begin{align*}
+z_{10} &= \frac{10 - 30}{14.14} \approx -1.41 \\
+z_{20} &= \frac{20 - 30}{14.14} \approx -0.71 \\
+z_{30} &= \frac{30 - 30}{14.14} = 0.00 \\
+z_{40} &= \frac{40 - 30}{14.14} \approx +0.71 \\
+z_{50} &= \frac{50 - 30}{14.14} \approx +1.41
+\end{align*}
+
+\begin{infobox}[Min-Max vs Z-Score]
+\begin{itemize}
+    \item \textbf{Min-Max}: Bounded $[0,1]$, ευαίσθητο σε outliers
+    \item \textbf{Z-Score}: Unbounded, μέσος=0, std=1, λιγότερο ευαίσθητο σε outliers
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 5.8
+% -----------------------------------------------------------------------------
+\section{Άσκηση 5.8: Υπολογισμός Αποστάσεων}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται τα διανύσματα:
+\begin{itemize}
+    \item $\mathbf{x} = (1, 2, 3)$
+    \item $\mathbf{y} = (4, 6, 3)$
+\end{itemize}
+
+Υπολογίστε: (a) Euclidean distance, (b) Manhattan distance, (c) Cosine similarity
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{(a) Euclidean Distance:}
+
+$$d_E(\mathbf{x}, \mathbf{y}) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}$$
+
+$$d_E = \sqrt{(1-4)^2 + (2-6)^2 + (3-3)^2} = \sqrt{9 + 16 + 0} = \sqrt{25} = 5$$
+
+\textbf{(b) Manhattan Distance:}
+
+$$d_M(\mathbf{x}, \mathbf{y}) = \sum_{i=1}^{n} |x_i - y_i|$$
+
+$$d_M = |1-4| + |2-6| + |3-3| = 3 + 4 + 0 = 7$$
+
+\textbf{(c) Cosine Similarity:}
+
+$$\cos(\mathbf{x}, \mathbf{y}) = \frac{\mathbf{x} \cdot \mathbf{y}}{||\mathbf{x}|| \cdot ||\mathbf{y}||}$$
+
+\begin{align*}
+\mathbf{x} \cdot \mathbf{y} &= 1 \cdot 4 + 2 \cdot 6 + 3 \cdot 3 = 4 + 12 + 9 = 25 \\
+||\mathbf{x}|| &= \sqrt{1^2 + 2^2 + 3^2} = \sqrt{14} \\
+||\mathbf{y}|| &= \sqrt{4^2 + 6^2 + 3^2} = \sqrt{61} \\
+\cos(\mathbf{x}, \mathbf{y}) &= \frac{25}{\sqrt{14} \cdot \sqrt{61}} = \frac{25}{\sqrt{854}} \approx 0.855
+\end{align*}
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Distance Metric} & \textbf{Value} \\
+\midrule
+Euclidean & 5.00 \\
+Manhattan & 7 \\
+Cosine Similarity & 0.855 \\
+Cosine Distance & $1 - 0.855 = 0.145$ \\
+\bottomrule
+\end{tabular}
+\end{center}

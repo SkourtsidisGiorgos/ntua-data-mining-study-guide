@@ -1,0 +1,583 @@
+% =============================================================================
+% Chapter 18: HMM και Διακριτές Ακολουθίες - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{HMM και Διακριτές Ακολουθίες - Λυμένες Ασκήσεις}
+\label{ch:hmm-sequences-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για ανάλυση διακριτών ακολουθιών:
+\begin{itemize}
+    \item \textbf{Υποακολουθίες}: Βασικές έννοιες subsequences (Άσκηση 7.1)
+    \item \textbf{HMM Algorithms}: Forward, Viterbi, Baum-Welch (Ασκήσεις 7.2--7.5, 7.8)
+    \item \textbf{Sequence Similarity}: Edit Distance, LCS, DTW (Ασκήσεις 7.6, 7.7, 7.9)
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.1
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.1: Υποακολουθίες}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται η ακολουθία $S = \langle A, B, C, D \rangle$.
+
+\begin{enumerate}
+    \item Πόσες υποακολουθίες (subsequences) έχει;
+    \item Απαριθμήστε όλες τις υποακολουθίες μήκους 2.
+    \item Είναι η $\langle B, D \rangle$ υποακολουθία της $S$;
+    \item Είναι η $\langle C, B \rangle$ υποακολουθία της $S$;
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{(1) Αριθμός υποακολουθιών:}
+
+Κάθε στοιχείο μπορεί να είναι ή να μην είναι στην υποακολουθία:
+$$\text{Total} = 2^n = 2^4 = 16 \text{ (συμπεριλαμβανομένης της κενής)}$$
+
+\textbf{(2) Υποακολουθίες μήκους 2:}
+
+$$\binom{4}{2} = 6 \text{ υποακολουθίες}$$
+
+$\langle A, B \rangle$, $\langle A, C \rangle$, $\langle A, D \rangle$,
+$\langle B, C \rangle$, $\langle B, D \rangle$, $\langle C, D \rangle$
+
+\textbf{(3) $\langle B, D \rangle$ υποακολουθία;} \textbf{ΝΑΙ}
+
+Το B εμφανίζεται πριν το D στην $S$: $A, \mathbf{B}, C, \mathbf{D}$
+
+\textbf{(4) $\langle C, B \rangle$ υποακολουθία;} \textbf{ΟΧΙ}
+
+Στην $S$ το B έρχεται πριν το C, όχι μετά.
+
+\begin{infobox}[Υποακολουθία vs Υποσυμβολοσειρά]
+\begin{itemize}
+    \item \textbf{Subsequence}: Διατήρηση σειράς, όχι απαραίτητα συνεχόμενα
+    \item \textbf{Substring}: Συνεχόμενα στοιχεία
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.2
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.2: Forward Algorithm - Απλό}
+
+\begin{formulabox}[Εκφώνηση]
+Ένα HMM έχει 2 καταστάσεις (H: Hot, C: Cold) και 2 παρατηρήσεις (S: Sun, R: Rain).
+
+\textbf{Παράμετροι:}
+\begin{itemize}
+    \item Initial: $\pi_H = 0.6$, $\pi_C = 0.4$
+    \item Transitions: $a_{HH} = 0.7$, $a_{HC} = 0.3$, $a_{CH} = 0.4$, $a_{CC} = 0.6$
+    \item Emissions: $b_H(S) = 0.8$, $b_H(R) = 0.2$, $b_C(S) = 0.3$, $b_C(R) = 0.7$
+\end{itemize}
+
+Υπολογίστε την πιθανότητα της παρατήρησης $O = \langle S, R \rangle$.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Forward Algorithm:}
+
+$$\alpha_t(j) = P(o_1, o_2, ..., o_t, q_t = j | \lambda)$$
+
+\textbf{Βήμα 1: Αρχικοποίηση ($t=1$, $o_1 = S$)}
+
+\begin{align*}
+\alpha_1(H) &= \pi_H \cdot b_H(S) = 0.6 \times 0.8 = 0.48 \\
+\alpha_1(C) &= \pi_C \cdot b_C(S) = 0.4 \times 0.3 = 0.12
+\end{align*}
+
+\textbf{Βήμα 2: Induction ($t=2$, $o_2 = R$)}
+
+\begin{align*}
+\alpha_2(H) &= \left[\alpha_1(H) \cdot a_{HH} + \alpha_1(C) \cdot a_{CH}\right] \cdot b_H(R) \\
+&= [0.48 \times 0.7 + 0.12 \times 0.4] \times 0.2 \\
+&= [0.336 + 0.048] \times 0.2 = 0.384 \times 0.2 = 0.0768 \\[5pt]
+\alpha_2(C) &= \left[\alpha_1(H) \cdot a_{HC} + \alpha_1(C) \cdot a_{CC}\right] \cdot b_C(R) \\
+&= [0.48 \times 0.3 + 0.12 \times 0.6] \times 0.7 \\
+&= [0.144 + 0.072] \times 0.7 = 0.216 \times 0.7 = 0.1512
+\end{align*}
+
+\textbf{Βήμα 3: Termination}
+
+$$P(O | \lambda) = \alpha_2(H) + \alpha_2(C) = 0.0768 + 0.1512 = 0.228$$
+
+\textbf{Τελική Απάντηση:} $P(\langle S, R \rangle) = 0.228$
+
+% -----------------------------------------------------------------------------
+% Exercise 7.3
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.3: Forward Algorithm - Πίνακας}
+
+\begin{formulabox}[Εκφώνηση]
+Με το ίδιο HMM, υπολογίστε $P(O = \langle S, S, R \rangle)$ χρησιμοποιώντας πίνακα.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{c|ccc}
+\toprule
+ & $t=1$ (S) & $t=2$ (S) & $t=3$ (R) \\
+\midrule
+$\alpha_t(H)$ & $0.6 \times 0.8 = 0.48$ & $0.2976$ & $0.0655$ \\
+$\alpha_t(C)$ & $0.4 \times 0.3 = 0.12$ & $0.0648$ & $0.1197$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Υπολογισμοί $t=2$:}
+\begin{align*}
+\alpha_2(H) &= [0.48 \times 0.7 + 0.12 \times 0.4] \times 0.8 = 0.384 \times 0.8 = 0.3072 \\
+\alpha_2(C) &= [0.48 \times 0.3 + 0.12 \times 0.6] \times 0.3 = 0.216 \times 0.3 = 0.0648
+\end{align*}
+
+\textbf{Υπολογισμοί $t=3$:}
+\begin{align*}
+\alpha_3(H) &= [0.3072 \times 0.7 + 0.0648 \times 0.4] \times 0.2 = 0.2409 \times 0.2 = 0.0482 \\
+\alpha_3(C) &= [0.3072 \times 0.3 + 0.0648 \times 0.6] \times 0.7 = 0.1310 \times 0.7 = 0.0917
+\end{align*}
+
+$$P(O) = 0.0482 + 0.0917 = 0.1399$$
+
+% -----------------------------------------------------------------------------
+% Exercise 7.4
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.4: Viterbi Algorithm}
+
+\begin{formulabox}[Εκφώνηση]
+Με το ίδιο HMM, βρείτε την πιο πιθανή ακολουθία καταστάσεων για $O = \langle S, R \rangle$.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Viterbi Algorithm:}
+
+$$\delta_t(j) = \max_{q_1,...,q_{t-1}} P(q_1,...,q_{t-1}, q_t=j, o_1,...,o_t | \lambda)$$
+
+\textbf{Βήμα 1: Αρχικοποίηση ($t=1$, $o_1 = S$)}
+
+\begin{align*}
+\delta_1(H) &= \pi_H \cdot b_H(S) = 0.6 \times 0.8 = 0.48 \\
+\delta_1(C) &= \pi_C \cdot b_C(S) = 0.4 \times 0.3 = 0.12
+\end{align*}
+
+$\psi_1(H) = \psi_1(C) = 0$ (αρχή)
+
+\textbf{Βήμα 2: Recursion ($t=2$, $o_2 = R$)}
+
+\begin{align*}
+\delta_2(H) &= \max[\delta_1(H) \cdot a_{HH}, \delta_1(C) \cdot a_{CH}] \cdot b_H(R) \\
+&= \max[0.48 \times 0.7, 0.12 \times 0.4] \times 0.2 \\
+&= \max[0.336, 0.048] \times 0.2 = 0.336 \times 0.2 = 0.0672 \\
+\psi_2(H) &= H \text{ (επειδή } 0.336 > 0.048\text{)}
+\end{align*}
+
+\begin{align*}
+\delta_2(C) &= \max[\delta_1(H) \cdot a_{HC}, \delta_1(C) \cdot a_{CC}] \cdot b_C(R) \\
+&= \max[0.48 \times 0.3, 0.12 \times 0.6] \times 0.7 \\
+&= \max[0.144, 0.072] \times 0.7 = 0.144 \times 0.7 = 0.1008 \\
+\psi_2(C) &= H \text{ (επειδή } 0.144 > 0.072\text{)}
+\end{align*}
+
+\textbf{Βήμα 3: Termination}
+
+$$q_2^* = \arg\max[\delta_2(H), \delta_2(C)] = \arg\max[0.0672, 0.1008] = C$$
+
+\textbf{Βήμα 4: Backtracking}
+
+$$q_1^* = \psi_2(C) = H$$
+
+\textbf{Τελική Απάντηση:} Πιο πιθανή ακολουθία: $\langle H, C \rangle$
+
+\begin{center}
+\begin{tikzpicture}[
+    state/.style={circle, draw=secondary, fill=box-blue, minimum size=1cm, font=\bfseries},
+    node distance=3cm]
+
+    \node[state] (h1) {H};
+    \node[state, below=1.5cm of h1] (c1) {C};
+    \node[state, right=of h1] (h2) {H};
+    \node[state, below=1.5cm of h2] (c2) {C};
+
+    \draw[arrow, thick, accent] (h1) -- (c2);
+    \draw[arrow, dashed, gray] (h1) -- (h2);
+    \draw[arrow, dashed, gray] (c1) -- (h2);
+    \draw[arrow, dashed, gray] (c1) -- (c2);
+
+    \node[above=0.3cm of h1] {$t=1$: S};
+    \node[above=0.3cm of h2] {$t=2$: R};
+\end{tikzpicture}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.5
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.5: Ερμηνεία HMM Παραμέτρων}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται HMM για αναγνώριση δραστηριότητας με καταστάσεις \{Walk, Run, Sit\} και
+παρατηρήσεις \{Low, Medium, High\} (accelerometer readings).
+
+Οι παράμετροι είναι:
+\begin{center}
+\begin{tabular}{c|ccc}
+$A$ & Walk & Run & Sit \\
+\hline
+Walk & 0.7 & 0.2 & 0.1 \\
+Run & 0.1 & 0.8 & 0.1 \\
+Sit & 0.2 & 0.1 & 0.7 \\
+\end{tabular}
+\quad
+\begin{tabular}{c|ccc}
+$B$ & Low & Med & High \\
+\hline
+Walk & 0.1 & 0.7 & 0.2 \\
+Run & 0.05 & 0.15 & 0.8 \\
+Sit & 0.8 & 0.15 & 0.05 \\
+\end{tabular}
+\end{center}
+
+Τι μας λένε αυτές οι παράμετροι για τη συμπεριφορά του μοντέλου;
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Transition Matrix $A$ - Ερμηνεία:}
+
+\begin{itemize}
+    \item Υψηλές διαγώνιες τιμές (0.7-0.8): Οι δραστηριότητες τείνουν να \textbf{συνεχίζονται}
+    \item $a_{Walk \to Run} = 0.2$: Σχετικά πιθανή η μετάβαση από περπάτημα σε τρέξιμο
+    \item $a_{Run \to Sit} = 0.1$: Σπάνια απότομη διακοπή τρεξίματος
+    \item $a_{Sit \to Run} = 0.1$: Σπάνια άμεση μετάβαση από κάθισμα σε τρέξιμο
+\end{itemize}
+
+\textbf{Emission Matrix $B$ - Ερμηνεία:}
+
+\begin{itemize}
+    \item \textbf{Sit}: Κυρίως χαμηλές ενδείξεις (0.8) - λογικό, καθιστή θέση
+    \item \textbf{Run}: Κυρίως υψηλές ενδείξεις (0.8) - έντονη κίνηση
+    \item \textbf{Walk}: Κυρίως μεσαίες ενδείξεις (0.7) - μέτρια κίνηση
+\end{itemize}
+
+\begin{infobox}[Χρησιμότητα HMM]
+Το HMM μπορεί να «εξομαλύνει» θορυβώδεις μετρήσεις χρησιμοποιώντας την πληροφορία
+ότι οι καταστάσεις τείνουν να παραμένουν σταθερές.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.6
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.6: Edit Distance (Levenshtein)}
+
+\begin{formulabox}[Εκφώνηση]
+Υπολογίστε την απόσταση επεξεργασίας (Edit Distance / Levenshtein Distance) μεταξύ
+των συμβολοσειρών:
+\begin{itemize}
+    \item $S_1 = $ ``SATURDAY''
+    \item $S_2 = $ ``SUNDAY''
+\end{itemize}
+
+Οι επιτρεπόμενες λειτουργίες είναι: Insert, Delete, Replace (κόστος 1 η καθεμία).
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Δυναμικός Προγραμματισμός:}
+
+Ορίζουμε $D[i,j]$ = edit distance μεταξύ $S_1[1..i]$ και $S_2[1..j]$.
+
+\textbf{Αναδρομική σχέση:}
+$$D[i,j] = \min \begin{cases}
+D[i-1,j] + 1 & \text{(delete από } S_1\text{)} \\
+D[i,j-1] + 1 & \text{(insert στο } S_1\text{)} \\
+D[i-1,j-1] + \delta_{ij} & \text{(replace/match)}
+\end{cases}$$
+
+όπου $\delta_{ij} = 0$ αν $S_1[i] = S_2[j]$, αλλιώς $\delta_{ij} = 1$.
+
+\textbf{Πίνακας D:}
+
+\begin{center}
+\small
+\begin{tabular}{c|ccccccc}
+ & $\varepsilon$ & S & U & N & D & A & Y \\
+\hline
+$\varepsilon$ & 0 & 1 & 2 & 3 & 4 & 5 & 6 \\
+S & 1 & \textbf{0} & 1 & 2 & 3 & 4 & 5 \\
+A & 2 & 1 & 1 & 2 & 3 & \textbf{3} & 4 \\
+T & 3 & 2 & 2 & 2 & 3 & 4 & 4 \\
+U & 4 & 3 & \textbf{2} & 3 & 3 & 4 & 5 \\
+R & 5 & 4 & 3 & 3 & 4 & 4 & 5 \\
+D & 6 & 5 & 4 & 4 & \textbf{3} & 4 & 5 \\
+A & 7 & 6 & 5 & 5 & 4 & \textbf{3} & 4 \\
+Y & 8 & 7 & 6 & 6 & 5 & 4 & \textbf{3} \\
+\end{tabular}
+\end{center}
+
+\textbf{Απάντηση:} $D[8,6] = 3$
+
+\textbf{Ελάχιστες επεξεργασίες:}
+\begin{enumerate}
+    \item Delete `A' (SATURDAY $\to$ STURDAY)
+    \item Delete `T' (STURDAY $\to$ SURDAY)
+    \item Replace `R' $\to$ `N' (SURDAY $\to$ SUNDAY)
+\end{enumerate}
+
+\begin{infobox}[Πολυπλοκότητα]
+\begin{itemize}
+    \item Χρόνος: $O(m \cdot n)$
+    \item Χώρος: $O(m \cdot n)$, μπορεί να μειωθεί σε $O(\min(m,n))$ αν δεν χρειαζόμαστε backtracking
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.7
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.7: Longest Common Subsequence (LCS)}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τη μεγαλύτερη κοινή υποακολουθία (LCS) των:
+\begin{itemize}
+    \item $X = $ ``ABCBDAB''
+    \item $Y = $ ``BDCABA''
+\end{itemize}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Δυναμικός Προγραμματισμός:}
+
+Ορίζουμε $L[i,j]$ = μήκος LCS μεταξύ $X[1..i]$ και $Y[1..j]$.
+
+\textbf{Αναδρομική σχέση:}
+$$L[i,j] = \begin{cases}
+0 & \text{αν } i = 0 \text{ ή } j = 0 \\
+L[i-1,j-1] + 1 & \text{αν } X[i] = Y[j] \\
+\max(L[i-1,j], L[i,j-1]) & \text{αλλιώς}
+\end{cases}$$
+
+\textbf{Πίνακας L:}
+
+\begin{center}
+\begin{tabular}{c|ccccccc}
+ & $\varepsilon$ & B & D & C & A & B & A \\
+\hline
+$\varepsilon$ & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+A & 0 & 0 & 0 & 0 & \textbf{1} & 1 & 1 \\
+B & 0 & \textbf{1} & 1 & 1 & 1 & \textbf{2} & 2 \\
+C & 0 & 1 & 1 & \textbf{2} & 2 & 2 & 2 \\
+B & 0 & 1 & 1 & 2 & 2 & \textbf{3} & 3 \\
+D & 0 & 1 & \textbf{2} & 2 & 2 & 3 & 3 \\
+A & 0 & 1 & 2 & 2 & \textbf{3} & 3 & \textbf{4} \\
+B & 0 & 1 & 2 & 2 & 3 & \textbf{4} & 4 \\
+\end{tabular}
+\end{center}
+
+\textbf{Μήκος LCS:} $L[7,6] = 4$
+
+\textbf{Backtracking για εύρεση LCS:}
+
+Ακολουθούμε τα βέλη από $(7,6)$ προς $(0,0)$:
+\begin{enumerate}
+    \item $(7,6)$: $X[7]=B \neq Y[6]=A$, πάμε $(6,6)$
+    \item $(6,6)$: $X[6]=A = Y[6]=A$ $\checkmark$, πάμε $(5,5)$, προσθέτουμε \textbf{A}
+    \item $(5,5)$: $X[5]=D \neq Y[5]=B$, πάμε $(5,4)$
+    \item $(5,4)$: $X[5]=D \neq Y[4]=A$, πάμε $(4,4)$
+    \item $(4,4)$: $X[4]=B \neq Y[4]=A$, πάμε $(4,3)$
+    \item $(4,3)$: $X[4]=B \neq Y[3]=C$, πάμε $(3,3)$
+    \item $(3,3)$: $X[3]=C = Y[3]=C$ $\checkmark$, πάμε $(2,2)$, προσθέτουμε \textbf{C}
+    \item $(2,2)$: $X[2]=B \neq Y[2]=D$, πάμε $(1,2)$
+    \item $(1,2)$: $X[1]=A \neq Y[2]=D$, πάμε $(1,1)$
+    \item $(1,1)$: $X[1]=A \neq Y[1]=B$, πάμε $(0,1)$
+\end{enumerate}
+
+\textbf{Σημείωση:} Υπάρχουν πολλαπλές LCS μήκους 4. Μία είναι: \textbf{BCBA}
+
+Άλλες LCS: BCAB, BDAB
+
+% -----------------------------------------------------------------------------
+% Exercise 7.8
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.8: Baum-Welch Algorithm}
+
+\begin{formulabox}[Εκφώνηση]
+Ο αλγόριθμος Baum-Welch χρησιμοποιείται για την εκμάθηση των παραμέτρων ενός HMM
+από δεδομένα παρατηρήσεων (unsupervised learning).
+
+Δίνεται HMM με 2 καταστάσεις (A, B) και 2 σύμβολα (0, 1). Οι αρχικές παράμετροι είναι:
+\begin{itemize}
+    \item $\pi = (0.5, 0.5)$
+    \item $A = \begin{pmatrix} 0.6 & 0.4 \\ 0.3 & 0.7 \end{pmatrix}$
+    \item $B = \begin{pmatrix} 0.7 & 0.3 \\ 0.4 & 0.6 \end{pmatrix}$
+\end{itemize}
+
+Για την παρατήρηση $O = \langle 0, 1, 0 \rangle$:
+\begin{enumerate}
+    \item Υπολογίστε τις forward probabilities $\alpha_t(i)$
+    \item Υπολογίστε τις backward probabilities $\beta_t(i)$
+    \item Υπολογίστε τα $\gamma_t(i) = P(q_t = i | O, \lambda)$ για $t=2$
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Forward Probabilities $\alpha_t(i)$}
+
+$\alpha_t(i) = P(o_1, ..., o_t, q_t = i | \lambda)$
+
+\textbf{t = 1} ($o_1 = 0$):
+\begin{align*}
+\alpha_1(A) &= \pi_A \cdot b_A(0) = 0.5 \times 0.7 = 0.35 \\
+\alpha_1(B) &= \pi_B \cdot b_B(0) = 0.5 \times 0.4 = 0.20
+\end{align*}
+
+\textbf{t = 2} ($o_2 = 1$):
+\begin{align*}
+\alpha_2(A) &= [\alpha_1(A) \cdot a_{AA} + \alpha_1(B) \cdot a_{BA}] \cdot b_A(1) \\
+&= [0.35 \times 0.6 + 0.20 \times 0.3] \times 0.3 \\
+&= [0.21 + 0.06] \times 0.3 = 0.081 \\
+\alpha_2(B) &= [\alpha_1(A) \cdot a_{AB} + \alpha_1(B) \cdot a_{BB}] \cdot b_B(1) \\
+&= [0.35 \times 0.4 + 0.20 \times 0.7] \times 0.6 \\
+&= [0.14 + 0.14] \times 0.6 = 0.168
+\end{align*}
+
+\textbf{t = 3} ($o_3 = 0$):
+\begin{align*}
+\alpha_3(A) &= [0.081 \times 0.6 + 0.168 \times 0.3] \times 0.7 = 0.0693 \\
+\alpha_3(B) &= [0.081 \times 0.4 + 0.168 \times 0.7] \times 0.4 = 0.0600
+\end{align*}
+
+$P(O|\lambda) = \alpha_3(A) + \alpha_3(B) = 0.1293$
+
+\textbf{Βήμα 2: Backward Probabilities $\beta_t(i)$}
+
+$\beta_t(i) = P(o_{t+1}, ..., o_T | q_t = i, \lambda)$
+
+\textbf{t = 3} (initialization):
+$$\beta_3(A) = \beta_3(B) = 1$$
+
+\textbf{t = 2}:
+\begin{align*}
+\beta_2(A) &= a_{AA} \cdot b_A(o_3) \cdot \beta_3(A) + a_{AB} \cdot b_B(o_3) \cdot \beta_3(B) \\
+&= 0.6 \times 0.7 \times 1 + 0.4 \times 0.4 \times 1 = 0.58 \\
+\beta_2(B) &= a_{BA} \cdot b_A(o_3) \cdot \beta_3(A) + a_{BB} \cdot b_B(o_3) \cdot \beta_3(B) \\
+&= 0.3 \times 0.7 \times 1 + 0.7 \times 0.4 \times 1 = 0.49
+\end{align*}
+
+\textbf{t = 1}:
+\begin{align*}
+\beta_1(A) &= 0.6 \times 0.3 \times 0.58 + 0.4 \times 0.6 \times 0.49 = 0.222 \\
+\beta_1(B) &= 0.3 \times 0.3 \times 0.58 + 0.7 \times 0.6 \times 0.49 = 0.258
+\end{align*}
+
+\textbf{Βήμα 3: State Probabilities $\gamma_t(i)$}
+
+$$\gamma_t(i) = \frac{\alpha_t(i) \cdot \beta_t(i)}{\sum_j \alpha_t(j) \cdot \beta_t(j)} = \frac{\alpha_t(i) \cdot \beta_t(i)}{P(O|\lambda)}$$
+
+Για $t = 2$:
+\begin{align*}
+\gamma_2(A) &= \frac{0.081 \times 0.58}{0.1293} = \frac{0.047}{0.1293} \approx 0.363 \\
+\gamma_2(B) &= \frac{0.168 \times 0.49}{0.1293} = \frac{0.082}{0.1293} \approx 0.637
+\end{align*}
+
+\textbf{Ερμηνεία:} Στο $t=2$, η πιθανότητα να είμαστε στην κατάσταση B (63.7\%) είναι
+μεγαλύτερη από την A (36.3\%), δεδομένης της παρατήρησης.
+
+\begin{warningbox}[Baum-Welch Update Rules]
+Οι νέες παράμετροι υπολογίζονται ως:
+\begin{align*}
+\hat{a}_{ij} &= \frac{\sum_t \xi_t(i,j)}{\sum_t \gamma_t(i)} \\
+\hat{b}_j(k) &= \frac{\sum_{t: o_t = k} \gamma_t(j)}{\sum_t \gamma_t(j)}
+\end{align*}
+όπου $\xi_t(i,j) = P(q_t=i, q_{t+1}=j | O, \lambda)$
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 7.9
+% -----------------------------------------------------------------------------
+\section{Άσκηση 7.9: Dynamic Time Warping (DTW)}
+
+\begin{formulabox}[Εκφώνηση]
+Υπολογίστε την απόσταση DTW μεταξύ δύο χρονοσειρών:
+\begin{itemize}
+    \item $X = (1, 3, 4, 9)$
+    \item $Y = (1, 2, 4, 9, 8)$
+\end{itemize}
+
+Χρησιμοποιήστε Ευκλείδεια απόσταση $d(x, y) = |x - y|$.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Dynamic Time Warping:}
+
+Ο DTW επιτρέπει ελαστική ευθυγράμμιση (elastic alignment) δύο χρονοσειρών
+διαφορετικού μήκους.
+
+\textbf{Αναδρομική σχέση:}
+$$D[i,j] = d(x_i, y_j) + \min \begin{cases}
+D[i-1,j] & \text{(επέκταση } x\text{)} \\
+D[i,j-1] & \text{(επέκταση } y\text{)} \\
+D[i-1,j-1] & \text{(αντιστοίχιση)}
+\end{cases}$$
+
+\textbf{Πίνακας αποστάσεων $d(x_i, y_j) = |x_i - y_j|$:}
+
+\begin{center}
+\begin{tabular}{c|ccccc}
+$d$ & $y_1=1$ & $y_2=2$ & $y_3=4$ & $y_4=9$ & $y_5=8$ \\
+\hline
+$x_1=1$ & 0 & 1 & 3 & 8 & 7 \\
+$x_2=3$ & 2 & 1 & 1 & 6 & 5 \\
+$x_3=4$ & 3 & 2 & 0 & 5 & 4 \\
+$x_4=9$ & 8 & 7 & 5 & 0 & 1 \\
+\end{tabular}
+\end{center}
+
+\textbf{Πίνακας DTW D[i,j]:}
+
+\begin{center}
+\begin{tabular}{c|ccccc}
+$D$ & $y_1$ & $y_2$ & $y_3$ & $y_4$ & $y_5$ \\
+\hline
+$x_1$ & \textbf{0} & 1 & 4 & 12 & 19 \\
+$x_2$ & 2 & \textbf{1} & \textbf{2} & 8 & 13 \\
+$x_3$ & 5 & 3 & \textbf{1} & 6 & 10 \\
+$x_4$ & 13 & 10 & 6 & \textbf{1} & \textbf{2} \\
+\end{tabular}
+\end{center}
+
+\textbf{Υπολογισμοί:}
+\begin{itemize}
+    \item $D[1,1] = d(1,1) = 0$
+    \item $D[2,1] = d(3,1) + D[1,1] = 2 + 0 = 2$
+    \item $D[2,2] = d(3,2) + \min(D[1,1], D[1,2], D[2,1]) = 1 + \min(0, 1, 2) = 1$
+    \item $D[2,3] = d(3,4) + \min(D[1,2], D[1,3], D[2,2]) = 1 + \min(1, 4, 1) = 2$
+    \item $D[3,3] = d(4,4) + \min(D[2,2], D[2,3], D[3,2]) = 0 + \min(1, 2, 3) = 1$
+    \item $D[4,4] = d(9,9) + \min(D[3,3], D[3,4], D[4,3]) = 0 + \min(1, 6, 6) = 1$
+    \item $D[4,5] = d(9,8) + \min(D[3,4], D[3,5], D[4,4]) = 1 + \min(6, 10, 1) = 2$
+\end{itemize}
+
+\textbf{DTW Distance:} $D[4,5] = 2$
+
+\textbf{Optimal Warping Path:}
+$(1,1) \to (2,2) \to (2,3) \to (3,3) \to (4,4) \to (4,5)$
+
+Αυτό σημαίνει:
+\begin{itemize}
+    \item $x_1 = 1 \leftrightarrow y_1 = 1$
+    \item $x_2 = 3 \leftrightarrow y_2 = 2, y_3 = 4$ (στοιχείο του X αντιστοιχίζεται σε 2 στοιχεία του Y)
+    \item $x_3 = 4 \leftrightarrow y_3 = 4$
+    \item $x_4 = 9 \leftrightarrow y_4 = 9, y_5 = 8$
+\end{itemize}
+
+\begin{infobox}[DTW vs Euclidean Distance]
+\begin{itemize}
+    \item \textbf{Euclidean}: Απαιτεί ίσο μήκος, point-to-point σύγκριση
+    \item \textbf{DTW}: Επιτρέπει ελαστική ευθυγράμμιση, αντοχή σε χρονικές παραμορφώσεις
+    \item Χρησιμότητα: Speech recognition, gesture recognition, ECG analysis
+\end{itemize}
+\end{infobox}

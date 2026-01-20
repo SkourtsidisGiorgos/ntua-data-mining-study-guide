@@ -1,0 +1,333 @@
+% =============================================================================
+% Chapter 12: E-R Μοντέλο - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{E-R Μοντέλο και Σχεδιασμός Βάσεων Δεδομένων - Λυμένες Ασκήσεις}
+\label{ch:er-model-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για το E-R μοντέλο και τον σχεδιασμό
+βάσεων δεδομένων.
+
+% -----------------------------------------------------------------------------
+% Exercise 1.1
+% -----------------------------------------------------------------------------
+\section{Άσκηση 1.1: Σχεδιασμός E-R από Απαιτήσεις}
+
+\begin{formulabox}[Εκφώνηση]
+Σχεδιάστε ένα E-R διάγραμμα για ένα σύστημα music streaming με τις εξής απαιτήσεις:
+\begin{itemize}
+    \item Κάθε \textbf{τραγούδι} έχει μοναδικό ID, τίτλο, διάρκεια και έτος κυκλοφορίας
+    \item Κάθε \textbf{καλλιτέχνης} έχει μοναδικό ID, όνομα και χώρα προέλευσης
+    \item Κάθε τραγούδι ανήκει σε ακριβώς έναν καλλιτέχνη, αλλά ένας καλλιτέχνης μπορεί να έχει πολλά τραγούδια
+    \item Οι \textbf{χρήστες} έχουν ID, username και email
+    \item Οι χρήστες δημιουργούν \textbf{playlists} με όνομα και ημερομηνία δημιουργίας
+    \item Μια playlist μπορεί να περιέχει πολλά τραγούδια και ένα τραγούδι μπορεί να είναι σε πολλές playlists
+\end{itemize}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Αναγνώριση Οντοτήτων}
+
+\textit{Γιατί:} Πρώτα εντοπίζουμε τα «αντικείμενα» του συστήματος που έχουν ανεξάρτητη ύπαρξη.
+
+Οντότητες:
+\begin{itemize}
+    \item \texttt{Song} (τραγούδι)
+    \item \texttt{Artist} (καλλιτέχνης)
+    \item \texttt{User} (χρήστης)
+    \item \texttt{Playlist}
+\end{itemize}
+
+\textbf{Βήμα 2: Αναγνώριση Γνωρισμάτων}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Οντότητα} & \textbf{Γνωρίσματα} \\
+\midrule
+Song & \underline{song\_id}, title, duration, release\_year \\
+Artist & \underline{artist\_id}, name, country \\
+User & \underline{user\_id}, username, email \\
+Playlist & \underline{playlist\_id}, name, created\_date \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Βήμα 3: Αναγνώριση Συσχετίσεων και Cardinality}
+
+\begin{itemize}
+    \item \texttt{Artist} --- \texttt{creates} --- \texttt{Song}: \textbf{1:N}
+    \item \texttt{User} --- \texttt{owns} --- \texttt{Playlist}: \textbf{1:N}
+    \item \texttt{Playlist} --- \texttt{contains} --- \texttt{Song}: \textbf{M:N}
+\end{itemize}
+
+\textbf{Βήμα 4: E-R Διάγραμμα}
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm,
+    entity/.style={rectangle, draw=primary, fill=box-blue, minimum width=2cm, minimum height=1cm, font=\bfseries},
+    relationship/.style={diamond, draw=secondary, fill=box-yellow, aspect=2, font=\small},
+    attribute/.style={ellipse, draw=gray, fill=light-gray, font=\small\ttfamily, inner sep=2pt}]
+
+    % Entities
+    \node[entity] (artist) {Artist};
+    \node[entity, right=4cm of artist] (song) {Song};
+    \node[entity, below=3cm of artist] (user) {User};
+    \node[entity, right=4cm of user] (playlist) {Playlist};
+
+    % Relationships
+    \node[relationship] (creates) at ($(artist)!0.5!(song)$) {creates};
+    \node[relationship] (owns) at ($(user)!0.5!(playlist)$) {owns};
+    \node[relationship] (contains) at ($(playlist)!0.5!(song)$) {contains};
+
+    % Connections with cardinality
+    \draw[thick] (artist) -- node[above] {1} (creates);
+    \draw[thick] (creates) -- node[above] {N} (song);
+    \draw[thick] (user) -- node[above] {1} (owns);
+    \draw[thick] (owns) -- node[above] {N} (playlist);
+    \draw[thick] (playlist) -- node[left] {M} (contains);
+    \draw[thick] (contains) -- node[right] {N} (song);
+
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}[Συνήθες Λάθος]
+Πολλοί φοιτητές ξεχνούν ότι η σχέση \texttt{contains} είναι M:N και χρειάζεται
+ενδιάμεσο πίνακα στο σχεσιακό μοντέλο!
+\end{warningbox}
+
+\textbf{Τελική Απάντηση:} Το E-R διάγραμμα περιλαμβάνει 4 οντότητες και 3 συσχετίσεις
+(1:N, 1:N, M:N).
+
+% -----------------------------------------------------------------------------
+% Exercise 1.2
+% -----------------------------------------------------------------------------
+\section{Άσκηση 1.2: Μετατροπή E-R σε Σχεσιακό (M:N)}
+
+\begin{formulabox}[Εκφώνηση]
+Μετατρέψτε την M:N σχέση \texttt{contains} μεταξύ \texttt{Playlist} και \texttt{Song}
+σε σχεσιακούς πίνακες. Η σχέση έχει επιπλέον γνώρισμα \texttt{position} που δηλώνει
+τη θέση του τραγουδιού στη playlist.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Κανόνας Μετατροπής M:N}
+
+\textit{Γιατί:} Οι M:N σχέσεις δεν μπορούν να αναπαρασταθούν με ξένα κλειδιά σε έναν
+από τους δύο πίνακες. Χρειάζεται ενδιάμεσος πίνακας.
+
+\textbf{Βήμα 2: Δημιουργία Πινάκων}
+
+\begin{lstlisting}[language=SQL]
+-- Πίνακας Playlist
+CREATE TABLE Playlist (
+    playlist_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    created_date DATE,
+    user_id INT REFERENCES User(user_id)
+);
+
+-- Πίνακας Song
+CREATE TABLE Song (
+    song_id INT PRIMARY KEY,
+    title VARCHAR(200),
+    duration INT,
+    release_year INT,
+    artist_id INT REFERENCES Artist(artist_id)
+);
+
+-- Ενδιάμεσος πίνακας για M:N
+CREATE TABLE Playlist_Song (
+    playlist_id INT REFERENCES Playlist(playlist_id),
+    song_id INT REFERENCES Song(song_id),
+    position INT,  -- Γνώρισμα της σχέσης
+    PRIMARY KEY (playlist_id, song_id)
+);
+\end{lstlisting}
+
+\begin{infobox}[Σημαντικό]
+Το πρωτεύον κλειδί του ενδιάμεσου πίνακα είναι το συνδυασμένο κλειδί
+\texttt{(playlist\_id, song\_id)} που αποτρέπει διπλότυπες εγγραφές.
+\end{infobox}
+
+\textbf{Τελική Απάντηση:} Δημιουργούνται 3 πίνακες: \texttt{Playlist}, \texttt{Song},
+και \texttt{Playlist\_Song} (ενδιάμεσος).
+
+% -----------------------------------------------------------------------------
+% Exercise 1.3
+% -----------------------------------------------------------------------------
+\section{Άσκηση 1.3: Weak Entity Μετατροπή}
+
+\begin{formulabox}[Εκφώνηση]
+Ένα σύστημα διαχείρισης παραγγελιών έχει:
+\begin{itemize}
+    \item \texttt{Order} με \underline{order\_id} και order\_date
+    \item \texttt{OrderItem} (weak entity) με \underline{item\_number}, quantity, price
+\end{itemize}
+Το \texttt{OrderItem} εξαρτάται από το \texttt{Order} για την αναγνώρισή του.
+Μετατρέψτε σε σχεσιακό μοντέλο.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Αναγνώριση Weak Entity}
+
+\textit{Γιατί:} Μια weak entity δεν έχει αρκετά γνωρίσματα για να ταυτοποιηθεί μόνη
+της. Το \texttt{item\_number} (π.χ. 1, 2, 3) επαναλαμβάνεται μεταξύ διαφορετικών
+παραγγελιών.
+
+\textbf{Βήμα 2: Σύνθετο Πρωτεύον Κλειδί}
+
+Το πρωτεύον κλειδί της weak entity σχηματίζεται από:
+\begin{itemize}
+    \item Το πρωτεύον κλειδί της «ιδιοκτήτριας» οντότητας (owner entity)
+    \item Το μερικό κλειδί (partial key) της weak entity
+\end{itemize}
+
+\textbf{Βήμα 3: Σχεσιακοί Πίνακες}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE Order (
+    order_id INT PRIMARY KEY,
+    order_date DATE
+);
+
+CREATE TABLE OrderItem (
+    order_id INT REFERENCES Order(order_id),
+    item_number INT,
+    quantity INT,
+    price DECIMAL(10,2),
+    PRIMARY KEY (order_id, item_number)  -- Σύνθετο κλειδί
+);
+\end{lstlisting}
+
+\begin{warningbox}[Συνήθες Λάθος]
+Μην ξεχνάτε: το ξένο κλειδί (\texttt{order\_id}) γίνεται \textbf{μέρος} του
+πρωτεύοντος κλειδιού στη weak entity, όχι απλά ξένο κλειδί!
+\end{warningbox}
+
+\textbf{Τελική Απάντηση:} PK του OrderItem = \texttt{(order\_id, item\_number)}
+
+% -----------------------------------------------------------------------------
+% Exercise 1.4
+% -----------------------------------------------------------------------------
+\section{Άσκηση 1.4: Cardinality Constraints}
+
+\begin{formulabox}[Εκφώνηση]
+Για τις παρακάτω περιγραφές, προσδιορίστε το cardinality (1:1, 1:N, M:N):
+
+\begin{enumerate}
+    \item Ένας φοιτητής εγγράφεται σε πολλά μαθήματα, ένα μάθημα έχει πολλούς φοιτητές
+    \item Κάθε υπάλληλος έχει ακριβώς έναν διευθυντή, ένας διευθυντής διευθύνει πολλούς υπαλλήλους
+    \item Κάθε χώρα έχει μία πρωτεύουσα, κάθε πρωτεύουσα ανήκει σε μία χώρα
+    \item Ένας συγγραφέας γράφει πολλά βιβλία, ένα βιβλίο μπορεί να έχει πολλούς συγγραφείς
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Μέθοδος:} Για κάθε περίπτωση ρωτάμε:
+\begin{itemize}
+    \item Πόσες οντότητες Β συνδέονται με μία οντότητα Α;
+    \item Πόσες οντότητες Α συνδέονται με μία οντότητα Β;
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{clcl}
+\toprule
+\textbf{\#} & \textbf{Σχέση} & \textbf{Cardinality} & \textbf{Εξήγηση} \\
+\midrule
+1 & Student-Course & \textbf{M:N} & Πολλοί-σε-πολλούς \\
+2 & Employee-Manager & \textbf{N:1} & Πολλοί υπάλληλοι, ένας διευθυντής \\
+3 & Country-Capital & \textbf{1:1} & Ένα-προς-ένα \\
+4 & Author-Book & \textbf{M:N} & Πολλοί-σε-πολλούς \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Υλοποίηση σε Σχεσιακό]
+\begin{itemize}
+    \item \textbf{1:1}: FK σε οποιονδήποτε πίνακα (+ UNIQUE)
+    \item \textbf{1:N}: FK στην πλευρά του N
+    \item \textbf{M:N}: Ενδιάμεσος πίνακας (junction table)
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 1.5
+% -----------------------------------------------------------------------------
+\section{Άσκηση 1.5: Σύνθετο Schema (Hospital System)}
+
+\begin{formulabox}[Εκφώνηση]
+Σχεδιάστε E-R και μετατρέψτε σε σχεσιακό για νοσοκομειακό σύστημα:
+\begin{itemize}
+    \item \texttt{Doctor}: doctor\_id, name, specialty
+    \item \texttt{Patient}: patient\_id, name, birth\_date
+    \item \texttt{Appointment}: date, time, diagnosis (σχέση μεταξύ Doctor-Patient)
+    \item Ένας γιατρός έχει πολλά ραντεβού, ένας ασθενής έχει πολλά ραντεβού
+    \item Ένα ραντεβού συνδέει ακριβώς έναν γιατρό με έναν ασθενή
+\end{itemize}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Ανάλυση}
+
+Η σχέση Doctor-Patient είναι M:N (ένας γιατρός βλέπει πολλούς ασθενείς, ένας ασθενής
+επισκέπτεται πολλούς γιατρούς), αλλά κάθε \textit{συγκεκριμένο} ραντεβού αφορά
+ακριβώς έναν γιατρό και έναν ασθενή.
+
+\textbf{Βήμα 2: E-R Διάγραμμα}
+
+\begin{center}
+\begin{tikzpicture}[node distance=4cm,
+    entity/.style={rectangle, draw=primary, fill=box-blue, minimum width=2cm, minimum height=1cm, font=\bfseries},
+    relationship/.style={diamond, draw=secondary, fill=box-yellow, aspect=2.5, font=\small}]
+
+    \node[entity] (doctor) {Doctor};
+    \node[entity, right=5cm of doctor] (patient) {Patient};
+    \node[relationship] (appointment) at ($(doctor)!0.5!(patient)$) {Appointment};
+
+    \draw[thick] (doctor) -- node[above] {1} (appointment);
+    \draw[thick] (appointment) -- node[above] {N} (patient);
+    \draw[thick] (patient) -- node[below] {1} (appointment);
+    \draw[thick] (appointment) -- node[below] {M} (doctor);
+
+    % Attributes of relationship
+    \node[ellipse, draw=gray, fill=light-gray, font=\small, above=0.5cm of appointment] (date) {date, time};
+    \node[ellipse, draw=gray, fill=light-gray, font=\small, below=0.5cm of appointment] (diag) {diagnosis};
+    \draw[dashed] (appointment) -- (date);
+    \draw[dashed] (appointment) -- (diag);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Βήμα 3: Σχεσιακό Μοντέλο}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE Doctor (
+    doctor_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    specialty VARCHAR(50)
+);
+
+CREATE TABLE Patient (
+    patient_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    birth_date DATE
+);
+
+CREATE TABLE Appointment (
+    appointment_id INT PRIMARY KEY,
+    doctor_id INT REFERENCES Doctor(doctor_id),
+    patient_id INT REFERENCES Patient(patient_id),
+    appointment_date DATE,
+    appointment_time TIME,
+    diagnosis TEXT
+);
+\end{lstlisting}
+
+\textbf{Τελική Απάντηση:} 3 πίνακες με τον \texttt{Appointment} να περιέχει FKs και
+προς τους δύο.

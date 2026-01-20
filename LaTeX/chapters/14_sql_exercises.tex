@@ -1,0 +1,355 @@
+% =============================================================================
+% Chapter 14: SQL - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{SQL - Λυμένες Ασκήσεις}
+\label{ch:sql-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για SQL queries.
+
+% -----------------------------------------------------------------------------
+% Exercise 3.1
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.1: SELECT με WHERE}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται ο πίνακας \texttt{Products(pid, pname, category, price, stock)}.
+
+Γράψτε SQL query για να βρείτε τα προϊόντα κατηγορίας «Electronics» με τιμή μεταξύ
+100 και 500 ευρώ, ταξινομημένα κατά τιμή (φθίνουσα).
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT pid, pname, price
+FROM Products
+WHERE category = 'Electronics'
+  AND price BETWEEN 100 AND 500
+ORDER BY price DESC;
+\end{lstlisting}
+
+\begin{infobox}[BETWEEN]
+Το \texttt{BETWEEN 100 AND 500} είναι ισοδύναμο με \texttt{price >= 100 AND price <= 500}
+(περιλαμβάνει τα όρια).
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.2
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.2: JOINs (INNER, LEFT)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Customers(cid, cname, city)}
+    \item \texttt{Orders(oid, cid, order\_date, total)}
+\end{itemize}
+
+\begin{enumerate}
+    \item Βρείτε όλους τους πελάτες με τις παραγγελίες τους
+    \item Βρείτε όλους τους πελάτες, ακόμα κι αν δεν έχουν παραγγελίες
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{(a) INNER JOIN -- μόνο πελάτες με παραγγελίες:}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname, o.oid, o.total
+FROM Customers c
+INNER JOIN Orders o ON c.cid = o.cid;
+\end{lstlisting}
+
+\textbf{(b) LEFT JOIN -- όλοι οι πελάτες:}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname, o.oid, o.total
+FROM Customers c
+LEFT JOIN Orders o ON c.cid = o.cid;
+\end{lstlisting}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.8]
+    % INNER JOIN
+    \begin{scope}[xshift=-4cm]
+        \draw[fill=box-blue, fill opacity=0.5] (0,0) circle (1.2);
+        \draw[fill=box-green, fill opacity=0.5] (1.5,0) circle (1.2);
+        \fill[secondary, opacity=0.7] (0.75,0) circle (0.5);
+        \node at (0.75,-2) {\small INNER JOIN};
+    \end{scope}
+    % LEFT JOIN
+    \begin{scope}[xshift=4cm]
+        \draw[fill=secondary, fill opacity=0.5] (0,0) circle (1.2);
+        \draw[fill=box-green, fill opacity=0.3] (1.5,0) circle (1.2);
+        \node at (0.75,-2) {\small LEFT JOIN};
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.3
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.3: GROUP BY με COUNT}
+
+\begin{formulabox}[Εκφώνηση]
+Χρησιμοποιώντας τους πίνακες \texttt{Orders} και \texttt{Customers}, βρείτε πόσες
+παραγγελίες έχει κάνει κάθε πελάτης.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cid, c.cname, COUNT(o.oid) AS order_count
+FROM Customers c
+LEFT JOIN Orders o ON c.cid = o.cid
+GROUP BY c.cid, c.cname;
+\end{lstlisting}
+
+\begin{warningbox}[LEFT vs INNER JOIN]
+Χρησιμοποιούμε LEFT JOIN για να συμπεριλάβουμε πελάτες με 0 παραγγελίες.
+Με INNER JOIN θα χάναμε αυτούς τους πελάτες!
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.4
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.4: GROUP BY με HAVING}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τις πόλεις που έχουν περισσότερους από 5 πελάτες και εμφανίστε τον αριθμό
+πελατών ανά πόλη.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT city, COUNT(*) AS customer_count
+FROM Customers
+GROUP BY city
+HAVING COUNT(*) > 5
+ORDER BY customer_count DESC;
+\end{lstlisting}
+
+\begin{infobox}[WHERE vs HAVING]
+\begin{itemize}
+    \item \textbf{WHERE}: Φιλτράρει \textit{γραμμές} \textbf{πριν} το grouping
+    \item \textbf{HAVING}: Φιλτράρει \textit{groups} \textbf{μετά} το grouping
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.5
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.5: Subquery με IN}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους πελάτες που έχουν κάνει παραγγελία με total > 1000.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Μέθοδος 1: Subquery με IN}
+
+\begin{lstlisting}[language=SQL]
+SELECT cname
+FROM Customers
+WHERE cid IN (
+    SELECT cid
+    FROM Orders
+    WHERE total > 1000
+);
+\end{lstlisting}
+
+\textbf{Μέθοδος 2: JOIN (ισοδύναμο)}
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT c.cname
+FROM Customers c
+JOIN Orders o ON c.cid = o.cid
+WHERE o.total > 1000;
+\end{lstlisting}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.6
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.6: Correlated Subquery}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους υπαλλήλους που έχουν μισθό μεγαλύτερο από τον μέσο όρο του τμήματός τους.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT e1.ename, e1.salary, e1.dept_id
+FROM Employee e1
+WHERE e1.salary > (
+    SELECT AVG(e2.salary)
+    FROM Employee e2
+    WHERE e2.dept_id = e1.dept_id  -- Correlated!
+);
+\end{lstlisting}
+
+\begin{infobox}[Correlated Subquery]
+Το subquery εξαρτάται από το εξωτερικό query (αναφέρεται στο \texttt{e1.dept\_id}).
+Εκτελείται μία φορά \textbf{για κάθε γραμμή} του εξωτερικού query.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.7
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.7: NOT EXISTS Pattern}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους πελάτες που \textbf{δεν} έχουν κάνει καμία παραγγελία.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Μέθοδος 1: NOT EXISTS}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname
+FROM Customers c
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Orders o
+    WHERE o.cid = c.cid
+);
+\end{lstlisting}
+
+\textbf{Μέθοδος 2: LEFT JOIN + IS NULL}
+
+\begin{lstlisting}[language=SQL]
+SELECT c.cname
+FROM Customers c
+LEFT JOIN Orders o ON c.cid = o.cid
+WHERE o.oid IS NULL;
+\end{lstlisting}
+
+\textbf{Μέθοδος 3: NOT IN}
+
+\begin{lstlisting}[language=SQL]
+SELECT cname
+FROM Customers
+WHERE cid NOT IN (SELECT cid FROM Orders);
+\end{lstlisting}
+
+\begin{warningbox}[NOT IN με NULL]
+Αν το subquery του NOT IN επιστρέψει NULL, το αποτέλεσμα είναι κενό!
+Προτιμήστε NOT EXISTS για ασφάλεια.
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.8
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.8: SQL Division (Double NOT EXISTS)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Enrollment(sid, cid)}
+    \item \texttt{Course(cid, cname)}
+\end{itemize}
+
+Βρείτε τους φοιτητές που έχουν εγγραφεί σε \textbf{όλα} τα μαθήματα.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Λογική:} «Δεν υπάρχει μάθημα στο οποίο ο φοιτητής να μην έχει εγγραφεί»
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT e1.sid
+FROM Enrollment e1
+WHERE NOT EXISTS (
+    -- Μαθήματα που ΔΕΝ έχει πάρει ο e1.sid
+    SELECT c.cid
+    FROM Course c
+    WHERE NOT EXISTS (
+        -- Έλεγχος αν ο e1.sid έχει πάρει το c.cid
+        SELECT 1
+        FROM Enrollment e2
+        WHERE e2.sid = e1.sid AND e2.cid = c.cid
+    )
+);
+\end{lstlisting}
+
+\begin{infobox}[Ερμηνεία Double NOT EXISTS]
+\begin{enumerate}
+    \item Εσωτερικό NOT EXISTS: Βρες μαθήματα που \textbf{δεν} έχει πάρει ο φοιτητής
+    \item Εξωτερικό NOT EXISTS: Κράτα φοιτητές που \textbf{δεν} έχουν τέτοια μαθήματα
+\end{enumerate}
+Δηλαδή: φοιτητές χωρίς «κενά» στο πρόγραμμα.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.9
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.9: Multiple JOINs με Aggregation}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Orders(oid, cid, order\_date)}
+    \item \texttt{OrderItems(oid, pid, quantity, unit\_price)}
+    \item \texttt{Products(pid, pname, category)}
+\end{itemize}
+
+Βρείτε το συνολικό έσοδο (revenue) ανά κατηγορία προϊόντος.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    p.category,
+    SUM(oi.quantity * oi.unit_price) AS total_revenue
+FROM Products p
+JOIN OrderItems oi ON p.pid = oi.pid
+GROUP BY p.category
+ORDER BY total_revenue DESC;
+\end{lstlisting}
+
+% -----------------------------------------------------------------------------
+% Exercise 3.10
+% -----------------------------------------------------------------------------
+\section{Άσκηση 3.10: Complex Query}
+
+\begin{formulabox}[Εκφώνηση]
+Βρείτε τους top 3 πελάτες (με βάση συνολικές αγορές) που έχουν αγοράσει προϊόντα
+από τουλάχιστον 2 διαφορετικές κατηγορίες.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    c.cid,
+    c.cname,
+    SUM(oi.quantity * oi.unit_price) AS total_spent,
+    COUNT(DISTINCT p.category) AS categories_bought
+FROM Customers c
+JOIN Orders o ON c.cid = o.cid
+JOIN OrderItems oi ON o.oid = oi.oid
+JOIN Products p ON oi.pid = p.pid
+GROUP BY c.cid, c.cname
+HAVING COUNT(DISTINCT p.category) >= 2
+ORDER BY total_spent DESC
+LIMIT 3;
+\end{lstlisting}
+
+\begin{infobox}[Σειρά Εκτέλεσης SQL]
+\begin{enumerate}
+    \item FROM / JOIN
+    \item WHERE
+    \item GROUP BY
+    \item HAVING
+    \item SELECT
+    \item ORDER BY
+    \item LIMIT
+\end{enumerate}
+\end{infobox}

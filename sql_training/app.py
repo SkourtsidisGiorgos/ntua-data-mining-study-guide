@@ -17,6 +17,7 @@ from questions.question_bank import (
 )
 from questions.grading import compare_results
 from utils.query_executor import execute_query, get_row_counts
+from utils.shame_messages import get_random_shame_message
 
 # Page configuration
 st.set_page_config(
@@ -59,6 +60,13 @@ def init_session_state():
         st.session_state.last_error = ""
     if 'show_hint' not in st.session_state:
         st.session_state.show_hint = False
+    # Extra hint (shame) feature
+    if 'extra_hint_clicks' not in st.session_state:
+        st.session_state.extra_hint_clicks = {}  # {question_id: click_count}
+    if 'show_extra_hint' not in st.session_state:
+        st.session_state.show_extra_hint = {}  # {question_id: bool}
+    if 'current_shame_message' not in st.session_state:
+        st.session_state.current_shame_message = None
 
 
 def render_sidebar():
@@ -147,6 +155,189 @@ def render_schema_reference():
                 cols[i % 3].metric(table, count)
 
 
+def analyze_query_concepts(query: str) -> dict:
+    """Analyze a SQL query to identify key concepts and structure."""
+    query_upper = query.upper()
+    query_clean = ' '.join(query.split())  # Normalize whitespace
+
+    concepts = {
+        'tables': [],
+        'joins': [],
+        'has_subquery': 'SELECT' in query_upper[query_upper.find('FROM'):] if 'FROM' in query_upper else False,
+        'has_correlated_subquery': False,
+        'has_group_by': 'GROUP BY' in query_upper,
+        'has_having': 'HAVING' in query_upper,
+        'has_order_by': 'ORDER BY' in query_upper,
+        'has_distinct': 'DISTINCT' in query_upper,
+        'has_not_exists': 'NOT EXISTS' in query_upper,
+        'has_double_not_exists': query_upper.count('NOT EXISTS') >= 2,
+        'aggregates': [],
+        'is_division': False,
+    }
+
+    # Detect aggregates
+    for agg in ['COUNT', 'SUM', 'AVG', 'MAX', 'MIN']:
+        if agg + '(' in query_upper:
+            concepts['aggregates'].append(agg)
+
+    # Detect tables (simple extraction from FROM and JOIN)
+    import re
+    # Find tables after FROM
+    from_match = re.search(r'FROM\s+(\w+)', query, re.IGNORECASE)
+    if from_match:
+        concepts['tables'].append(from_match.group(1))
+
+    # Find JOIN tables
+    join_matches = re.findall(r'JOIN\s+(\w+)', query, re.IGNORECASE)
+    concepts['tables'].extend(join_matches)
+    concepts['joins'] = join_matches
+
+    # Detect SQL Division pattern
+    if concepts['has_double_not_exists']:
+        concepts['is_division'] = True
+
+    # Detect correlated subquery
+    if concepts['has_subquery'] and re.search(r'WHERE\s+\w+\.\w+\s*=\s*\w+\.\w+', query, re.IGNORECASE):
+        concepts['has_correlated_subquery'] = True
+
+    return concepts
+
+
+def get_hint_level_1(question: dict) -> str:
+    """Level 1: Explain the problem and approach (conceptual)."""
+    query = question['expected_query']
+    concepts = analyze_query_concepts(query)
+
+    hints = ["**🧠 Ανάλυση Προβλήματος:**\n"]
+
+    # Explain the general approach
+    if concepts['is_division']:
+        hints.append("• Αυτό είναι πρόβλημα **SQL Division** - ψάχνεις οντότητες που σχετίζονται με ΟΛΕΣ τις οντότητες μιας άλλης ομάδας.")
+        hints.append("• Σκέψου το ως: «δεν υπάρχει X που να μην το έχει κάνει»")
+        hints.append("• Τεχνική: Διπλό NOT EXISTS")
+    elif concepts['has_not_exists']:
+        hints.append("• Χρειάζεσαι **NOT EXISTS** για να ελέγξεις ότι κάτι ΔΕΝ υπάρχει")
+        hints.append("• Σκέψου: ποια συνθήκη πρέπει να ΜΗΝ ισχύει;")
+    elif concepts['has_correlated_subquery']:
+        hints.append("• Χρειάζεσαι **correlated subquery** - υποερώτημα που αναφέρεται στο εξωτερικό query")
+        hints.append("• Το εσωτερικό query εξαρτάται από κάθε γραμμή του εξωτερικού")
+
+    if concepts['has_group_by'] and concepts['has_having']:
+        hints.append("• Χρειάζεσαι **GROUP BY + HAVING** για φιλτράρισμα ομάδων")
+        hints.append("• WHERE φιλτράρει γραμμές ΠΡΙΝ την ομαδοποίηση, HAVING ΜΕΤΑ")
+
+    if len(concepts['joins']) > 0:
+        hints.append(f"• Χρειάζεσαι **{len(concepts['joins'])} JOIN(s)** για να συνδέσεις τους πίνακες")
+
+    if concepts['aggregates']:
+        hints.append(f"• Θα χρησιμοποιήσεις: **{', '.join(concepts['aggregates'])}**")
+
+    if concepts['has_subquery'] and not concepts['has_not_exists']:
+        hints.append("• Χρειάζεσαι **υποερώτημα (subquery)** για ενδιάμεσο υπολογισμό")
+
+    return '\n'.join(hints)
+
+
+def get_hint_level_2(question: dict) -> str:
+    """Level 2: Show structure and tables involved."""
+    query = question['expected_query']
+    concepts = analyze_query_concepts(query)
+
+    hints = ["**🔧 Δομή Λύσης:**\n"]
+
+    # Show tables involved
+    if concepts['tables']:
+        hints.append(f"**Πίνακες:** {', '.join(set(concepts['tables']))}")
+
+    # Show structure based on query type
+    if concepts['is_division']:
+        hints.append("""
+**Πρότυπο SQL Division:**
+```sql
+SELECT ...
+FROM TableA a
+WHERE NOT EXISTS (
+    SELECT ...
+    FROM TableB b
+    WHERE [συνθήκη για B]
+    AND NOT EXISTS (
+        SELECT 1
+        FROM RelationTable r
+        WHERE r.a_id = a.id AND r.b_id = b.id
+    )
+)
+```""")
+    elif concepts['has_not_exists']:
+        hints.append("""
+**Πρότυπο NOT EXISTS:**
+```sql
+SELECT ...
+FROM Table1
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Table2
+    WHERE [συνθήκη σύνδεσης]
+    AND [επιπλέον συνθήκη]
+)
+```""")
+    elif concepts['has_group_by'] and concepts['has_having']:
+        aggs = concepts['aggregates'] if concepts['aggregates'] else ['COUNT/SUM/AVG']
+        hints.append(f"""
+**Πρότυπο GROUP BY + HAVING:**
+```sql
+SELECT column, {aggs[0]}(...)
+FROM Table1
+[JOIN Table2 ON ...]
+GROUP BY column
+HAVING {aggs[0]}(...) [συνθήκη]
+```""")
+    elif concepts['joins']:
+        hints.append(f"""
+**Πρότυπο με JOINs:**
+```sql
+SELECT ...
+FROM {concepts['tables'][0] if concepts['tables'] else 'Table1'}
+JOIN {concepts['joins'][0] if concepts['joins'] else 'Table2'} ON [συνθήκη]
+{'JOIN ... ON [συνθήκη]' if len(concepts['joins']) > 1 else ''}
+WHERE [φίλτρα]
+```""")
+
+    return '\n'.join(hints)
+
+
+def get_hint_level_3(question: dict) -> str:
+    """Level 3: Show significant portion of actual solution."""
+    query = question['expected_query']
+    lines = [line.strip() for line in query.strip().split('\n') if line.strip()]
+
+    hints = ["**💀 Μεγάλο μέρος της λύσης:**\n"]
+
+    # Show ~70% of the query with some parts masked
+    total_lines = len(lines)
+    show_count = max(total_lines - 1, int(total_lines * 0.7))
+
+    shown_lines = []
+    for i, line in enumerate(lines[:show_count]):
+        # Mask some specific values but keep structure
+        import re
+        # Keep the line mostly intact but maybe mask literal values
+        masked = re.sub(r"'[^']*'", "'???'", line)  # Mask string literals
+        masked = re.sub(r'\b\d+\b', 'N', masked)  # Mask numbers
+        shown_lines.append(masked)
+
+    if show_count < total_lines:
+        shown_lines.append("    -- ... (συνέχεια)")
+
+    hints.append("```sql")
+    hints.append('\n'.join(shown_lines))
+    hints.append("```")
+
+    # Add a final tip
+    hints.append("\n**💡 Tip:** Αντικατάστησε τα `'???'` με τις σωστές τιμές και το `N` με τους σωστούς αριθμούς.")
+
+    return '\n'.join(hints)
+
+
 def render_question(question: dict, db_path: str):
     """Render a single question with query workspace."""
     # Question header
@@ -167,6 +358,44 @@ def render_question(question: dict, db_path: str):
 
     if st.session_state.show_hint:
         st.info(f"💡 **Υπόδειξη:** {question['hint']}")
+
+    # Extra Hint Button (με ντροπή)
+    q_id = question['id']
+    clicks = st.session_state.extra_hint_clicks.get(q_id, 0)
+
+    with col2:
+        if clicks < 3:
+            button_labels = [
+                "🆘 Extra Hint 1/3 (για τους αδύναμους)",
+                "🆘 Extra Hint 2/3 (ακόμα;)",
+                "🆘 Extra Hint 3/3 (τελευταία ευκαιρία)"
+            ]
+            if st.button(button_labels[clicks], key=f"extra_hint_{q_id}"):
+                clicks += 1
+                st.session_state.extra_hint_clicks[q_id] = clicks
+                st.session_state.current_shame_message = get_random_shame_message()
+                st.rerun()
+
+    # Show shame message after each click
+    if clicks > 0 and st.session_state.current_shame_message:
+        st.warning(f"😈 {st.session_state.current_shame_message}")
+        if clicks < 3:
+            remaining = 3 - clicks
+            st.caption(f"Απομένουν {remaining} επίπεδα hints...")
+
+    # Show progressive hints based on click count
+    if clicks >= 1:
+        with st.expander("📖 Hint Level 1: Ανάλυση Προβλήματος", expanded=(clicks == 1)):
+            st.markdown(get_hint_level_1(question))
+
+    if clicks >= 2:
+        with st.expander("🔧 Hint Level 2: Δομή Λύσης", expanded=(clicks == 2)):
+            st.markdown(get_hint_level_2(question))
+
+    if clicks >= 3:
+        with st.expander("💀 Hint Level 3: Μεγάλο Μέρος Λύσης", expanded=True):
+            st.error("🏳️ Παραδόθηκες πλήρως...")
+            st.markdown(get_hint_level_3(question))
 
     st.markdown("---")
 

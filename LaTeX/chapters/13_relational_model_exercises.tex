@@ -1,0 +1,349 @@
+% =============================================================================
+% Chapter 13: Σχεσιακή Άλγεβρα - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{Σχεσιακή Άλγεβρα - Λυμένες Ασκήσεις}
+\label{ch:relational-algebra-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για τη σχεσιακή άλγεβρα.
+
+\begin{infobox}[Σύνοψη Τελεστών]
+\begin{center}
+\begin{tabular}{cll}
+\toprule
+\textbf{Σύμβολο} & \textbf{Όνομα} & \textbf{Περιγραφή} \\
+\midrule
+$\sigma$ & Selection & Επιλογή γραμμών \\
+$\pi$ & Projection & Επιλογή στηλών \\
+$\cup$ & Union & Ένωση συνόλων \\
+$\cap$ & Intersection & Τομή συνόλων \\
+$-$ & Difference & Διαφορά συνόλων \\
+$\times$ & Cartesian Product & Καρτεσιανό γινόμενο \\
+$\bowtie$ & Natural Join & Φυσική σύζευξη \\
+$\bowtie_\theta$ & Theta Join & Σύζευξη με συνθήκη \\
+$\div$ & Division & Διαίρεση \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.1
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.1: Selection και Projection}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται ο πίνακας \texttt{Employee(emp\_id, name, department, salary)}.
+
+Γράψτε σε σχεσιακή άλγεβρα: «Βρες τα ονόματα των υπαλλήλων του τμήματος IT με
+μισθό πάνω από 50000».
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Selection (επιλογή γραμμών)}
+
+\textit{Γιατί:} Πρώτα φιλτράρουμε τις γραμμές που πληρούν τις συνθήκες.
+
+$$\sigma_{department='IT' \land salary > 50000}(Employee)$$
+
+\textbf{Βήμα 2: Projection (επιλογή στηλών)}
+
+\textit{Γιατί:} Μετά κρατάμε μόνο τη στήλη που μας ενδιαφέρει.
+
+$$\pi_{name}(\sigma_{department='IT' \land salary > 50000}(Employee))$$
+
+\begin{warningbox}[Σειρά Εφαρμογής]
+Η σειρά Selection $\to$ Projection είναι σημαντική για βελτιστοποίηση! Αν κάνουμε
+πρώτα projection, χάνουμε τις στήλες που χρειαζόμαστε για το φιλτράρισμα.
+\end{warningbox}
+
+\textbf{Τελική Απάντηση:} $\pi_{name}(\sigma_{department='IT' \land salary > 50000}(Employee))$
+
+% -----------------------------------------------------------------------------
+% Exercise 2.2
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.2: Natural Join}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Student(sid, sname, dept)}
+    \item \texttt{Enrollment(sid, cid, grade)}
+    \item \texttt{Course(cid, cname, credits)}
+\end{itemize}
+
+Βρείτε τα ονόματα φοιτητών και τα μαθήματα στα οποία είναι εγγεγραμμένοι.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Αναγνώριση κοινών γνωρισμάτων}
+
+\begin{itemize}
+    \item Student $\bowtie$ Enrollment: κοινό \texttt{sid}
+    \item Enrollment $\bowtie$ Course: κοινό \texttt{cid}
+\end{itemize}
+
+\textbf{Βήμα 2: Natural Join αλυσίδα}
+
+$$Student \bowtie Enrollment \bowtie Course$$
+
+\textbf{Βήμα 3: Projection}
+
+$$\pi_{sname, cname}(Student \bowtie Enrollment \bowtie Course)$$
+
+\begin{infobox}[Πώς λειτουργεί το Natural Join]
+Το $\bowtie$ συνδέει πλειάδες που έχουν \textbf{ίδιες τιμές} στα κοινά γνωρίσματα
+(αυτά με το ίδιο όνομα). Οι κοινές στήλες εμφανίζονται μία φορά στο αποτέλεσμα.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.3
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.3: Theta Join}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Employee(eid, ename, salary, manager\_id)}
+    \item \texttt{Manager(mid, mname, bonus)}
+\end{itemize}
+
+Βρείτε ζεύγη (υπάλληλος, διευθυντής) όπου ο μισθός του υπαλλήλου είναι
+μεγαλύτερος από το bonus του διευθυντή του.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Σύνδεση υπαλλήλου με διευθυντή}
+
+Πρώτα συνδέουμε με βάση το \texttt{manager\_id = mid}:
+$$Employee \bowtie_{manager\_id = mid} Manager$$
+
+\textbf{Βήμα 2: Φιλτράρισμα}
+
+Εφαρμόζουμε τη συνθήκη \texttt{salary > bonus}:
+$$\sigma_{salary > bonus}(Employee \bowtie_{manager\_id = mid} Manager)$$
+
+\textbf{Βήμα 3: Projection}
+
+$$\pi_{ename, mname}(\sigma_{salary > bonus}(Employee \bowtie_{manager\_id = mid} Manager))$$
+
+\textbf{Εναλλακτικά (ενιαίο Theta Join):}
+$$\pi_{ename, mname}(Employee \bowtie_{manager\_id = mid \land salary > bonus} Manager)$$
+
+% -----------------------------------------------------------------------------
+% Exercise 2.4
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.4: Set Difference}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{AllStudents(sid, sname)}
+    \item \texttt{Enrollment(sid, cid)}
+\end{itemize}
+
+Βρείτε τους φοιτητές που \textbf{δεν} είναι εγγεγραμμένοι σε κανένα μάθημα.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Εύρεση εγγεγραμμένων φοιτητών}
+
+$$EnrolledStudents = \pi_{sid}(Enrollment)$$
+
+\textbf{Βήμα 2: Set Difference}
+
+\textit{Γιατί:} Το $A - B$ δίνει τα στοιχεία που είναι στο A αλλά όχι στο B.
+
+$$NotEnrolled = \pi_{sid}(AllStudents) - \pi_{sid}(Enrollment)$$
+
+\textbf{Βήμα 3: Επαναφορά ονομάτων (αν χρειάζεται)}
+
+$$\pi_{sname}(AllStudents \bowtie NotEnrolled)$$
+
+\begin{warningbox}[Απαίτηση Συμβατότητας]
+Για τελεστές συνόλων ($\cup$, $\cap$, $-$), οι σχέσεις πρέπει να έχουν:
+\begin{enumerate}
+    \item Ίδιο αριθμό γνωρισμάτων
+    \item Συμβατά domains στις αντίστοιχες θέσεις
+\end{enumerate}
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.5
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.5: Intersection με Projection}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{CS\_Students(sid, sname)} -- Φοιτητές πληροφορικής
+    \item \texttt{Math\_Students(sid, sname)} -- Φοιτητές μαθηματικών
+\end{itemize}
+
+Βρείτε τους φοιτητές που σπουδάζουν \textbf{και} πληροφορική \textbf{και} μαθηματικά.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+$$CS\_Students \cap Math\_Students$$
+
+ή ισοδύναμα (αν θέλουμε μόνο ονόματα):
+
+$$\pi_{sname}(CS\_Students \cap Math\_Students)$$
+
+\begin{infobox}[Ισοδυναμία]
+Η τομή μπορεί να εκφραστεί με διαφορά:
+$$A \cap B = A - (A - B)$$
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.6
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.6: Division (Απλή)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Takes(sid, cid)} -- φοιτητής παίρνει μάθημα
+    \item \texttt{Required(cid)} -- υποχρεωτικά μαθήματα: $\{C1, C2\}$
+\end{itemize}
+
+Βρείτε τους φοιτητές που έχουν πάρει \textbf{όλα} τα υποχρεωτικά μαθήματα.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Η Division ($\div$) απαντά σε ερωτήματα «για όλα»:}
+
+$$Takes \div Required$$
+
+\textbf{Βήμα-βήμα αλγόριθμος:}
+
+\begin{enumerate}
+    \item Βρες όλους τους φοιτητές: $\pi_{sid}(Takes)$
+    \item Βρες τι «θα έπρεπε» να έχει πάρει κάθε φοιτητής: $\pi_{sid}(Takes) \times Required$
+    \item Βρες τι «δεν έχει» πάρει: $(\pi_{sid}(Takes) \times Required) - Takes$
+    \item Αφαίρεσε όσους «δεν έχουν» κάτι: $\pi_{sid}(Takes) - \pi_{sid}((\pi_{sid}(Takes) \times Required) - Takes)$
+\end{enumerate}
+
+\textbf{Παράδειγμα:}
+
+\begin{center}
+\begin{tabular}{cc}
+\textbf{Takes} & \\
+\toprule
+sid & cid \\
+\midrule
+S1 & C1 \\
+S1 & C2 \\
+S1 & C3 \\
+S2 & C1 \\
+S3 & C1 \\
+S3 & C2 \\
+\bottomrule
+\end{tabular}
+\quad\quad
+\begin{tabular}{c}
+\textbf{Required} \\
+\toprule
+cid \\
+\midrule
+C1 \\
+C2 \\
+\bottomrule
+\end{tabular}
+\quad\quad
+\begin{tabular}{c}
+\textbf{Result} \\
+\toprule
+sid \\
+\midrule
+S1 \\
+S3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.7
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.7: Division (Σύνθετη)}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Supplies(supplier, part)}
+    \item \texttt{Project(pname, part)} -- έργα και τα parts που χρειάζονται
+\end{itemize}
+
+Βρείτε τους προμηθευτές που μπορούν να προμηθεύσουν \textbf{όλα} τα parts που
+χρειάζεται το έργο «Rocket».
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Βρες τα parts του Rocket}
+
+$$RocketParts = \pi_{part}(\sigma_{pname='Rocket'}(Project))$$
+
+\textbf{Βήμα 2: Division}
+
+$$Supplies \div RocketParts$$
+
+\textbf{Σε SQL (για κατανόηση):}
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT s1.supplier
+FROM Supplies s1
+WHERE NOT EXISTS (
+    SELECT part FROM Project WHERE pname = 'Rocket'
+    EXCEPT
+    SELECT part FROM Supplies s2
+    WHERE s2.supplier = s1.supplier
+);
+\end{lstlisting}
+
+% -----------------------------------------------------------------------------
+% Exercise 2.8
+% -----------------------------------------------------------------------------
+\section{Άσκηση 2.8: Σύνθετη Έκφραση}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται:
+\begin{itemize}
+    \item \texttt{Employee(eid, ename, dept\_id, salary)}
+    \item \texttt{Department(dept\_id, dname, budget)}
+    \item \texttt{Project(pid, pname, dept\_id)}
+    \item \texttt{WorksOn(eid, pid, hours)}
+\end{itemize}
+
+Βρείτε τα ονόματα υπαλλήλων του τμήματος «Research» που εργάζονται πάνω από 20 ώρες
+σε κάποιο project.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Βήμα 1: Εύρεση dept\_id του Research}
+
+$$ResearchDept = \sigma_{dname='Research'}(Department)$$
+
+\textbf{Βήμα 2: Υπάλληλοι του Research}
+
+$$ResearchEmps = Employee \bowtie ResearchDept$$
+
+\textbf{Βήμα 3: Υπάλληλοι με >20 ώρες}
+
+$$HighHours = \sigma_{hours > 20}(WorksOn)$$
+
+\textbf{Βήμα 4: Συνδυασμός}
+
+$$Result = \pi_{ename}(ResearchEmps \bowtie HighHours)$$
+
+\textbf{Ενιαία έκφραση:}
+
+$$\pi_{ename}(\sigma_{dname='Research'}(Department) \bowtie Employee \bowtie \sigma_{hours>20}(WorksOn))$$

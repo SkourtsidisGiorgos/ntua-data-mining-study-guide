@@ -1,0 +1,936 @@
+% =============================================================================
+% Chapter 20: Retrieval-Augmented Generation (RAG) - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{RAG και Retrieval-based LLMs - Λυμένες Ασκήσεις}
+\label{ch:rag-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για τα Retrieval-based Language Models
+και την αρχιτεκτονική RAG (Retrieval-Augmented Generation).
+
+% =============================================================================
+% SECTION 1: Βασικές Έννοιες RAG
+% =============================================================================
+\section{Βασικές Έννοιες RAG}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.1
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.1: Αρχιτεκτονική RAG}
+
+\begin{formulabox}[Εκφώνηση]
+Περιγράψτε τα βασικά components ενός Retrieval-based Language Model και εξηγήστε
+τη ροή δεδομένων κατά το inference. Ποια είναι η διαφορά με ένα τυπικό LLM;
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{Βασικά Components:}
+
+\begin{enumerate}
+    \item \textbf{Datastore ($\mathcal{D}$)}: Εξωτερική βάση γνώσης με raw text corpus
+    (π.χ. Wikipedia, εταιρικά έγγραφα)
+
+    \item \textbf{Index}: Δομή για γρήγορη αναζήτηση (π.χ. vector index με embeddings)
+
+    \item \textbf{Retriever}: Μηχανισμός που βρίσκει τα πιο σχετικά documents/chunks
+    για ένα query $q$
+
+    \item \textbf{Language Model (LM)}: Το νευρωνικό δίκτυο που παράγει την απάντηση
+\end{enumerate}
+
+\textbf{Ροή Δεδομένων:}
+
+\begin{center}
+\begin{tikzpicture}[node distance=2cm,
+    box/.style={rectangle, draw=primary, fill=box-blue, minimum width=2cm, minimum height=0.8cm, font=\small},
+    arrow/.style={->, thick, >=stealth}]
+
+    \node[box] (input) {Input $x$};
+    \node[box, right=1.5cm of input] (query) {Query $q$};
+    \node[box, below=1cm of query] (index) {Index};
+    \node[box, left=1.5cm of index] (datastore) {Datastore};
+    \node[box, right=1.5cm of index] (retrieval) {Retrieved $z$};
+    \node[box, right=1.5cm of retrieval] (lm) {LM};
+    \node[box, right=1.5cm of lm] (output) {Output $y$};
+
+    \draw[arrow] (input) -- (query);
+    \draw[arrow] (query) -- (index);
+    \draw[arrow] (datastore) -- (index);
+    \draw[arrow] (index) -- (retrieval);
+    \draw[arrow] (retrieval) -- (lm);
+    \draw[arrow] (input) to[bend left=30] (lm);
+    \draw[arrow] (lm) -- (output);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Διαφορά με Τυπικό LLM:}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Χαρακτηριστικό} & \textbf{Τυπικό LLM} & \textbf{Retrieval-based LLM} \\
+\midrule
+Γνώση & Αποθηκευμένη στις παραμέτρους & Εξωτερικό datastore \\
+Ενημέρωση & Απαιτεί retraining & Απλή αλλαγή datastore \\
+Ιχνηλασιμότητα & Δύσκολη & Εύκολη (citations) \\
+Long-tail knowledge & Περιορισμένη & Βελτιωμένη \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Πλεονεκτήματα RAG]
+\begin{itemize}
+    \item Μειωμένες ψευδαισθήσεις (hallucinations)
+    \item Εύκολη ενημέρωση γνώσης χωρίς retraining
+    \item Καλύτερη απόδοση σε long-tail entities
+    \item Verifiable outputs με citations
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.2
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.2: Ταξινόμηση Retrieval-based LMs}
+
+\begin{formulabox}[Εκφώνηση]
+Ταξινομήστε τα παρακάτω μοντέλα βάσει:
+\begin{itemize}
+    \item \textbf{What} to retrieve: Chunks vs Tokens
+    \item \textbf{When} to retrieve: Once, Every $n$ tokens, Every token
+    \item \textbf{How} to use: Input layer, Intermediate layers, Output layer
+\end{itemize}
+
+Μοντέλα: (a) REALM, (b) RETRO, (c) $k$NN-LM, (d) In-Context RAG
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Μοντέλο} & \textbf{What} & \textbf{When} & \textbf{How} \\
+\midrule
+(a) REALM & Chunks & Once & Input layer \\
+(b) RETRO & Chunks & Every $n$ tokens & Intermediate layers \\
+(c) $k$NN-LM & Tokens & Every token & Output layer \\
+(d) In-Context RAG & Chunks & Every $n$ tokens & Input layer \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Εξήγηση:}
+
+\begin{itemize}
+    \item \textbf{REALM}: Retrieve-then-read. Ανακτά passages μία φορά και τα
+    προσθέτει στο input του encoder.
+
+    \item \textbf{RETRO}: Χωρίζει το input σε chunks, ανακτά neighbors για κάθε
+    chunk, και τα ενσωματώνει μέσω Chunked Cross-Attention σε intermediate layers.
+
+    \item \textbf{$k$NN-LM}: Για κάθε token prediction, βρίσκει τα $k$ πιο κοντινά
+    contexts στο datastore και παρεμβάλει τις κατανομές στο output layer.
+
+    \item \textbf{In-Context RAG}: Ανακτά documents περιοδικά και τα προσθέτει
+    στο context window του LLM.
+\end{itemize}
+
+\begin{warningbox}[Trade-offs]
+\begin{itemize}
+    \item \textbf{Chunks}: Πιο αποδοτικό, αλλά λιγότερο fine-grained
+    \item \textbf{Tokens}: Πιο ακριβές για rare patterns, αλλά υψηλό storage cost
+    \item \textbf{Frequent retrieval}: Καλύτερα αποτελέσματα, υψηλότερο inference cost
+\end{itemize}
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.3
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.3: Perplexity Υπολογισμός}
+
+\begin{formulabox}[Εκφώνηση]
+Ένα language model δίνει τις παρακάτω πιθανότητες για το επόμενο token:
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+\textbf{Token} & \textbf{Probability} \\
+\midrule
+Toronto & 0.52 \\
+Ottawa & 0.31 \\
+Vancouver & 0.13 \\
+Montreal & 0.03 \\
+Calgary & 0.01 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Αν η σωστή απάντηση είναι ``Toronto'', υπολογίστε:
+\begin{enumerate}
+    \item Το negative log-likelihood
+    \item Την perplexity για αυτό το token
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Negative Log-Likelihood:}
+
+$$\text{NLL} = -\log P(\text{Toronto}) = -\log(0.52)$$
+
+Χρησιμοποιώντας natural logarithm:
+$$\text{NLL} = -\ln(0.52) \approx 0.654$$
+
+\textbf{(2) Perplexity:}
+
+Η perplexity ορίζεται ως:
+$$\text{PPL} = e^{\text{NLL}} = e^{-\log P(y)}$$
+
+Για ένα μόνο token:
+$$\text{PPL} = e^{0.654} \approx 1.92$$
+
+\textbf{Ή ισοδύναμα:}
+$$\text{PPL} = \frac{1}{P(\text{Toronto})} = \frac{1}{0.52} \approx 1.92$$
+
+\begin{infobox}[Ερμηνεία Perplexity]
+\begin{itemize}
+    \item PPL = 1: Τέλεια πρόβλεψη (certainty)
+    \item PPL = $|V|$: Uniform distribution (maximum uncertainty)
+    \item \textbf{Χαμηλότερη perplexity = καλύτερο μοντέλο}
+\end{itemize}
+\end{infobox}
+
+\textbf{Για ακολουθία tokens:}
+$$\text{PPL}(x_1, ..., x_n) = \exp\left(-\frac{1}{n}\sum_{i=1}^{n}\log P(x_i | x_{<i})\right)$$
+
+% -----------------------------------------------------------------------------
+% Exercise 9.4
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.4: Dense vs Sparse Retrieval}
+
+\begin{formulabox}[Εκφώνηση]
+Συγκρίνετε τις δύο βασικές προσεγγίσεις retrieval:
+\begin{enumerate}
+    \item Sparse Retrieval (π.χ. BM25)
+    \item Dense Retrieval (π.χ. bi-encoder με embeddings)
+\end{enumerate}
+
+Για κάθε προσέγγιση, αναφέρετε πλεονεκτήματα, μειονεκτήματα και κατάλληλα use cases.
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{p{3cm}p{5cm}p{5cm}}
+\toprule
+& \textbf{Sparse (BM25)} & \textbf{Dense (Embeddings)} \\
+\midrule
+\textbf{Αναπαράσταση} &
+Bag-of-words, TF-IDF βάρη &
+Dense vectors από neural encoder \\
+\midrule
+\textbf{Matching} &
+Lexical (exact keyword match) &
+Semantic (conceptual similarity) \\
+\midrule
+\textbf{Πλεονεκτήματα} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Γρήγορο (inverted index)
+    \item Interpretable
+    \item Δεν χρειάζεται training
+    \item Zero-shot ready
+\end{itemize} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Semantic understanding
+    \item Handles synonyms
+    \item Cross-lingual capable
+    \item Learns domain patterns
+\end{itemize} \\
+\midrule
+\textbf{Μειονεκτήματα} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Vocabulary mismatch
+    \item No semantic understanding
+    \item Fails on paraphrases
+\end{itemize} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Requires training data
+    \item Computationally expensive
+    \item Less interpretable
+\end{itemize} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Κατάλληλα Use Cases:}
+
+\begin{itemize}
+    \item \textbf{Sparse}: Exact keyword search, technical documentation, code search,
+    out-of-domain queries
+
+    \item \textbf{Dense}: Question answering, semantic search, cross-lingual retrieval,
+    conversational AI
+
+    \item \textbf{Hybrid}: Συνδυασμός και των δύο για βέλτιστη απόδοση
+\end{itemize}
+
+\begin{infobox}[Similarity Metrics]
+\begin{itemize}
+    \item \textbf{Sparse}: BM25, TF-IDF cosine
+    \item \textbf{Dense}: Cosine similarity, dot product, Euclidean distance
+\end{itemize}
+$$\text{sim}(q, d) = \frac{q \cdot d}{\|q\| \|d\|} \quad \text{(cosine)}$$
+\end{infobox}
+
+
+% =============================================================================
+% SECTION 2: REALM και RAG Pipeline
+% =============================================================================
+\section{REALM και RAG Pipeline}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.5
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.5: REALM Retrieve-Read}
+
+\begin{formulabox}[Εκφώνηση]
+Στο REALM, δίνεται input: ``World Cup 2022 was the last with 32 teams before
+the increase to [MASK] in 2026''.
+
+Ο retriever επιστρέφει $k=3$ passages με τα εξής scores:
+
+\begin{center}
+\begin{tabular}{clc}
+\toprule
+\textbf{ID} & \textbf{Passage} & \textbf{Score} $z_q \cdot z_x$ \\
+\midrule
+$z_1$ & ``FIFA World Cup 2026 will expand to 48 teams...'' & 8.5 \\
+$z_2$ & ``The 2022 tournament had 32 national teams...'' & 7.2 \\
+$z_3$ & ``Team USA celebrated after winning...'' & 5.1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{enumerate}
+    \item Υπολογίστε την πιθανότητα $P(z_i | x)$ για κάθε passage
+    \item Αν το reader δίνει $P(y=48 | x, z_i)$ = [0.85, 0.20, 0.05], υπολογίστε $P(y=48)$
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Retriever Probabilities:}
+
+Η πιθανότητα κάθε passage υπολογίζεται με softmax:
+
+$$P(z_i | x) = \frac{\exp(z_q \cdot z_{z_i})}{\sum_{j} \exp(z_q \cdot z_{z_j})}$$
+
+\textbf{Βήμα 1: Υπολογισμός $\exp$ scores}
+\begin{align*}
+\exp(8.5) &\approx 4914.77 \\
+\exp(7.2) &\approx 1339.43 \\
+\exp(5.1) &\approx 164.02
+\end{align*}
+
+\textbf{Βήμα 2: Normalization}
+$$\text{Sum} = 4914.77 + 1339.43 + 164.02 = 6418.22$$
+
+\begin{align*}
+P(z_1 | x) &= \frac{4914.77}{6418.22} \approx 0.766 \\
+P(z_2 | x) &= \frac{1339.43}{6418.22} \approx 0.209 \\
+P(z_3 | x) &= \frac{164.02}{6418.22} \approx 0.026
+\end{align*}
+
+\textbf{(2) Final Output Probability:}
+
+Το REALM χρησιμοποιεί marginalization:
+$$P(y | x) = \sum_{z \in \mathcal{D}_k} P(z | x) \cdot P(y | x, z)$$
+
+\begin{align*}
+P(y=48) &= P(z_1|x) \cdot P(48|x,z_1) + P(z_2|x) \cdot P(48|x,z_2) + P(z_3|x) \cdot P(48|x,z_3) \\
+&= 0.766 \times 0.85 + 0.209 \times 0.20 + 0.026 \times 0.05 \\
+&= 0.651 + 0.042 + 0.001 \\
+&= \mathbf{0.694}
+\end{align*}
+
+\textbf{Τελική Απάντηση:} $P(y=48) = 0.694$ ή 69.4\%
+
+\begin{warningbox}[Σημαντικό]
+Το passage $z_1$ με το υψηλότερο retrieval score συνεισφέρει το 94\% της τελικής
+πιθανότητας ($0.651/0.694$), δείχνοντας τη σημασία του quality retrieval.
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.6
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.6: Retrieval Frequency}
+
+\begin{formulabox}[Εκφώνηση]
+Μελέτες δείχνουν ότι η συχνότητα retrieval επηρεάζει την perplexity:
+
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+\textbf{Retrieval Stride} & \textbf{Perplexity (GPT-2 1.5B)} \\
+\midrule
+64 tokens & 18.6 \\
+32 tokens & 17.9 \\
+16 tokens & 17.3 \\
+8 tokens & 16.9 \\
+4 tokens & 16.7 \\
+1 token & 16.4 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{enumerate}
+    \item Ποια είναι η σχέση μεταξύ retrieval frequency και perplexity;
+    \item Ποιο είναι το trade-off αυτής της προσέγγισης;
+    \item Γιατί είναι σημαντικό το query να περιέχει τα πιο πρόσφατα tokens;
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Σχέση Frequency-Perplexity:}
+
+\begin{itemize}
+    \item Πιο συχνό retrieval $\Rightarrow$ χαμηλότερη perplexity (καλύτερο μοντέλο)
+    \item Η βελτίωση είναι \textbf{φθίνουσα}:
+    \begin{itemize}
+        \item 64$\to$32: $-0.7$ PPL (3.8\% improvement)
+        \item 4$\to$1: $-0.3$ PPL (1.8\% improvement)
+    \end{itemize}
+    \item \textbf{Diminishing returns} στις πολύ υψηλές συχνότητες
+\end{itemize}
+
+\textbf{(2) Trade-offs:}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{High Frequency} & \textbf{Low Frequency} \\
+\midrule
+Perplexity & Καλύτερη & Χειρότερη \\
+Latency & Υψηλή & Χαμηλή \\
+Computational Cost & Υψηλό & Χαμηλό \\
+Coverage & Καλύτερη & Χειρότερη \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Πρακτική επιλογή:} Stride 4-16 tokens προσφέρει καλό balance.
+
+\textbf{(3) Σημασία Πρόσφατων Tokens:}
+
+\begin{itemize}
+    \item Τα πρόσφατα tokens είναι πιο \textbf{relevant} για το τι θα ακολουθήσει
+    \item Αν $q = x$ (ολόκληρο το context), το retrieval μπορεί να επιστρέψει
+    documents σχετικά με την αρχή, όχι με τη συνέχεια
+\end{itemize}
+
+\textbf{Παράδειγμα:}
+\begin{itemize}
+    \item $x$ = ``Team USA celebrates... World Cup 2022 was the last with 32 teams, before the increase to''
+    \item $q = x$: Retrieves documents about Team USA
+    \item $q$ = ``World Cup 2022 was the last with 32 teams, before the increase to'': Retrieves documents about the 48-team expansion
+\end{itemize}
+
+\begin{infobox}[Best Practice]
+Query length 16-32 tokens από τα πιο πρόσφατα tokens δίνει τα καλύτερα αποτελέσματα
+σύμφωνα με τη βιβλιογραφία (Ram et al., 2023).
+\end{infobox}
+
+
+% =============================================================================
+% SECTION 3: kNN-LM
+% =============================================================================
+\section{$k$NN-LM}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.7
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.7: $k$NN-LM Probability Calculation}
+
+\begin{formulabox}[Εκφώνηση]
+Για το context ``Obama's birthplace is'', ένα $k$NN-LM βρίσκει τα εξής $k=5$
+nearest neighbors στο datastore:
+
+\begin{center}
+\begin{tabular}{clcc}
+\toprule
+\textbf{ID} & \textbf{Context} & \textbf{Target} & \textbf{Distance} \\
+\midrule
+1 & ``Obama was born in'' & Hawaii & 4 \\
+2 & ``Barack is married to'' & Michelle & 100 \\
+3 & ``Obama is a native of'' & Hawaii & 3 \\
+4 & ``Obama was senator for'' & Illinois & 5 \\
+5 & ``The president was born in'' & Hawaii & 6 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{enumerate}
+    \item Υπολογίστε το $P_{kNN}(y | x)$ για κάθε πιθανό target
+    \item Αν το LM δίνει $P_{LM}(\text{Hawaii}) = 0.2$ και $\lambda = 0.5$, ποιο είναι το τελικό $P(y)$;
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) $k$NN Distribution:}
+
+\textbf{Βήμα 1: Similarity scores}
+
+$$\text{sim}(k_i, q) = \exp(-d_i)$$
+
+\begin{align*}
+\text{sim}_1 &= e^{-4} \approx 0.0183 \\
+\text{sim}_2 &= e^{-100} \approx 0 \text{ (negligible)} \\
+\text{sim}_3 &= e^{-3} \approx 0.0498 \\
+\text{sim}_4 &= e^{-5} \approx 0.0067 \\
+\text{sim}_5 &= e^{-6} \approx 0.0025
+\end{align*}
+
+\textbf{Βήμα 2: Normalization}
+
+$$Z = 0.0183 + 0 + 0.0498 + 0.0067 + 0.0025 = 0.0773$$
+
+\textbf{Βήμα 3: Aggregation ανά target}
+
+$$P_{kNN}(y | x) \propto \sum_{(k,v) \in \mathcal{D}} \mathbb{1}_{v=y} \cdot \text{sim}(k, x)$$
+
+\begin{align*}
+P_{kNN}(\text{Hawaii}) &= \frac{0.0183 + 0.0498 + 0.0025}{0.0773} = \frac{0.0706}{0.0773} \approx \mathbf{0.913} \\
+P_{kNN}(\text{Illinois}) &= \frac{0.0067}{0.0773} \approx \mathbf{0.087} \\
+P_{kNN}(\text{Michelle}) &\approx 0
+\end{align*}
+
+\textbf{(2) Interpolation με LM:}
+
+$$P_{kNN-LM}(y | x) = \lambda \cdot P_{kNN}(y | x) + (1-\lambda) \cdot P_{LM}(y | x)$$
+
+Για $\lambda = 0.5$ και $P_{LM}(\text{Hawaii}) = 0.2$:
+
+\begin{align*}
+P(\text{Hawaii}) &= 0.5 \times 0.913 + 0.5 \times 0.2 \\
+&= 0.457 + 0.1 \\
+&= \mathbf{0.557}
+\end{align*}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Target} & $P_{kNN}$ & $P_{LM}$ & $P_{kNN-LM}$ ($\lambda=0.5$) \\
+\midrule
+Hawaii & 0.913 & 0.20 & \textbf{0.557} \\
+Illinois & 0.087 & 0.15 & 0.119 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Επιλογή $\lambda$]
+\begin{itemize}
+    \item \textbf{In-domain}: $\lambda \approx 0.25$ (εμπιστοσύνη στο LM)
+    \item \textbf{Out-of-domain / Domain adaptation}: $\lambda \approx 0.5-0.7$ (εμπιστοσύνη στο $k$NN)
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.8
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.8: $k$NN-LM vs Standard LM}
+
+\begin{formulabox}[Εκφώνηση]
+Τα παρακάτω αποτελέσματα δείχνουν perplexity σε Wikitext-103:
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+\textbf{Model} & \textbf{Perplexity} \\
+\midrule
+Transformer LM (trained on 100M tokens) & 21.0 \\
+Transformer LM (trained on 3B tokens) & 16.0 \\
+$k$NN-LM (100M LM + 3B datastore) & 14.5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{enumerate}
+    \item Τι συμπέρασμα βγαίνει για την αποδοτικότητα του $k$NN-LM;
+    \item Ποια είναι τα πλεονεκτήματα και μειονεκτήματα έναντι του scaling του LM;
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Συμπέρασμα:}
+
+\begin{itemize}
+    \item Ένα \textbf{μικρότερο LM με μεγάλο datastore} μπορεί να ξεπεράσει ένα
+    \textbf{μεγαλύτερο LM χωρίς retrieval}
+
+    \item Το $k$NN-LM με 100M training tokens πετυχαίνει καλύτερη perplexity (14.5)
+    από το 30x μεγαλύτερο LM (16.0)
+
+    \item \textbf{Parameter efficiency}: Η γνώση αποθηκεύεται στο datastore
+    αντί στις παραμέτρους
+\end{itemize}
+
+\textbf{(2) Trade-offs:}
+
+\begin{center}
+\begin{tabular}{p{3.5cm}p{4.5cm}p{4.5cm}}
+\toprule
+\textbf{Aspect} & \textbf{$k$NN-LM} & \textbf{Larger LM} \\
+\midrule
+Training Cost & Χαμηλό (μικρότερο LM) & Υψηλό (πολλά parameters) \\
+Inference Cost & Υψηλό ($k$NN search) & Χαμηλό (single forward pass) \\
+Storage & Υψηλό (datastore) & Χαμηλό (only parameters) \\
+Knowledge Update & Εύκολο (swap datastore) & Δύσκολο (retraining) \\
+Domain Adaptation & Εύκολο & Απαιτεί fine-tuning \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Storage Analysis:}
+
+Για Wikipedia (4B tokens) με 1024-dim embeddings:
+$$\text{Datastore size} = 4 \times 10^9 \times 1024 \times 4 \text{ bytes} \approx 16 \text{ TB}$$
+
+\begin{warningbox}[Practical Consideration]
+Το $k$NN-LM είναι ιδανικό όταν:
+\begin{itemize}
+    \item Χρειάζεται domain adaptation χωρίς retraining
+    \item Η γνώση αλλάζει συχνά
+    \item Υπάρχει περιορισμένο training budget
+\end{itemize}
+Δεν είναι ιδανικό όταν:
+\begin{itemize}
+    \item Το inference latency είναι κρίσιμο
+    \item Ο storage είναι περιορισμένος
+\end{itemize}
+\end{warningbox}
+
+
+% =============================================================================
+% SECTION 4: Πρακτικά Σενάρια RAG
+% =============================================================================
+\section{Πρακτικά Σενάρια και Use Cases}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.9
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.9: When to Use Retrieval}
+
+\begin{formulabox}[Εκφώνηση]
+Για κάθε σενάριο, αποφασίστε αν πρέπει να χρησιμοποιηθεί retrieval-augmented LM ή
+standard LM και αιτιολογήστε:
+
+\begin{enumerate}
+    \item Chatbot για customer support με συχνές ενημερώσεις πολιτικής
+    \item Autocomplete για code editor
+    \item Σύστημα απάντησης ερωτήσεων για obscure ιστορικά γεγονότα
+    \item Translation system (English $\to$ French)
+    \item Legal document analysis για συγκεκριμένο law firm
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{clp{7cm}}
+\toprule
+\textbf{\#} & \textbf{Επιλογή} & \textbf{Αιτιολόγηση} \\
+\midrule
+1 & \textbf{RAG} &
+Συχνές ενημερώσεις $\Rightarrow$ εύκολο update datastore χωρίς retraining.
+Verifiable answers με citations. \\
+
+2 & \textbf{Standard LM} &
+Code completion χρειάζεται χαμηλή latency. Η γνώση είναι γενική
+(syntax, patterns) και αλλάζει αργά. \\
+
+3 & \textbf{RAG} &
+Long-tail knowledge: τα LLMs αποτυγχάνουν σε rare entities.
+Retrieval από historical databases βελτιώνει accuracy. \\
+
+4 & \textbf{Standard LM} &
+Translation είναι skill-based, όχι knowledge-intensive.
+Δεν χρειάζεται external retrieval. \\
+
+5 & \textbf{RAG} &
+Domain-specific knowledge (firm's documents).
+Proprietary data δεν είναι στο training set.
+Verifiability σημαντική για legal. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Decision Framework]
+Χρησιμοποιήστε RAG όταν:
+\begin{itemize}
+    \item[$\checkmark$] Knowledge changes frequently
+    \item[$\checkmark$] Long-tail / rare information needed
+    \item[$\checkmark$] Verifiability / citations required
+    \item[$\checkmark$] Domain-specific / proprietary data
+    \item[$\checkmark$] Reducing hallucinations is critical
+\end{itemize}
+Προτιμήστε Standard LM όταν:
+\begin{itemize}
+    \item[$\times$] Low latency is critical
+    \item[$\times$] Task is skill-based (translation, summarization)
+    \item[$\times$] General knowledge is sufficient
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.10
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.10: Long-Tail Entity Performance}
+
+\begin{formulabox}[Εκφώνηση]
+Τα παρακάτω δεδομένα δείχνουν QA accuracy ανάλογα με τη δημοφιλία των entities:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Popularity} & \textbf{Standard LLM} & \textbf{RAG} \\
+\midrule
+$10^1$ (very rare) & 5\% & 32\% \\
+$10^2$ & 12\% & 38\% \\
+$10^3$ & 28\% & 42\% \\
+$10^4$ & 48\% & 45\% \\
+$10^5$ (popular) & 62\% & 48\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{enumerate}
+    \item Σχολιάστε τα αποτελέσματα για rare vs popular entities
+    \item Προτείνετε μια adaptive στρατηγική
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Ανάλυση Αποτελεσμάτων:}
+
+\begin{itemize}
+    \item \textbf{Rare entities ($10^1$-$10^2$)}: RAG υπερτερεί σημαντικά (+27\% για very rare)
+    \begin{itemize}
+        \item LLMs δεν έχουν αρκετά training examples
+        \item Retrieval φέρνει relevant context από το datastore
+    \end{itemize}
+
+    \item \textbf{Popular entities ($10^4$-$10^5$)}: Standard LLM υπερτερεί (+14\% για popular)
+    \begin{itemize}
+        \item Η γνώση είναι ``memorized'' στις παραμέτρους
+        \item Retrieval μπορεί να φέρει noise ή conflicting info
+    \end{itemize}
+
+    \item \textbf{Cross-over point}: Περίπου στο $10^{3.5}$ popularity
+\end{itemize}
+
+\textbf{(2) Adaptive Strategy:}
+
+$$P_{final}(y|x) = \begin{cases}
+P_{RAG}(y|x) & \text{if entity is rare (popularity} < 10^3\text{)} \\
+P_{LM}(y|x) & \text{if entity is popular (popularity} > 10^4\text{)} \\
+\lambda P_{RAG} + (1-\lambda) P_{LM} & \text{otherwise}
+\end{cases}$$
+
+\textbf{Υλοποίηση:}
+\begin{enumerate}
+    \item Entity recognition στο query
+    \item Lookup popularity score (από Wikipedia pageviews ή training frequency)
+    \item Επιλογή strategy βάσει threshold
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    width=10cm, height=6cm,
+    xlabel={Entity Popularity (log scale)},
+    ylabel={Accuracy (\%)},
+    xmin=0.5, xmax=5.5,
+    ymin=0, ymax=70,
+    xtick={1,2,3,4,5},
+    xticklabels={$10^1$,$10^2$,$10^3$,$10^4$,$10^5$},
+    legend pos=south east,
+    grid=major
+]
+\addplot[color=primary, mark=*, thick] coordinates {(1,5) (2,12) (3,28) (4,48) (5,62)};
+\addplot[color=accent, mark=square*, thick] coordinates {(1,32) (2,38) (3,42) (4,45) (5,48)};
+\legend{Standard LLM, RAG}
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}[Practical Insight]
+Πολλά production systems χρησιμοποιούν \textbf{Self-RAG} ή \textbf{Adaptive Retrieval}
+που αποφασίζει dynamically αν χρειάζεται retrieval βάσει του query confidence του LM.
+\end{warningbox}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.11
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.11: RETRO Architecture}
+
+\begin{formulabox}[Εκφώνηση]
+Στο RETRO, ένα input ``World Cup 2022 was the last with 32 teams, before the
+increase to'' χωρίζεται σε 3 chunks των 4 tokens:
+\begin{itemize}
+    \item $x_1$ = ``World Cup 2022 was''
+    \item $x_2$ = ``the last with 32 teams,''
+    \item $x_3$ = ``before the increase to''
+\end{itemize}
+
+Για κάθε chunk, το σύστημα ανακτά $k=2$ neighbors. Οι neighbor encodings είναι
+$E_i \in \mathbb{R}^{r \times k \times d}$ όπου $r=4$ (tokens per chunk), $k=2$, $d=512$.
+
+\begin{enumerate}
+    \item Ποιες είναι οι διαστάσεις κάθε $E_i$;
+    \item Πώς διαφέρει η αρχιτεκτονική του RETRO decoder από έναν standard decoder;
+    \item Ποιο είναι το πλεονέκτημα του Chunked Cross-Attention;
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Διαστάσεις:}
+
+$$E_i \in \mathbb{R}^{4 \times 2 \times 512}$$
+
+Για κάθε chunk $x_i$:
+\begin{itemize}
+    \item $r = 4$: tokens ανά retrieved neighbor chunk
+    \item $k = 2$: αριθμός neighbors
+    \item $d = 512$: hidden dimension
+\end{itemize}
+
+Συνολικά για 3 chunks: $3 \times 4 \times 2 \times 512 = 12,288$ floats
+
+\textbf{(2) RETRO Decoder Architecture:}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Standard Decoder} & \textbf{RETRO Decoder} \\
+\midrule
+EMB $\to$ ATTN $\to$ FFN $\to$ HEAD & EMB $\to$ ATTN $\to$ \textbf{CCA} $\to$ FFN $\to$ HEAD \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Όπου \textbf{CCA} = Chunked Cross-Attention:
+\begin{itemize}
+    \item Query: Representations των tokens του $i$-th chunk
+    \item Key/Value: Encoded neighbors $E_i$ για αυτό το chunk
+    \item Επιτρέπει στο μοντέλο να ``κοιτάξει'' τα retrieved documents
+\end{itemize}
+
+\textbf{(3) Πλεονεκτήματα Chunked Cross-Attention:}
+
+\begin{enumerate}
+    \item \textbf{Efficiency}: Κάθε chunk κάνει attention μόνο στα δικά του neighbors,
+    όχι σε όλο το retrieved content
+
+    \item \textbf{Scalability}: Μπορεί να χειριστεί πολλά chunks και neighbors χωρίς
+    quadratic cost
+
+    \item \textbf{Locality}: Τα neighbors είναι relevant για το συγκεκριμένο chunk,
+    όχι για ολόκληρο το input
+\end{enumerate}
+
+\textbf{Complexity Comparison:}
+\begin{itemize}
+    \item Standard cross-attention: $O(n \cdot m)$ όπου $n$ = input tokens, $m$ = retrieved tokens
+    \item Chunked cross-attention: $O(\frac{n}{r} \cdot r \cdot k \cdot r) = O(n \cdot k \cdot r)$
+\end{itemize}
+
+\begin{infobox}[RETRO Results]
+Το RETRO με 7.5B parameters και 1.8T token datastore πετυχαίνει performance
+συγκρίσιμη με GPT-3 (175B parameters) χρησιμοποιώντας \textbf{25x λιγότερες παραμέτρους}.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 9.12
+% -----------------------------------------------------------------------------
+\subsection{Άσκηση 9.12: Hallucination Reduction}
+
+\begin{formulabox}[Εκφώνηση]
+Σε ένα biography generation task, ζητάμε ``Tell me about Bridget Moynahan''.
+Ένα ChatGPT-style model παράγει:
+
+\textit{``Bridget Moynahan is an American actress, model and producer. She is best known for her roles in Grey's Anatomy, I, Robot and Blue Bloods. She studied acting at the American Academy of Dramatic Arts...''}
+
+Fact-checking δείχνει ότι μόνο 66.7\% των claims είναι supported by Wikipedia.
+
+\begin{enumerate}
+    \item Ποια claims είναι πιθανώς hallucinated;
+    \item Πώς θα βοηθούσε ένα RAG system;
+    \item Τι είναι το FactScore metric;
+\end{enumerate}
+\end{formulabox}
+
+\subsubsection*{Λύση}
+
+\textbf{(1) Fact Verification:}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Claim} & \textbf{Wikipedia} & \textbf{Status} \\
+\midrule
+Bridget Moynahan is American & $\checkmark$ & Correct \\
+She is an actress & $\checkmark$ & Correct \\
+She is a model & $\checkmark$ & Correct \\
+She is a \textbf{producer} & $\times$ & \textcolor{red}{Hallucinated} \\
+Best known for \textbf{Grey's Anatomy} & $\times$ & \textcolor{red}{Hallucinated} \\
+Best known for I, Robot & $\checkmark$ & Correct \\
+Best known for Blue Bloods & $\checkmark$ & Correct \\
+Studied acting & $\checkmark$ & Correct \\
+At \textbf{American Academy of Dramatic Arts} & $\times$ & \textcolor{red}{Hallucinated} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+FactScore = 6/9 = 66.7\%
+
+\textbf{(2) RAG Solution:}
+
+\begin{enumerate}
+    \item \textbf{Retrieve}: Φέρε Wikipedia article για Bridget Moynahan
+    \item \textbf{Generate}: Παράγαγε απάντηση conditioned στο retrieved document
+    \item \textbf{Cite}: Πρόσθεσε citations για κάθε claim
+\end{enumerate}
+
+Με RAG (π.χ. Perplexity.ai style):
+\begin{itemize}
+    \item FactScore αυξάνεται σε $\sim$80\%+
+    \item User μπορεί να verify τα claims
+    \item Model ``αποφεύγει'' να παράγει unsupported info
+\end{itemize}
+
+\textbf{(3) FactScore Metric:}
+
+$$\text{FactScore} = \frac{\text{Number of supported atomic facts}}{\text{Total number of atomic facts}}$$
+
+\textbf{Process:}
+\begin{enumerate}
+    \item Decompose generation σε atomic facts
+    \item Για κάθε fact, check αν υποστηρίζεται από reliable source
+    \item Υπολογισμός ποσοστού supported facts
+\end{enumerate}
+
+\begin{warningbox}[Key Insight]
+Τα LLMs τείνουν να hallucinate περισσότερο για:
+\begin{itemize}
+    \item Less famous entities
+    \item Specific details (dates, places, affiliations)
+    \item Information not well-represented in training data
+\end{itemize}
+RAG μειώνει hallucinations παρέχοντας grounded context.
+\end{warningbox}

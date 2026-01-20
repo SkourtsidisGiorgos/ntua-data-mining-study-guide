@@ -1,0 +1,342 @@
+% =============================================================================
+% Chapter 19: OLAP και Data Warehousing - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{OLAP και Data Warehousing - Λυμένες Ασκήσεις}
+\label{ch:olap-dw-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για OLAP operations, star schema design,
+και data warehouse queries.
+
+% -----------------------------------------------------------------------------
+% Exercise 8.1
+% -----------------------------------------------------------------------------
+\section{Άσκηση 8.1: OLAP Operations Ταξινόμηση}
+
+\begin{formulabox}[Εκφώνηση]
+Ταξινομήστε κάθε λειτουργία σε Roll-up, Drill-down, Slice, Dice, ή Pivot:
+
+\begin{enumerate}
+    \item Από πωλήσεις ανά ημέρα σε πωλήσεις ανά μήνα
+    \item Εμφάνιση μόνο των πωλήσεων του 2024
+    \item Από πωλήσεις ανά χώρα σε πωλήσεις ανά πόλη
+    \item Πωλήσεις για συγκεκριμένη περιοχή ΚΑΙ κατηγορία προϊόντος
+    \item Αλλαγή από Product×Time σε Region×Time
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{center}
+\begin{tabular}{clp{6cm}}
+\toprule
+\textbf{\#} & \textbf{Operation} & \textbf{Εξήγηση} \\
+\midrule
+1 & \textbf{Roll-up} & Aggregation σε υψηλότερο επίπεδο ιεραρχίας (ημέρα → μήνας) \\
+2 & \textbf{Slice} & Επιλογή μιας τιμής σε μία διάσταση (year = 2024) \\
+3 & \textbf{Drill-down} & Μετάβαση σε χαμηλότερο επίπεδο λεπτομέρειας \\
+4 & \textbf{Dice} & Επιλογή εύρους τιμών σε πολλές διαστάσεις \\
+5 & \textbf{Pivot} & Αναδιάταξη διαστάσεων/αλλαγή οπτικής γωνίας \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.7]
+    % Hierarchy visualization
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,3) {Year};
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,2) {Quarter};
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,1) {Month};
+    \node[draw, fill=box-blue, minimum width=3cm] at (0,0) {Day};
+
+    \draw[arrow, thick, success] (1.8,0.5) -- (1.8,2.5) node[midway, right] {Roll-up};
+    \draw[arrow, thick, accent] (-1.8,2.5) -- (-1.8,0.5) node[midway, left] {Drill-down};
+\end{tikzpicture}
+\end{center}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.2
+% -----------------------------------------------------------------------------
+\section{Άσκηση 8.2: Roll-up και Drill-down Sequence}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνεται cube με διαστάσεις: Time (Day → Month → Quarter → Year),
+Product (Item → Category → Department), Location (City → Region → Country).
+
+Ξεκινώντας από (Day, Item, City), περιγράψτε τη σειρά operations για να φτάσετε σε
+(Year, Department, Country).
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Απαιτούμενα Roll-ups:}
+
+\begin{enumerate}
+    \item \textbf{Time}: Day → Month → Quarter → Year (3 roll-ups)
+    \item \textbf{Product}: Item → Category → Department (2 roll-ups)
+    \item \textbf{Location}: City → Region → Country (2 roll-ups)
+\end{enumerate}
+
+\textbf{Σύνολο:} 7 consecutive roll-up operations
+
+\begin{center}
+\begin{tikzpicture}[node distance=0.8cm, font=\small]
+    \node[draw, fill=box-green, rounded corners] (start) {(Day, Item, City)};
+    \node[draw, fill=box-blue, rounded corners, below=of start] (s1) {(Month, Item, City)};
+    \node[draw, fill=box-blue, rounded corners, below=of s1] (s2) {(Quarter, Category, Region)};
+    \node[draw, fill=box-green, rounded corners, below=of s2] (end) {(Year, Department, Country)};
+
+    \draw[arrow] (start) -- (s1) node[midway, right] {roll-up Time};
+    \draw[arrow] (s1) -- (s2) node[midway, right] {roll-up all};
+    \draw[arrow] (s2) -- (end) node[midway, right] {roll-up all};
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Optimization]
+Στην πράξη, τα roll-ups μπορούν να γίνουν παράλληλα σε διαφορετικές διαστάσεις
+αν υπάρχουν pre-computed aggregates.
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.3
+% -----------------------------------------------------------------------------
+\section{Άσκηση 8.3: Slice vs Dice}
+
+\begin{formulabox}[Εκφώνηση]
+Για cube πωλήσεων με διαστάσεις (Product, Location, Time), εκφράστε σε OLAP
+operations:
+
+\begin{enumerate}
+    \item Πωλήσεις για τον Ιανουάριο 2024
+    \item Πωλήσεις για Electronics σε Athens τον Ιανουάριο 2024
+    \item Πωλήσεις για όλα τα προϊόντα, στην Ελλάδα, για Q1 2024
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{(1) Slice}
+
+$$\text{SLICE}(Cube, Time = \text{``Jan 2024''})$$
+
+Μειώνει τον cube κατά μία διάσταση.
+
+\textbf{(2) Dice}
+
+$$\text{DICE}(Cube, Product = \text{``Electronics''}, Location = \text{``Athens''}, Time = \text{``Jan 2024''})$$
+
+Επιλογή σε πολλαπλές διαστάσεις ταυτόχρονα.
+
+\textbf{(3) Slice + Roll-up (ή Dice)}
+
+\begin{enumerate}
+    \item Roll-up Location: City → Country (Ελλάδα)
+    \item Roll-up Time: Month → Quarter (Q1)
+    \item Slice: Country = ``Greece'', Quarter = ``Q1 2024''
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.4
+% -----------------------------------------------------------------------------
+\section{Άσκηση 8.4: Cube Calculations}
+
+\begin{formulabox}[Εκφώνηση]
+Ένας cube έχει 3 διαστάσεις: Product (100 values), Location (50 values),
+Time (365 days).
+
+\begin{enumerate}
+    \item Πόσα cells έχει ο base cube;
+    \item Πόσα συνολικά cells έχει ο πλήρης CUBE (με όλα τα aggregations);
+    \item Αν κάθε cell χρειάζεται 8 bytes, πόση μνήμη απαιτείται;
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{(1) Base Cube Cells:}
+
+$$|Product| \times |Location| \times |Time| = 100 \times 50 \times 365 = 1,825,000$$
+
+\textbf{(2) Full CUBE:}
+
+Για κάθε διάσταση, μπορεί να έχουμε τις τιμές της ή το ALL (aggregation):
+
+$$(|Product| + 1) \times (|Location| + 1) \times (|Time| + 1)$$
+$$= 101 \times 51 \times 366 = 1,884,666$$
+
+Εναλλακτικά (για cuboids):
+$$\text{Cuboids} = 2^3 = 8$$
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+\textbf{Cuboid} & \textbf{Cells} \\
+\midrule
+(P, L, T) & $100 \times 50 \times 365 = 1,825,000$ \\
+(P, L, *) & $100 \times 50 = 5,000$ \\
+(P, *, T) & $100 \times 365 = 36,500$ \\
+(*, L, T) & $50 \times 365 = 18,250$ \\
+(P, *, *) & $100$ \\
+(*, L, *) & $50$ \\
+(*, *, T) & $365$ \\
+(*, *, *) & $1$ \\
+\midrule
+\textbf{Total} & \textbf{1,885,266} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(3) Memory:}
+
+$$1,885,266 \times 8 \text{ bytes} = 15,082,128 \text{ bytes} \approx 14.4 \text{ MB}$$
+
+% -----------------------------------------------------------------------------
+% Exercise 8.5
+% -----------------------------------------------------------------------------
+\section{Άσκηση 8.5: Star Schema Design}
+
+\begin{formulabox}[Εκφώνηση]
+Σχεδιάστε star schema για ηλεκτρονικό κατάστημα με τα εξής requirements:
+\begin{itemize}
+    \item Παρακολούθηση πωλήσεων (ποσότητα, τιμή, έκπτωση)
+    \item Διαστάσεις: Προϊόν, Πελάτης, Ημερομηνία, Κατάστημα
+    \item Ιεραρχία προϊόντων: Product → Subcategory → Category → Department
+\end{itemize}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\begin{center}
+\begin{tikzpicture}[
+    fact/.style={rectangle, draw=accent, fill=box-red, minimum width=3cm, minimum height=2cm, font=\small, align=center},
+    dim/.style={rectangle, draw=secondary, fill=box-blue, minimum width=2.5cm, minimum height=1.8cm, font=\small, align=center}]
+
+    % Fact table
+    \node[fact] (fact) {
+        \textbf{Sales\_Fact}\\
+        \underline{product\_sk}\\
+        \underline{customer\_sk}\\
+        \underline{date\_sk}\\
+        \underline{store\_sk}\\
+        quantity\\
+        unit\_price\\
+        discount
+    };
+
+    % Dimension tables
+    \node[dim, above left=1cm and 2cm of fact] (product) {
+        \textbf{Dim\_Product}\\
+        \underline{product\_sk}\\
+        product\_id\\
+        name\\
+        subcategory\\
+        category\\
+        department
+    };
+
+    \node[dim, above right=1cm and 2cm of fact] (customer) {
+        \textbf{Dim\_Customer}\\
+        \underline{customer\_sk}\\
+        customer\_id\\
+        name\\
+        city\\
+        country
+    };
+
+    \node[dim, below left=1cm and 2cm of fact] (date) {
+        \textbf{Dim\_Date}\\
+        \underline{date\_sk}\\
+        date\\
+        day\_of\_week\\
+        month\\
+        quarter\\
+        year
+    };
+
+    \node[dim, below right=1cm and 2cm of fact] (store) {
+        \textbf{Dim\_Store}\\
+        \underline{store\_sk}\\
+        store\_id\\
+        name\\
+        city\\
+        region
+    };
+
+    % Connections
+    \draw[thick] (product) -- (fact);
+    \draw[thick] (customer) -- (fact);
+    \draw[thick] (date) -- (fact);
+    \draw[thick] (store) -- (fact);
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Surrogate Keys (\_sk)]
+Χρησιμοποιούμε surrogate keys (τεχνητά κλειδιά) αντί για natural keys για:
+\begin{itemize}
+    \item Καλύτερη απόδοση (μικρότερα integers)
+    \item Διαχείριση slowly changing dimensions
+    \item Ανεξαρτησία από source systems
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 8.6
+% -----------------------------------------------------------------------------
+\section{Άσκηση 8.6: OLAP Queries σε SQL}
+
+\begin{formulabox}[Εκφώνηση]
+Χρησιμοποιώντας το star schema της προηγούμενης άσκησης, γράψτε SQL queries για:
+
+\begin{enumerate}
+    \item Συνολικές πωλήσεις ανά κατηγορία προϊόντος
+    \item Top 5 πελάτες με βάση το συνολικό ποσό αγορών
+    \item Πωλήσεις ανά μήνα για το 2024
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{(1) Πωλήσεις ανά κατηγορία (Roll-up):}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    p.category,
+    SUM(f.quantity * f.unit_price * (1 - f.discount)) AS total_revenue
+FROM Sales_Fact f
+JOIN Dim_Product p ON f.product_sk = p.product_sk
+GROUP BY p.category
+ORDER BY total_revenue DESC;
+\end{lstlisting}
+
+\textbf{(2) Top 5 πελάτες:}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    c.name,
+    SUM(f.quantity * f.unit_price * (1 - f.discount)) AS total_spent
+FROM Sales_Fact f
+JOIN Dim_Customer c ON f.customer_sk = c.customer_sk
+GROUP BY c.customer_sk, c.name
+ORDER BY total_spent DESC
+LIMIT 5;
+\end{lstlisting}
+
+\textbf{(3) Πωλήσεις ανά μήνα 2024 (Slice + Roll-up):}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    d.year,
+    d.month,
+    SUM(f.quantity * f.unit_price * (1 - f.discount)) AS monthly_revenue
+FROM Sales_Fact f
+JOIN Dim_Date d ON f.date_sk = d.date_sk
+WHERE d.year = 2024
+GROUP BY d.year, d.month
+ORDER BY d.month;
+\end{lstlisting}
+
+\begin{warningbox}[Performance]
+Στα data warehouses, οι dimension tables είναι συνήθως denormalized για αποφυγή
+πολλαπλών JOINs. Αυτό αυξάνει το μέγεθος αλλά βελτιώνει την απόδοση των queries.
+\end{warningbox}

@@ -1,0 +1,227 @@
+% =============================================================================
+% Chapter 15: Query Processing - Λυμένες Ασκήσεις
+% Data Mining Study Guide - NTUA
+% =============================================================================
+
+\chapter{Query Processing - Λυμένες Ασκήσεις}
+\label{ch:query-processing-exercises}
+
+Αυτό το κεφάλαιο περιέχει λυμένες ασκήσεις για επεξεργασία ερωτημάτων και
+βελτιστοποίηση.
+
+% -----------------------------------------------------------------------------
+% Exercise 4.1
+% -----------------------------------------------------------------------------
+\section{Άσκηση 4.1: Pipelining vs Materialization}
+
+\begin{formulabox}[Εκφώνηση]
+Για το query: $\pi_{name}(\sigma_{salary>50000}(Employee \bowtie Department))$
+
+Ταξινομήστε τους τελεστές σε pipelined ή materialized και εξηγήστε γιατί.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Ορισμοί:}
+\begin{itemize}
+    \item \textbf{Pipelining:} Τα αποτελέσματα περνάνε αμέσως στον επόμενο τελεστή χωρίς αποθήκευση
+    \item \textbf{Materialization:} Τα αποτελέσματα αποθηκεύονται προσωρινά πριν περάσουν στον επόμενο τελεστή
+\end{itemize}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Τελεστής} & \textbf{Τύπος} & \textbf{Λόγος} \\
+\midrule
+$\bowtie$ (Join) & Materialized & Χρειάζεται πλήρη δεδομένα για hash/sort \\
+$\sigma$ (Selection) & Pipelined & Φιλτράρει γραμμή-γραμμή \\
+$\pi$ (Projection) & Pipelined & Επεξεργάζεται γραμμή-γραμμή \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{infobox}[Pipeline Breakers]
+Οι τελεστές που \textbf{δεν} μπορούν να είναι pipelined ονομάζονται «pipeline breakers»:
+\begin{itemize}
+    \item Sort
+    \item Hash Join (build phase)
+    \item Group By / Aggregation
+    \item Duplicate elimination (DISTINCT)
+\end{itemize}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 4.2
+% -----------------------------------------------------------------------------
+\section{Άσκηση 4.2: Επιλογή Join Algorithm}
+
+\begin{formulabox}[Εκφώνηση]
+Δίνονται δύο πίνακες:
+\begin{itemize}
+    \item $R$: 10,000 tuples, 100 tuples/page $\Rightarrow$ 100 pages
+    \item $S$: 1,000 tuples, 100 tuples/page $\Rightarrow$ 10 pages
+    \item Buffer: 12 pages
+\end{itemize}
+
+Ποιος αλγόριθμος join είναι καλύτερος; Υπολογίστε το I/O cost.
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Nested Loop Join:}
+
+$$Cost_{NLJ} = B_R + B_R \cdot B_S = 100 + 100 \cdot 10 = 1100 \text{ I/Os}$$
+
+(με το μικρότερο ως outer: $10 + 10 \cdot 100 = 1010$ I/Os)
+
+\textbf{Block Nested Loop Join:}
+
+Με buffer $B = 12$ pages, κρατάμε $B-2 = 10$ pages για τον outer.
+
+$$Cost_{BNLJ} = B_R + \lceil B_R / (B-2) \rceil \cdot B_S$$
+
+Με $S$ ως outer (μικρότερο):
+$$Cost = 10 + \lceil 10/10 \rceil \cdot 100 = 10 + 100 = 110 \text{ I/Os}$$
+
+\textbf{Hash Join:}
+
+$$Cost_{Hash} = 3 \cdot (B_R + B_S) = 3 \cdot 110 = 330 \text{ I/Os}$$
+
+\textbf{Sort-Merge Join:}
+
+$$Cost_{SM} = Sort(R) + Sort(S) + B_R + B_S$$
+$$= 2 \cdot 100 \cdot \lceil \log_{11}(10) \rceil + 2 \cdot 10 \cdot \lceil \log_{11}(1) \rceil + 110$$
+$$\approx 200 \cdot 1 + 20 \cdot 1 + 110 = 330 \text{ I/Os}$$
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Algorithm} & \textbf{I/O Cost} \\
+\midrule
+Simple NLJ (R outer) & 1,100 \\
+Simple NLJ (S outer) & 1,010 \\
+Block NLJ (S outer) & \textbf{110} \\
+Hash Join & 330 \\
+Sort-Merge & $\sim$330 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Τελική Απάντηση:} Block Nested Loop Join με S ως outer (110 I/Os).
+
+% -----------------------------------------------------------------------------
+% Exercise 4.3
+% -----------------------------------------------------------------------------
+\section{Άσκηση 4.3: Query Optimization (Push Selection)}
+
+\begin{formulabox}[Εκφώνηση]
+Βελτιστοποιήστε το query tree για:
+
+$$\pi_{ename}(\sigma_{dname='Sales'}(Employee \bowtie Department))$$
+\end{formulabox}
+
+\subsection*{Λύση}
+
+\textbf{Αρχικό Query Tree:}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    op/.style={circle, draw=secondary, fill=box-blue, minimum size=0.8cm},
+    rel/.style={rectangle, draw=primary, fill=box-green, rounded corners, minimum width=1.5cm}]
+
+    \node[op] (proj) {$\pi$};
+    \node[op, below=of proj] (sel) {$\sigma$};
+    \node[op, below=of sel] (join) {$\bowtie$};
+    \node[rel, below left=1cm and 0.5cm of join] (emp) {Employee};
+    \node[rel, below right=1cm and 0.5cm of join] (dept) {Department};
+
+    \draw[arrow] (sel) -- (proj);
+    \draw[arrow] (join) -- (sel);
+    \draw[arrow] (emp) -- (join);
+    \draw[arrow] (dept) -- (join);
+
+    \node[right=0.3cm of proj, font=\small] {$name$};
+    \node[right=0.3cm of sel, font=\small] {$dname='Sales'$};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Βελτιστοποιημένο Query Tree (Push Selection Down):}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    op/.style={circle, draw=secondary, fill=box-blue, minimum size=0.8cm},
+    rel/.style={rectangle, draw=primary, fill=box-green, rounded corners, minimum width=1.5cm}]
+
+    \node[op] (proj) {$\pi$};
+    \node[op, below=of proj] (join) {$\bowtie$};
+    \node[rel, below left=1cm and 0.5cm of join] (emp) {Employee};
+    \node[op, below right=1cm and 0.5cm of join] (sel) {$\sigma$};
+    \node[rel, below=of sel] (dept) {Department};
+
+    \draw[arrow] (join) -- (proj);
+    \draw[arrow] (emp) -- (join);
+    \draw[arrow] (sel) -- (join);
+    \draw[arrow] (dept) -- (sel);
+
+    \node[right=0.3cm of proj, font=\small] {$name$};
+    \node[right=0.3cm of sel, font=\small] {$dname='Sales'$};
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Κανόνες Βελτιστοποίησης]
+\begin{enumerate}
+    \item \textbf{Push selections down}: Μειώνει το μέγεθος ενδιάμεσων αποτελεσμάτων
+    \item \textbf{Push projections down}: Μειώνει το πλάτος tuples
+    \item \textbf{Join ordering}: Μικρότερα ενδιάμεσα αποτελέσματα πρώτα
+\end{enumerate}
+\end{infobox}
+
+% -----------------------------------------------------------------------------
+% Exercise 4.4
+% -----------------------------------------------------------------------------
+\section{Άσκηση 4.4: Cost Comparison}
+
+\begin{formulabox}[Εκφώνηση]
+Για τον πίνακα $R$ με 10,000 tuples και index στο attribute $A$:
+
+Συγκρίνετε το cost για: $\sigma_{A=5}(R)$
+
+\begin{enumerate}
+    \item Table scan
+    \item B+-tree index (height = 3, clustering factor = 1.0)
+    \item Hash index
+\end{enumerate}
+\end{formulabox}
+
+\subsection*{Λύση}
+
+Έστω $B_R = 100$ pages, selectivity = 1\% (100 tuples match).
+
+\textbf{(a) Table Scan:}
+$$Cost = B_R = 100 \text{ page I/Os}$$
+
+\textbf{(b) B+-tree Index (clustered):}
+$$Cost = height + \text{matching pages} = 3 + 1 = 4 \text{ I/Os}$$
+(Clustered = τα matching tuples είναι συνεχόμενα)
+
+\textbf{(c) Hash Index:}
+$$Cost = 1.2 \text{ (average bucket access)} = \approx 2 \text{ I/Os}$$
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Method} & \textbf{I/O Cost} \\
+\midrule
+Table Scan & 100 \\
+B+-tree (clustered) & 4 \\
+Hash Index & $\sim$2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warningbox}[Unclustered Index]
+Αν ο B+-tree index ήταν unclustered, το cost θα ήταν:
+$$Cost = 3 + 100 = 103 \text{ I/Os (χειρότερο από scan!)}$$
+\end{warningbox}
